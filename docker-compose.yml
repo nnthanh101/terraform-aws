@@ -33,7 +33,7 @@ services:
     tty: true
 
   localstack:
-    image: localstack/localstack:4.4.0
+    image: localstack/localstack:4.4.0@sha256:b52c16663c70b7234f217cb993a339b46686e30a1a5d9279cb5feeb2202f837c
     container_name: terraform-aws-localstack
     ports:
       - "4567:4566"    # Host 4567 → LocalStack 4566 (avoids adlc-framework's 4566)
@@ -58,7 +58,7 @@ services:
       - localstack
 
   terratest:
-    image: golang:1.24.2
+    image: golang:1.24.2@sha256:30baaea08c5d1e858329c50f29fe381e9b7d7bced11a0f5f1f69a1504cdfbf5e
     container_name: terraform-aws-terratest
     working_dir: /workspace
     volumes:

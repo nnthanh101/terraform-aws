@@ -79,4 +79,16 @@ jobs:
 
       - name: Run CI test suite (no HITL gate)
         run: task test:ci
-        continue-on-error: true
+
+  lock-verify:
+    name: Lock File Verification
+    runs-on: ubuntu-latest
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Verify .terraform.lock.hcl exists per module
+        run: task build:lock-verify
