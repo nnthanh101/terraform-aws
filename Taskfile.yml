@@ -1,0 +1,397 @@
+version: '3'
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# terraform-aws | Enterprise Taskfile
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#
+# Naming Convention:
+#   {adlc-phase}:{terraform-sdlc-action}
+#
+#   ADLC Phases: plan | build | test | deploy | monitor | operate | govern
+#   Terraform Actions: init, fmt, validate, lint, lock, docs, test, apply, cost
+#
+# Examples:
+#   build:validate  = ADLC BUILD phase, Terraform validate action
+#   test:tier1      = ADLC TEST phase, Tier 1 snapshot tests
+#   govern:legal    = ADLC GOVERN phase, Apache 2.0 compliance audit
+#
+# Usage:
+#   task                     # Show all tasks
+#   task build:all           # Run all BUILD phase gates
+#   task test:ci             # Run CI-safe tests (Tier 1+2, no AWS cost)
+#   task govern:all          # Run all governance gates
+#   task sprint:validate     # Run Sprint 1 unified validation (7 gates)
+#
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+vars:
+  PROJECT: terraform-aws
+  TF_VERSION: ">= 1.10.0"
+  EVIDENCE_DIR: tmp/terraform-aws
+  CONTAINER: terraform-aws-dev
+  IMAGE: "nnthanh101/terraform:2.6.0"
+  SCORING_MODEL: "50biz-30tech-20infra"
+  REGISTRY_NAMESPACE: os
+
+tasks:
+  default:
+    desc: "Show all tasks grouped by ADLC phase"
+    cmds:
+      - task --list
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # PLAN — cost estimation, tool verification, environment readiness
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  plan:cost:
+    desc: "Infracost estimate per module -> {{.EVIDENCE_DIR}}/cost/"
+    cmds:
+      - mkdir -p {{.EVIDENCE_DIR}}/cost
+      - |
+        if command -v infracost >/dev/null 2>&1; then
+          for dir in modules/*/; do
+            if [ -d "$dir" ] && ls "$dir"/*.tf 1>/dev/null 2>&1; then
+              echo "Estimating cost for $dir..."
+              infracost breakdown --path "$dir" --format json > "{{.EVIDENCE_DIR}}/cost/$(basename $dir).json" 2>/dev/null || echo "SKIP: $dir (no priceable resources)"
+            fi
+          done
+          echo "PASSED: plan:cost"
+        else
+          echo "SKIP: infracost not installed (https://www.infracost.io/docs/)"
+        fi
+
+  plan:tools:
+    desc: "Verify 18 tools in {{.IMAGE}} devcontainer"
+    cmds:
+      - |
+        ver() {
+          case "$1" in
+            go)      go version 2>&1 ;;
+            kubectl) kubectl version --client 2>&1 ;;
+            helm)    helm version --short 2>&1 ;;
+            *)       "$1" --version 2>&1 ;;
+          esac | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1
+        }
+        PASS=0; FAIL=0
+        TOOLS="terraform terragrunt tflint checkov trivy infracost aws az go task starship git node npm cdk kubectl helm k3d"
+        for tool in $TOOLS; do
+          if command -v "$tool" >/dev/null 2>&1; then
+            printf "  %-14s %s\n" "$tool" "$(ver "$tool")"
+            PASS=$((PASS+1))
+          else
+            printf "  %-14s %s\n" "$tool" "MISSING"
+            FAIL=$((FAIL+1))
+          fi
+        done
+        echo ""
+        echo "Tools: $PASS present, $FAIL missing (of $(echo $TOOLS | wc -w | tr -d ' '))"
+        [ $FAIL -eq 0 ] || exit 1
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # BUILD — format, validate, lint, lock, docs, environment
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  build:env:
+    desc: "Start devcontainer + verify healthy (30s timeout)"
+    cmds:
+      - docker compose up -d devcontainer
+      - |
+        echo "Waiting for container..."
+        for i in $(seq 1 30); do
+          if docker exec {{.CONTAINER}} echo "ready" 2>/dev/null; then
+            echo "PASSED: build:env"
+            exit 0
+          fi
+          sleep 1
+        done
+        echo "FAIL: {{.CONTAINER}} not ready after 30s" && exit 1
+
+  build:env:localstack:
+    desc: "Start devcontainer + LocalStack (120s timeout, for Tier 2 tests)"
+    cmds:
+      - docker compose --profile localstack up -d
+      - |
+        echo "Waiting for LocalStack health..."
+        for i in $(seq 1 60); do
+          if docker exec terraform-aws-localstack curl -sf http://localhost:4566/_localstack/health 2>/dev/null; then
+            echo "PASSED: build:env:localstack"
+            exit 0
+          fi
+          sleep 2
+        done
+        echo "FAIL: LocalStack not healthy after 120s" && exit 1
+
+  build:validate:
+    desc: "terraform fmt -check + terraform validate all modules (no credentials needed)"
+    cmds:
+      - |
+        terraform fmt -check -recursive .
+        for dir in modules/*/; do
+          if [ -d "$dir" ] && ls "$dir"/*.tf 1>/dev/null 2>&1; then
+            echo "Validating $dir..."
+            (cd "$dir" && terraform init -backend=false -input=false >/dev/null 2>&1 && terraform validate)
+          fi
+        done
+        echo "PASSED: build:validate"
+
+  build:lint:
+    desc: "tflint (AWS plugin, recursive) + checkov security scan on modules/"
+    cmds:
+      - |
+        LINT_PASS=true
+        if command -v tflint >/dev/null 2>&1; then
+          tflint --recursive
+        else
+          if [ -n "${CI:-}" ]; then echo "FAIL: tflint not installed in CI" && exit 1; fi
+          echo "WARN: tflint not installed (install for full lint coverage)"
+        fi
+        if command -v checkov >/dev/null 2>&1; then
+          checkov -d modules/ --framework terraform --quiet || LINT_PASS=false
+        else
+          if [ -n "${CI:-}" ]; then echo "FAIL: checkov not installed in CI" && exit 1; fi
+          echo "WARN: checkov not installed (install for security scanning)"
+        fi
+        if [ "$LINT_PASS" = "true" ]; then echo "PASSED: build:lint"; else echo "FAIL: build:lint" && exit 1; fi
+
+  build:lock:
+    desc: "terraform providers lock (4 platforms) -> .terraform.lock.hcl per module"
+    cmds:
+      - |
+        PLATFORMS="linux_amd64 linux_arm64 darwin_amd64 darwin_arm64"
+        LOCK_ARGS=""
+        for p in $PLATFORMS; do LOCK_ARGS="$LOCK_ARGS -platform=$p"; done
+        for dir in modules/*/; do
+          if [ -d "$dir" ] && ls "$dir"/*.tf 1>/dev/null 2>&1; then
+            echo "Locking providers for $dir..."
+            (cd "$dir" && terraform init -backend=false -input=false >/dev/null 2>&1 && terraform providers lock $LOCK_ARGS)
+          fi
+        done
+        echo "PASSED: build:lock"
+
+  build:docs:
+    desc: "terraform-docs README tables for all modules (Registry publish requirement)"
+    cmds:
+      - |
+        if ! command -v terraform-docs >/dev/null 2>&1; then
+          echo "SKIP: terraform-docs not installed (go install github.com/terraform-docs/terraform-docs@latest)"
+          exit 0
+        fi
+        for dir in modules/*/; do
+          if [ -d "$dir" ] && ls "$dir"/*.tf 1>/dev/null 2>&1; then
+            echo "Generating docs for $dir..."
+            terraform-docs markdown table --output-file README.md --output-mode inject "$dir" 2>/dev/null || \
+              terraform-docs markdown table "$dir" > "${dir}README.md"
+          fi
+        done
+        echo "PASSED: build:docs"
+
+  build:all:
+    desc: "All BUILD gates: validate + lint + lock + docs"
+    cmds:
+      - task: build:validate
+      - task: build:lint
+      - task: build:lock
+      - task: build:docs
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # TEST — 3-tier testing per ADR-002 + ADR-004
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  test:tier1:
+    desc: "Tier 1: .tftest.hcl snapshot tests (free, 2-3s, no credentials) per ADR-004"
+    cmds:
+      - |
+        if ls tests/snapshot/*.tftest.hcl 1>/dev/null 2>&1; then
+          echo "Running native Terraform tests (ADR-004)..."
+          cd tests/snapshot && terraform init -backend=false -input=false && terraform test -verbose
+        elif [ -d tests/snapshot ] && ls tests/snapshot/*.go 1>/dev/null 2>&1; then
+          echo "Running Go Terratest snapshot tests..."
+          cd tests/snapshot && go test -v -timeout 30s ./...
+        else
+          echo "FAIL: No snapshot tests found (.tftest.hcl or .go)" && exit 1
+        fi
+
+  test:tier2:
+    desc: "Tier 2: LocalStack integration tests (free, 30-60s). Needs: task build:env:localstack"
+    cmds:
+      - |
+        if [ -d tests/localstack ] && ls tests/localstack/*.go 1>/dev/null 2>&1; then
+          cd tests/localstack && go test -v -timeout 120s ./...
+        else
+          echo "FAIL: No localstack tests found" && exit 1
+        fi
+
+  test:tier3:
+    desc: "Tier 3: Real AWS integration tests. HITL REQUIRED (est $5-50/run, HITL_APPROVED=true)"
+    prompt: "Tier 3 tests use REAL AWS resources ($$). Continue?"
+    cmds:
+      - |
+        if [ -n "${CI:-}" ] && [ "${HITL_APPROVED:-}" != "true" ]; then
+          echo "FAIL: Tier 3 blocked in CI without HITL_APPROVED=true" && exit 1
+        fi
+        if [ -d tests/integration ] && ls tests/integration/*.go 1>/dev/null 2>&1; then
+          echo "HITL GATE: Running Tier 3 against real AWS (cost applies)..."
+          cd tests/integration && go test -v -timeout 600s ./...
+        else
+          echo "FAIL: No integration tests found" && exit 1
+        fi
+
+  test:ci:
+    desc: "CI-safe: Tier 1 + Tier 2 only (no HITL, no AWS cost)"
+    cmds:
+      - task: test:tier1
+      - task: test:tier2
+
+  test:all:
+    desc: "All 3 tiers (Tier 3 has HITL gate). For CI use test:ci instead"
+    cmds:
+      - task: test:tier1
+      - task: test:tier2
+      - task: test:tier3
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # GOVERN — legal, constitutional checkpoints, sprint validation
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  govern:legal:
+    desc: "Apache 2.0 compliance audit (4 checks) -> {{.EVIDENCE_DIR}}/legal/audit.json"
+    cmds:
+      - mkdir -p {{.EVIDENCE_DIR}}/legal
+      - |
+        PASS=0; FAIL=0; TOTAL=4
+        echo "=== Legal Compliance Audit ==="
+
+        if [ -f LICENSE ] && grep -q "Apache License" LICENSE; then
+          echo "CHECK 1/4: LICENSE file (Apache 2.0) ... PASSED"
+          PASS=$((PASS+1))
+        else
+          echo "CHECK 1/4: LICENSE file (Apache 2.0) ... FAILED"
+          FAIL=$((FAIL+1))
+        fi
+
+        if [ -f NOTICE ] && grep -q "Copyright" NOTICE; then
+          echo "CHECK 2/4: NOTICE file ... PASSED"
+          PASS=$((PASS+1))
+        else
+          echo "CHECK 2/4: NOTICE file ... FAILED"
+          FAIL=$((FAIL+1))
+        fi
+
+        FOUND=$(find modules tests examples -name "*.tf" -o -name "*.go" 2>/dev/null | xargs grep -l "GPL" 2>/dev/null | wc -l | tr -d ' ')
+        if [ "$FOUND" = "0" ]; then
+          echo "CHECK 3/4: No incompatible licenses ... PASSED"
+          PASS=$((PASS+1))
+        else
+          echo "CHECK 3/4: No incompatible licenses ... FAILED"
+          FAIL=$((FAIL+1))
+        fi
+
+        if [ -f VERSION ]; then
+          echo "CHECK 4/4: VERSION file ... PASSED"
+          PASS=$((PASS+1))
+        else
+          echo "CHECK 4/4: VERSION file ... FAILED"
+          FAIL=$((FAIL+1))
+        fi
+
+        echo ""
+        echo "Result: $PASS/$TOTAL PASSED"
+        echo "{\"date\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"checks\":$TOTAL,\"passed\":$PASS,\"failed\":$FAIL}" > {{.EVIDENCE_DIR}}/legal/audit.json
+        if [ $FAIL -gt 0 ]; then exit 1; fi
+
+  govern:score:
+    desc: "Constitutional checkpoint scoring (10 checks, >=85%) -> {{.EVIDENCE_DIR}}/governance/score.json"
+    cmds:
+      - mkdir -p {{.EVIDENCE_DIR}}/governance
+      - |
+        SCORE=0; TOTAL=10
+        echo "=== Governance Score ==="
+
+        [ -d .adlc ] && SCORE=$((SCORE+1)) && echo "CP-1: ADLC submodule ... PASS" || echo "CP-1: ADLC submodule ... FAIL"
+        [ -L .claude ] && [ -f .claude/settings.json ] && SCORE=$((SCORE+1)) && echo "CP-2: .claude symlink ... PASS" || echo "CP-2: .claude symlink ... FAIL"
+        [ -L .specify ] && [ -f .specify/memory/constitution.md ] && SCORE=$((SCORE+1)) && echo "CP-3: .specify symlink ... PASS" || echo "CP-3: .specify symlink ... FAIL"
+        [ -f LICENSE ] && SCORE=$((SCORE+1)) && echo "CP-4: LICENSE file ... PASS" || echo "CP-4: LICENSE file ... FAIL"
+        [ -f NOTICE ] && SCORE=$((SCORE+1)) && echo "CP-5: NOTICE file ... PASS" || echo "CP-5: NOTICE file ... FAIL"
+        [ -f VERSION ] && SCORE=$((SCORE+1)) && echo "CP-6: VERSION file ... PASS" || echo "CP-6: VERSION file ... FAIL"
+        [ -f CLAUDE.md ] && SCORE=$((SCORE+1)) && echo "CP-7: CLAUDE.md ... PASS" || echo "CP-7: CLAUDE.md ... FAIL"
+        [ -f Taskfile.yml ] && SCORE=$((SCORE+1)) && echo "CP-8: Taskfile.yml ... PASS" || echo "CP-8: Taskfile.yml ... FAIL"
+        [ -d modules/identity-center ] && [ -d modules/ecs-platform ] && [ -d modules/fullstack-web ] && SCORE=$((SCORE+1)) && echo "CP-9: Module dirs ... PASS" || echo "CP-9: Module dirs ... FAIL"
+        [ -d tests/snapshot ] && [ -d tests/localstack ] && [ -d tests/integration ] && SCORE=$((SCORE+1)) && echo "CP-10: Test dirs ... PASS" || echo "CP-10: Test dirs ... FAIL"
+
+        PERCENT=$(( SCORE * 100 / TOTAL ))
+        echo ""
+        echo "Governance Score: $SCORE/$TOTAL ($PERCENT%)"
+        echo "{\"date\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"score\":$SCORE,\"total\":$TOTAL,\"percent\":$PERCENT}" > {{.EVIDENCE_DIR}}/governance/score.json
+
+        if [ $PERCENT -lt 85 ]; then
+          echo "FAIL: Governance score $PERCENT% below 85% threshold" && exit 1
+        fi
+        echo "PASSED: govern:score ($PERCENT% >= 85%)"
+
+  govern:all:
+    desc: "All governance gates: legal + score"
+    cmds:
+      - task: govern:legal
+      - task: govern:score
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # MONITOR — evidence collection + anti-NATO gates
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  monitor:evidence:
+    desc: "Collect all evidence artifacts: build + govern + test -> {{.EVIDENCE_DIR}}/"
+    cmds:
+      - task: build:validate
+      - task: build:lint
+      - task: plan:cost
+      - task: govern:score
+      - task: test:tier1
+
+  monitor:verify:
+    desc: "Verify 8 evidence directories exist (anti-NATO gate)"
+    cmds:
+      - |
+        PASS=0; FAIL=0
+        for dir in coordination-logs test-results security-scans cost-reports terraform-plans screenshots legal-audit evidence; do
+          if [ -d "{{.EVIDENCE_DIR}}/$dir" ]; then
+            PASS=$((PASS+1))
+          else
+            echo "MISSING: {{.EVIDENCE_DIR}}/$dir"
+            FAIL=$((FAIL+1))
+          fi
+        done
+        echo "Evidence: $PASS present, $FAIL missing"
+        [ $FAIL -eq 0 ] || exit 1
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # OPERATE — environment lifecycle
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  operate:down:
+    desc: "Stop all containers (devcontainer + LocalStack + terratest)"
+    cmds:
+      - docker compose --profile localstack --profile test down
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # CI — composite pipelines
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ci:quick:
+    desc: "Fast CI: build:validate + build:lint + govern:legal (no Docker, <60s)"
+    cmds:
+      - task: build:validate
+      - task: build:lint
+      - task: govern:legal
+
+  ci:full:
+    desc: "Full CI: build:all + test:ci + govern:all + monitor:verify"
+    cmds:
+      - task: build:all
+      - task: test:ci
+      - task: govern:all
+      - task: monitor:verify
+
+  sprint:validate:
+    desc: "Sprint 1: Unified validation (7 gates) via scripts/validate-sprint1.sh"
+    cmds:
+      - scripts/validate-sprint1.sh

@@ -1,0 +1,17 @@
+terraform-aws
+Copyright 2026 nnthanh101@gmail.com (oceansoft.io)
+
+This project includes wrapper modules that consume the following upstream sources:
+
+- aws-ia/terraform-aws-iam-identity-center (Apache-2.0)
+  https://github.com/aws-ia/terraform-aws-iam-identity-center
+
+- aws-samples/terraform-aws-identity-center (MIT-0, no attribution required)
+  https://github.com/aws-samples/terraform-aws-identity-center
+
+- terraform-aws-modules/terraform-aws-ecs (Apache-2.0, Anton Babenko)
+  https://github.com/terraform-aws-modules/terraform-aws-ecs
+
+All upstream modules are used via Terraform module source references (wrapper pattern),
+not copied. This NOTICE is provided as best-practice attribution per Apache License 2.0
+Section 4(d). No upstream NOTICE files exist requiring Section 4(b) preservation.

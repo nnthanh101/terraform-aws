@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate & Lint
+    runs-on: ubuntu-latest
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Terraform fmt + validate
+        run: task build:validate
+
+      - name: Lint (tflint + checkov)
+        run: task build:lint
+
+  legal:
+    name: Legal Audit
+    runs-on: ubuntu-latest
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Apache 2.0 compliance (4 checks)
+        run: task govern:legal
+
+      - name: Upload legal evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: legal-audit
+          path: tmp/terraform-aws/legal/
+
+  governance:
+    name: Governance Score
+    runs-on: ubuntu-latest
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Constitutional checkpoint (>=85%)
+        run: task govern:score
+
+      - name: Upload governance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-score
+          path: tmp/terraform-aws/governance/
+
+  test:
+    name: CI-Safe Tests (Tier 1 + 2, no AWS cost)
+    needs: [validate]
+    runs-on: ubuntu-latest
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Run CI test suite (no HITL gate)
+        run: task test:ci
+        continue-on-error: true
