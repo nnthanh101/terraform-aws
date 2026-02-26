@@ -1,0 +1,8 @@
+terraform-aws
+Copyright 2026 nnthanh101@gmail.com (oceansoft.io)
+
+This product includes software derived from:
+  aws-ia/terraform-aws-iam-identity-center v1.0.4
+  Copyright 2016-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+  Licensed under Apache License 2.0
+  https://github.com/aws-ia/terraform-aws-iam-identity-center

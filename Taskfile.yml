@@ -1,0 +1,392 @@
+version: '3'
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# terraform-aws | Enterprise Taskfile (ADLC 6-Phase Lifecycle)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#
+# WHY:   Ship secure, cost-optimized AWS infrastructure with evidence-based
+#        governance. Every task maps to an ADLC phase + Terraform best practice.
+#
+# WHO:   Platform engineers, DevOps teams, AI agents (Claude Code)
+# WHAT:  28 tasks across 8 ADLC phases (plan→build→test→security→govern→monitor→operate→CI)
+# WHEN:  Daily development (ci:quick), PR gates (ci:full), sprint milestones (sprint:validate)
+# WHERE: Container-first via _exec helper (auto docker exec); bare-metal inside
+#        devcontainer or GitHub Actions container job; same scripts everywhere
+# HOW:   Inline for <10-line tasks; scripts/ for complex logic (KISS/DRY/LEAN)
+#
+# Quick Start:
+#   task                     # Show this help
+#   task ci:quick            # Fast PR gate: format + lint + legal (~60s)
+#   task ci:full             # Full pipeline: build + test + govern + security
+#   task sprint:validate     # Sprint milestone: 7-gate validation
+#
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+vars:
+  PROJECT: terraform-aws
+  TF_VERSION: ">= 1.11.0"
+  EVIDENCE_DIR: tmp/terraform-aws
+  CONTAINER: terraform-aws-dev
+  IMAGE: "nnthanh101/terraform:2.6.0"
+  SCORING_MODEL: "50biz-30tech-20infra"
+  REGISTRY_NAMESPACE: oceansoft
+
+tasks:
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # INTERNAL — container-first execution helper
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # WHY:  "Working on my machine ≠ deployed" — bare-metal pip/brew is non-reproducible.
+  #       The devcontainer image ({{.IMAGE}}) has all 18 tools pre-installed.
+  #       This helper ensures tasks execute INSIDE the container by default.
+  # HOW:  1. Already inside container (/.dockerenv) → run directly
+  #       2. Container running → docker exec into it
+  #       3. No container → auto-start, then exec
+  _exec:
+    internal: true
+    cmds:
+      - |
+        if [ -f /.dockerenv ]; then
+          eval '{{.CMD}}'
+        elif docker exec {{.CONTAINER}} echo "ok" >/dev/null 2>&1; then
+          docker exec -w /workspace {{.CONTAINER}} bash -c '{{.CMD}}'
+        else
+          echo "Container not running — starting {{.CONTAINER}}..."
+          docker compose up -d devcontainer
+          for i in $(seq 1 30); do
+            docker exec {{.CONTAINER}} echo "ok" >/dev/null 2>&1 && break
+            sleep 1
+          done
+          docker exec -w /workspace {{.CONTAINER}} bash -c '{{.CMD}}'
+        fi
+
+  default:
+    desc: "Show all tasks grouped by ADLC phase"
+    silent: true
+    cmds:
+      - |
+        echo ""
+        echo "  terraform-aws — ADLC Enterprise Taskfile"
+        echo "  ─────────────────────────────────────────"
+        echo ""
+        echo "  PLAN      Cost estimation & tool verification"
+        echo "    task plan:cost            Infracost per-module estimate"
+        echo "    task plan:tools           Verify 18 devcontainer tools"
+        echo ""
+        echo "  BUILD     Format, validate, lint, lock, docs"
+        echo "    task build:env            Start devcontainer (30s timeout)"
+        echo "    task build:env:localstack Start devcontainer + LocalStack"
+        echo "    task build:validate       terraform fmt + validate"
+        echo "    task build:lint           tflint + checkov security scan"
+        echo "    task build:lock           Provider lock (4 platforms)"
+        echo "    task build:docs           terraform-docs README generation"
+        echo "    task build:lock-verify    Verify lock files exist (CI gate)"
+        echo "    task build:all            All BUILD gates"
+        echo ""
+        echo "  TEST      3-tier testing (ADR-002 + ADR-004)"
+        echo "    task test:tier1           Tier 1: .tftest.hcl snapshots (free, 2-3s)"
+        echo "    task test:tier2           Tier 2: LocalStack integration (free, 30-60s)"
+        echo "    task test:tier3           Tier 3: Real AWS (HITL gate, \$\$)"
+        echo "    task test:ci              CI-safe: Tier 1 + 2 (no cost)"
+        echo "    task test:all             All 3 tiers (Tier 3 needs HITL)"
+        echo ""
+        echo "  SECURITY  IaC vulnerability scanning"
+        echo "    task security:trivy       Trivy misconfig scan per module"
+        echo ""
+        echo "  GOVERN    Legal + constitutional compliance"
+        echo "    task govern:legal         Apache 2.0 audit (5 checks)"
+        echo "    task govern:score         15 checkpoints (>=85% threshold)"
+        echo "    task govern:all           All governance gates"
+        echo ""
+        echo "  MONITOR   Evidence collection & anti-NATO"
+        echo "    task monitor:evidence     Collect all evidence artifacts"
+        echo "    task monitor:verify       Verify 8 evidence directories"
+        echo ""
+        echo "  OPERATE   Environment lifecycle"
+        echo "    task operate:down         Stop all containers"
+        echo "    task starship:configure   Configure Starship prompt"
+        echo ""
+        echo "  DOCS      Documentation sync (DevOps-TechDocs)"
+        echo "    task docs:sync            Sync docs/ into TechDocs submodule"
+        echo "    task docs:dev             Docusaurus dev server (port 5001)"
+        echo ""
+        echo "  CI        Composite pipelines"
+        echo "    task ci:quick             Fast: validate + lint + legal (<60s)"
+        echo "    task ci:full              Full: build + test + govern + security"
+        echo ""
+        echo "  SPRINT    Milestone validation"
+        echo "    task sprint:validate      7-gate sprint validation"
+        echo ""
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # PLAN — cost estimation, tool verification
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  plan:cost:
+    desc: "Infracost estimate per module -> {{.EVIDENCE_DIR}}/cost-reports/"
+    cmds:
+      - bash scripts/plan-cost.sh
+
+  plan:tools:
+    desc: "Verify 18 tools in {{.IMAGE}} devcontainer"
+    cmds:
+      - bash scripts/plan-tools.sh
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # BUILD — format, validate, lint, lock, docs, environment
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  build:env:
+    desc: "Start devcontainer + verify healthy (30s timeout)"
+    cmds:
+      - docker compose up -d devcontainer
+      - |
+        echo "Waiting for container..."
+        for i in $(seq 1 30); do
+          if docker exec {{.CONTAINER}} echo "ready" 2>/dev/null; then
+            echo "PASSED: build:env"
+            exit 0
+          fi
+          sleep 1
+        done
+        echo "FAIL: {{.CONTAINER}} not ready after 30s" && exit 1
+
+  build:env:localstack:
+    desc: "Start devcontainer + LocalStack (120s timeout, for Tier 2 tests)"
+    cmds:
+      - docker compose --profile localstack up -d
+      - |
+        echo "Waiting for LocalStack health..."
+        for i in $(seq 1 60); do
+          if docker exec terraform-aws-localstack curl -sf http://localhost:4566/_localstack/health 2>/dev/null; then
+            echo "PASSED: build:env:localstack"
+            exit 0
+          fi
+          sleep 2
+        done
+        echo "FAIL: LocalStack not healthy after 120s" && exit 1
+
+  build:validate:
+    desc: "terraform fmt -check + validate all modules (no credentials needed)"
+    cmds:
+      - task: _exec
+        vars:
+          CMD: "bash scripts/build-validate.sh"
+
+  build:lint:
+    desc: "tflint + checkov security scan on modules/"
+    cmds:
+      - task: _exec
+        vars:
+          CMD: "bash scripts/build-lint.sh"
+
+  build:lock:
+    desc: "terraform providers lock (4 platforms) -> .terraform.lock.hcl per module"
+    cmds:
+      - task: _exec
+        vars:
+          CMD: "bash scripts/build-lock.sh"
+
+  build:lock-verify:
+    desc: "Verify .terraform.lock.hcl exists per module (CI gate)"
+    cmds:
+      - bash scripts/build-lock-verify.sh
+
+  build:docs:
+    desc: "terraform-docs README tables for all modules"
+    cmds:
+      - task: _exec
+        vars:
+          CMD: "bash scripts/build-docs.sh"
+
+  build:all:
+    desc: "All BUILD gates: validate + lint + lock + docs"
+    cmds:
+      - task: build:validate
+      - task: build:lint
+      - task: build:lock
+      - task: build:docs
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # TEST — 3-tier testing per ADR-002 + ADR-004
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  test:tier1:
+    desc: "Tier 1: .tftest.hcl snapshot tests (free, 2-3s, no credentials)"
+    cmds:
+      - task: _exec
+        vars:
+          CMD: |
+            if ls tests/snapshot/*.tftest.hcl 1>/dev/null 2>&1; then
+              echo "Running native Terraform tests (ADR-004)..."
+              cd tests/snapshot && terraform init -backend=false -input=false && terraform test -verbose
+            elif [ -d tests/snapshot ] && ls tests/snapshot/*.go 1>/dev/null 2>&1; then
+              echo "Running Go Terratest snapshot tests..."
+              cd tests/snapshot && go test -v -timeout 30s ./...
+            else
+              echo "FAIL: No snapshot tests found (.tftest.hcl or .go)" && exit 1
+            fi
+
+  test:tier2:
+    desc: "Tier 2: LocalStack integration tests (free, 30-60s). Needs: task build:env:localstack"
+    cmds:
+      - |
+        if [ -d tests/localstack ] && ls tests/localstack/*.go 1>/dev/null 2>&1; then
+          cd tests/localstack && go test -v -timeout 120s ./...
+        else
+          echo "SKIP: No localstack tests found (Tier 2 not yet implemented)"
+          exit 0
+        fi
+
+  test:tier3:
+    desc: "Tier 3: Real AWS integration tests. HITL REQUIRED (est $5-50/run)"
+    prompt: "Tier 3 tests use REAL AWS resources ($$). Continue?"
+    cmds:
+      - |
+        if [ -n "${CI:-}" ] && [ "${HITL_APPROVED:-}" != "true" ]; then
+          echo "FAIL: Tier 3 blocked in CI without HITL_APPROVED=true" && exit 1
+        fi
+        if [ -d tests/integration ] && ls tests/integration/*.go 1>/dev/null 2>&1; then
+          echo "HITL GATE: Running Tier 3 against real AWS (cost applies)..."
+          cd tests/integration && go test -v -timeout 600s ./...
+        else
+          echo "FAIL: No integration tests found" && exit 1
+        fi
+
+  test:ci:
+    desc: "CI-safe: Tier 1 + Tier 2 only (no HITL, no AWS cost)"
+    cmds:
+      - task: test:tier1
+      - task: test:tier2
+
+  test:all:
+    desc: "All 3 tiers (Tier 3 has HITL gate)"
+    cmds:
+      - task: test:tier1
+      - task: test:tier2
+      - task: test:tier3
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # SECURITY — IaC vulnerability scanning
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  security:trivy:
+    desc: "Trivy misconfig scan per module -> {{.EVIDENCE_DIR}}/security-scans/"
+    cmds:
+      - task: _exec
+        vars:
+          CMD: "bash scripts/security-trivy.sh"
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # GOVERN — legal, constitutional checkpoints
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  govern:legal:
+    desc: "Apache 2.0 compliance audit (5 checks) -> {{.EVIDENCE_DIR}}/legal-audit/"
+    cmds:
+      - bash scripts/govern-legal.sh
+
+  govern:score:
+    desc: "Constitutional checkpoint scoring (15 checks, >=85%) -> {{.EVIDENCE_DIR}}/governance/"
+    cmds:
+      - bash scripts/govern-score.sh
+
+  govern:cps234:
+    desc: "APRA CPS 234 compliance check via checkov (Para 15/36/37)"
+    cmds:
+      - |
+        mkdir -p {{.EVIDENCE_DIR}}/test-results
+        checkov -d modules/iam-identity-center/ \
+          --external-checks-dir .checkov/custom_checks/ \
+          --check CKV_APRA_001,CKV_APRA_002,CKV_APRA_003 \
+          --output json \
+          --output-file-path {{.EVIDENCE_DIR}}/test-results/ \
+          --compact 2>/dev/null || true
+        echo "CPS 234 compliance check complete — evidence at {{.EVIDENCE_DIR}}/test-results/"
+
+  govern:all:
+    desc: "All governance gates: legal + score + cps234"
+    cmds:
+      - task: govern:legal
+      - task: govern:score
+      - task: govern:cps234
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # MONITOR — evidence collection + anti-NATO gates
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  monitor:evidence:
+    desc: "Collect all evidence: build + govern + test -> {{.EVIDENCE_DIR}}/"
+    cmds:
+      - task: build:validate
+      - task: build:lint
+      - task: plan:cost
+      - task: govern:score
+      - task: test:tier1
+
+  monitor:verify:
+    desc: "Verify 8 evidence directories exist (anti-NATO gate)"
+    cmds:
+      - bash scripts/monitor-verify.sh
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # OPERATE — environment lifecycle
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  operate:down:
+    desc: "Stop all containers (devcontainer + LocalStack + terratest)"
+    cmds:
+      - docker compose --profile localstack --profile test down
+
+  starship:configure:
+    desc: "Configure Starship prompt with terraform workspace + AWS profile"
+    cmds:
+      - bash scripts/starship-configure.sh
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # DOCS — documentation sync (DevOps-TechDocs submodule)
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  docs:sync:
+    desc: "Sync docs/ into DevOps-TechDocs submodule"
+    cmds:
+      - bash scripts/docs-sync.sh
+
+  docs:dev:
+    desc: "Start Docusaurus dev server (port 5001, requires docs/site submodule)"
+    cmds:
+      - |
+        if [ ! -d docs/site ]; then
+          echo "SKIP: docs/site submodule not found"
+          echo "  Run: git submodule add https://github.com/1xOps/DevOps-TechDocs.git docs/site"
+          exit 0
+        fi
+        cd docs/site && npm install && npm run start -- --port 5001
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # CI — composite pipelines
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ci:quick:
+    desc: "Fast CI: validate + lint + legal (container-first, <60s)"
+    cmds:
+      - task: build:validate
+      - task: build:lint
+      - task: govern:legal
+
+  ci:full:
+    desc: "Full CI: build + test + govern + security + verify"
+    cmds:
+      - task: build:all
+      - task: test:ci
+      - task: govern:all
+      - task: security:trivy
+      - task: monitor:verify
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # SPRINT — milestone validation
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  sprint:validate:
+    desc: "Sprint validation: 5 blocking gates + 2 advisory checks (sprint-agnostic)"
+    cmds:
+      - scripts/validate-sprint.sh

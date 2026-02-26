@@ -1,0 +1,38 @@
+# Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
+#
+# GitHub CODEOWNERS — enforced by branch protection rules
+# Ref: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Registry: oceansoft/iam-identity-center/aws (https://app.terraform.io/app/oceansoft/)
+# ADRs: ADR-001 (kebab-case), ADR-004 (3-tier testing), ADR-007 (upstream dependency strategy)
+# Tests: 8 .tftest.hcl files | Examples: 8 consumer patterns
+#
+# To register a new TF module:
+#   1. Create modules/<module-name>/ with versions.tf, main.tf, variables.tf, outputs.tf
+#   2. Add copyright headers (# Copyright 2026 ...) to all .tf files
+#   3. Add entry below: modules/<module-name>/ @oceansoft @nnthanh101
+#   4. Add NOTICE attribution if derived from upstream (Apache 2.0 Section 4d)
+#   5. Run: task ci:quick && task test:tier1
+
+# Global fallback — all unmatched files require oceansoft review
+* @oceansoft @nnthanh101
+
+# IAM Identity Center module — requires security review (APRA CPS 234 Attachment H)
+# Any change to IAM configuration must be reviewed by a designated security reviewer
+modules/iam-identity-center/ @oceansoft/security-reviewers @nnthanh101
+
+# Test suite — requires platform engineering review (ADR-004 3-tier testing)
+modules/iam-identity-center/tests/ @oceansoft/platform-engineers @nnthanh101
+
+# Examples — requires compliance review (auditor-facing YAML patterns)
+modules/iam-identity-center/examples/ @oceansoft/compliance-reviewers @nnthanh101
+
+# CI/CD workflows — requires platform engineering review
+.github/workflows/ @oceansoft/platform-engineers @nnthanh101
+
+# ADRs — requires cloud-architect review and sign-off
+docs/adr/ @oceansoft/cloud-architects @nnthanh101
+
+# Legal files — requires compliance review (Apache 2.0, NOTICE.txt)
+modules/iam-identity-center/LICENSE @oceansoft/compliance-reviewers
+modules/iam-identity-center/NOTICE.txt @oceansoft/compliance-reviewers

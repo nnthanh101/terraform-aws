@@ -1,0 +1,3 @@
+[submodule ".adlc"]
+	path = .adlc
+	url = https://github.com/1xOps/adlc-framework.git

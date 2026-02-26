@@ -1,0 +1,57 @@
+# Changelog
+
+All notable changes to the `iam-identity-center` module will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [1.0.0] - 2026-02-26
+
+### Added
+
+- Full wrapper module for AWS IAM Identity Center consuming `aws-ia/terraform-aws-iam-identity-center` v1.0.4 (ADR-007 upstream dependency strategy)
+- YAML-decoded variable inputs for SSO users, groups, permission sets, and account assignments
+- 8 consumer example patterns:
+  - `create-users-and-groups` — Create new SSO users and groups from scratch
+  - `existing-users-and-groups` — Reference pre-existing Identity Store entities
+  - `create-users-and-groups-with-customer-managed-policies` — Customer-managed IAM policies
+  - `google-workspace` — Google Workspace IdP integration
+  - `inline-policy` — Inline permission set policies
+  - `instance-access-control-attributes` — ABAC via instance access control
+  - `create-apps-and-assignments` — SSO application assignments
+  - `existing-users-groups-create-apps` — Existing entities with new app assignments
+- 8 test files (`.tftest.hcl`) with Tier 1 snapshot testing (ADR-004 3-tier strategy)
+- Apache 2.0 licensing with copyright headers on all `.tf` files
+- `NOTICE.txt` upstream attribution for `aws-ia/terraform-aws-iam-identity-center` v1.0.4 (Apache 2.0 Section 4d)
+- `CODEOWNERS` with 7 path-specific ownership entries (APRA CPS 234 separation of duties)
+- `.terraform.lock.hcl` for multi-platform provider reproducibility
+- `README.md` auto-generated via `terraform-docs`
+
+### Architecture Decisions
+
+- **ADR-001**: Module naming convention (kebab-case)
+- **ADR-003**: Provider constraints `>= 6.28, < 7.0` (no AWSCC dependency)
+- **ADR-004**: 3-tier testing strategy (snapshot/localstack/integration)
+- **ADR-006**: S3 native state locking (`use_lockfile = true`, no DynamoDB)
+- **ADR-007**: Upstream dependency strategy (fork + rebrand path)
+
+### Compliance
+
+- APRA CPS 234 Attachment H: Separation of duties enforced via CODEOWNERS
+- Apache 2.0: Full LICENSE, NOTICE.txt, file-level copyright headers
+- FOCUS 1.2+: Cost allocation tags in example configurations
+
+### Provider Requirements
+
+- Terraform `>= 1.11.0`
+- AWS Provider `>= 6.28, < 7.0`
+
+### Registry
+
+- Namespace: `oceansoft/iam-identity-center/aws`
+- Publication target: `app.terraform.io/app/oceansoft/`
+
+[Unreleased]: https://github.com/nnthanh101/terraform-aws/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/nnthanh101/terraform-aws/releases/tag/v1.0.0

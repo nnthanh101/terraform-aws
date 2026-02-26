@@ -1,0 +1,46 @@
+{
+  "name": "terraform-aws",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "devcontainer",
+  "workspaceFolder": "/workspace",
+
+  "initializeCommand": "echo 'Initializing terraform-aws DevContainer...'",
+  "onCreateCommand": ".devcontainer/scripts/on-create.sh",
+  "postCreateCommand": ".devcontainer/scripts/post-create.sh",
+  "postStartCommand": ".devcontainer/scripts/post-start.sh",
+  "postAttachCommand": ".devcontainer/scripts/post-attach.sh",
+
+  "forwardPorts": [4567],
+  "portsAttributes": {
+    "4567": { "label": "LocalStack", "onAutoForward": "silent" }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "HashiCorp.terraform",
+        "task.vscode-task",
+        "redhat.vscode-yaml",
+        "AmazonWebServices.aws-toolkit-vscode",
+        "ms-azuretools.vscode-docker",
+        "golang.go"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "editor.formatOnSave": true,
+        "terraform.languageServer.enable": true
+      }
+    }
+  },
+
+  "remoteEnv": {
+    "ADLC_PROJECT": "terraform-aws",
+    "ADLC_VERSION": "3.3.0",
+    "EVIDENCE_DIR": "/workspace/tmp/terraform-aws",
+    "LOCALSTACK_ENDPOINT": "http://localstack:4566",
+    "AWS_PROFILE": "terraform-aws",
+    "AWS_REGION": "ap-southeast-2"
+  },
+
+  "remoteUser": "os"
+}

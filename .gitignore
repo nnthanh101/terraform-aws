@@ -35,3 +35,26 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Environment files (secrets — NEVER commit)
+.env
+.env.local
+.env.*.local
+
+# ADLC Evidence (ephemeral)
+tmp/
+
+# Workspace cache (terraform plugins, trivy, go modules)
+.cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Infracost
+.infracost/

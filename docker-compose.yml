@@ -1,0 +1,82 @@
+# terraform-aws - Unified Development Environment
+# Used by BOTH bare-metal (docker compose up) and DevContainer
+# KISS/DRY: Test once, works everywhere
+# Pattern: adlc-framework/docker-compose.yml + Cloud-Infrastructure/terraform-aws/docker-compose.yml
+name: terraform-aws
+
+services:
+  devcontainer:
+    image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+    container_name: terraform-aws-dev
+    user: "11111"
+    working_dir: /workspace
+    volumes:
+      - .:/workspace:cached
+      - ${HOME}/.aws:/home/os/.aws:ro
+    environment:
+      - ADLC_PROJECT=terraform-aws
+      - ADLC_VERSION=3.3.0
+      - EVIDENCE_DIR=/workspace/tmp/terraform-aws
+      - TERM=xterm-256color
+      - COLORTERM=truecolor
+      - AWS_PROFILE=${AWS_PROFILE:-terraform-aws}
+      - AWS_REGION=${AWS_REGION:-ap-southeast-2}
+      - AWS_CONFIG_FILE=/home/os/.aws/config
+      - AWS_SHARED_CREDENTIALS_FILE=/home/os/.aws/credentials
+      - TF_PLUGIN_CACHE_DIR=/workspace/.cache/terraform/plugins
+      - TRIVY_CACHE_DIR=/workspace/.cache/trivy
+      - CHECKOV_LOG_LEVEL=WARNING
+      - LOCALSTACK_ENDPOINT=http://localstack:4566
+    networks:
+      - terraform-network
+    stdin_open: true
+    tty: true
+
+  localstack:
+    image: localstack/localstack:4.4.0@sha256:b52c16663c70b7234f217cb993a339b46686e30a1a5d9279cb5feeb2202f837c
+    container_name: terraform-aws-localstack
+    ports:
+      - "4567:4566"    # Host 4567 → LocalStack 4566 (avoids adlc-framework's 4566)
+    environment:
+      - SERVICES=s3,iam,sts,cloudwatch,sns,cloudtrail,logs,lambda,sqs,events,ec2,ecs,dynamodb,ssm,organizations
+      - LAMBDA_EXECUTOR=docker
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - PERSISTENCE=0
+      - AWS_DEFAULT_REGION=ap-southeast-2
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - localstack-data:/var/lib/localstack
+    networks:
+      - terraform-network
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    profiles:
+      - localstack
+
+  terratest:
+    image: golang:1.24.2@sha256:30baaea08c5d1e858329c50f29fe381e9b7d7bced11a0f5f1f69a1504cdfbf5e
+    container_name: terraform-aws-terratest
+    working_dir: /workspace
+    volumes:
+      - .:/workspace:cached
+    environment:
+      - CI=true
+      - AWS_REGION=ap-southeast-2
+      - LOCALSTACK_ENDPOINT=http://localstack:4566
+      - EVIDENCE_DIR=/workspace/tmp/terraform-aws
+    networks:
+      - terraform-network
+    profiles:
+      - test
+
+networks:
+  terraform-network:
+    driver: bridge
+    name: terraform-aws-network
+
+volumes:
+  localstack-data:
