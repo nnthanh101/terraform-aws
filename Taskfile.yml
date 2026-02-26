@@ -100,7 +100,7 @@ tasks:
         echo ""
         echo "  MONITOR   Evidence collection & anti-NATO"
         echo "    task monitor:evidence     Collect all evidence artifacts"
-        echo "    task monitor:verify       Verify 8 evidence directories"
+        echo "    task monitor:verify       Verify 6 evidence directories"
         echo ""
         echo "  OPERATE   Environment lifecycle"
         echo "    task operate:down         Stop all containers"
@@ -338,7 +338,7 @@ tasks:
       - task: test:tier1
 
   monitor:verify:
-    desc: "Verify 8 evidence directories exist (anti-NATO gate)"
+    desc: "Verify 6 evidence directories exist (anti-NATO gate)"
     cmds:
       - bash scripts/monitor-verify.sh
 
