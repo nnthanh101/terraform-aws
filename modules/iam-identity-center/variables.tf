@@ -176,6 +176,12 @@ variable "sso_instance_access_control_attributes" {
   }
 }
 
+variable "default_tags" {
+  description = "Default tags applied to all taggable resources. Must include APRA CPS 234 (data_classification) and FOCUS 1.2+ required tags (x_cost_center, x_project, x_environment, x_service_name)."
+  type        = map(string)
+  default     = {}
+}
+
 variable "config_path" {
   description = "Path to YAML configuration directory for APRA CPS 234 audit trail. When set, reads permission_sets.yaml and account_assignments.yaml from this directory, merged with HCL variable values (YAML values take precedence)."
   type        = string

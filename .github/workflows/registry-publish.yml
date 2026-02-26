@@ -21,9 +21,6 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          token: ${{ secrets.SUBMODULE_PAT }}
 
       - name: Quick CI (fmt + validate + lint + legal)
         run: task ci:quick
@@ -37,9 +34,6 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          token: ${{ secrets.SUBMODULE_PAT }}
 
       - name: Run Tier 1 tests (8 snapshot tests, $0 cost)
         run: task test:tier1

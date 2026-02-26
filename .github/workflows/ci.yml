@@ -22,9 +22,6 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          token: ${{ secrets.SUBMODULE_PAT }}
 
       - name: Terraform fmt + validate
         run: task build:validate
@@ -40,9 +37,6 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          token: ${{ secrets.SUBMODULE_PAT }}
 
       - name: Apache 2.0 compliance (5 checks)
         run: task govern:legal
@@ -62,9 +56,6 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          token: ${{ secrets.SUBMODULE_PAT }}
 
       - name: Constitutional checkpoint (>=85%)
         run: task govern:score
@@ -90,9 +81,6 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          token: ${{ secrets.SUBMODULE_PAT }}
 
       - name: Run CI test suite (no HITL gate)
         run: task test:ci
@@ -105,9 +93,6 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          token: ${{ secrets.SUBMODULE_PAT }}
 
       - name: Verify .terraform.lock.hcl exists per module
         run: task build:lock-verify
@@ -120,9 +105,6 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          token: ${{ secrets.SUBMODULE_PAT }}
 
       - name: Trivy misconfig scan
         run: task security:trivy

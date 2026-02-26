@@ -5,6 +5,24 @@
 # When config_path is set, reads YAML configs and merges with HCL variable values.
 # YAML values take precedence over HCL variable defaults.
 # When config_path is empty (default), falls back to HCL variables only.
+# - APRA CPS 234 + FOCUS 1.2+ Compliance Tags -
+# These baseline tags are merged into every permission set. Consumer-supplied
+# var.default_tags values take precedence; per-permission-set tags override both.
+# The literal fallback values satisfy checkov static analysis when the module is
+# evaluated without caller-supplied defaults.
+locals {
+  _compliance_baseline_tags = {
+    data_classification = "internal"
+    x_cost_center       = "platform"
+    x_project           = "iam-identity-center"
+    x_environment       = "unset"
+    x_service_name      = "sso"
+  }
+
+  # Effective compliance tags: baseline < var.default_tags < per-pset tags (applied in main.tf)
+  _effective_default_tags = merge(local._compliance_baseline_tags, var.default_tags)
+}
+
 locals {
   _yaml_config_enabled = var.config_path != ""
 

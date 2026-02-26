@@ -58,3 +58,4 @@ Thumbs.db
 
 # Infracost
 .infracost/
+.checkov/custom_checks/__pycache__

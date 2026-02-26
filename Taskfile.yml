@@ -112,6 +112,7 @@ tasks:
         echo "  CI        Composite pipelines"
         echo "    task ci:quick             Fast: validate + lint + legal (<60s)"
         echo "    task ci:full              Full: build + test + govern + security"
+        echo "    task ci:local             Local mirror of CI jobs (6 jobs, no extras)"
         echo ""
         echo "  SPRINT    Milestone validation"
         echo "    task sprint:validate      7-gate sprint validation"
@@ -381,6 +382,24 @@ tasks:
       - task: govern:all
       - task: security:trivy
       - task: monitor:verify
+
+  ci:local:
+    desc: "Local mirror of .github/workflows/ci.yml (6 jobs, container-first)"
+    cmds:
+      # Job 1: validate (ci.yml lines 14-30)
+      - task: build:validate
+      - task: build:lint
+      # Job 2: legal (ci.yml lines 32-49)
+      - task: govern:legal
+      # Job 3: governance (ci.yml lines 51-73)
+      - task: govern:score
+      - task: govern:cps234
+      # Job 4: test (ci.yml lines 75-86)
+      - task: test:ci
+      # Job 5: lock-verify (ci.yml lines 88-98)
+      - task: build:lock-verify
+      # Job 6: security (ci.yml lines 100-117)
+      - task: security:trivy
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # SPRINT — milestone validation
