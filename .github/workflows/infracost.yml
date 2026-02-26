@@ -16,6 +16,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          token: ${{ secrets.SUBMODULE_PAT }}
 
       - name: FOCUS 1.2+ tag compliance check
         run: |
@@ -62,6 +63,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          token: ${{ secrets.SUBMODULE_PAT }}
           path: pr
 
       - name: Infracost estimate (PR branch)

@@ -19,10 +19,12 @@ jobs:
         module: [iam-identity-center]  # expand: ecs-platform, fullstack-web
     container:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          token: ${{ secrets.SUBMODULE_PAT }}
 
       - name: Terraform fmt + validate
         run: task build:validate
@@ -35,10 +37,12 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          token: ${{ secrets.SUBMODULE_PAT }}
 
       - name: Apache 2.0 compliance (5 checks)
         run: task govern:legal
@@ -55,10 +59,12 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          token: ${{ secrets.SUBMODULE_PAT }}
 
       - name: Constitutional checkpoint (>=85%)
         run: task govern:score
@@ -81,10 +87,12 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          token: ${{ secrets.SUBMODULE_PAT }}
 
       - name: Run CI test suite (no HITL gate)
         run: task test:ci
@@ -94,10 +102,12 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          token: ${{ secrets.SUBMODULE_PAT }}
 
       - name: Verify .terraform.lock.hcl exists per module
         run: task build:lock-verify
@@ -107,10 +117,12 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          token: ${{ secrets.SUBMODULE_PAT }}
 
       - name: Trivy misconfig scan
         run: task security:trivy
