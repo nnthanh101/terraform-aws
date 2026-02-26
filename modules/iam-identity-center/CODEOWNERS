@@ -1,9 +1,0 @@
-# Module: iam-identity-center
-# Registry: oceansoft/iam-identity-center/aws (https://app.terraform.io/app/oceansoft/)
-# To register a new TF module:
-#   1. Create modules/<module-name>/ with versions.tf, main.tf, variables.tf, outputs.tf
-#   2. Add copyright headers (# Copyright 2026 ...) to all .tf files
-#   3. Add entry below: modules/<module-name>/ @oceansoft @nnthanh101
-#   4. Add NOTICE attribution if derived from upstream (Apache 2.0 Section 4d)
-#   5. Run: task ci:quick && task test:tier1
-* @oceansoft @nnthanh101

@@ -158,7 +158,7 @@ resource "aws_identitystore_group_membership" "sso_group_membership_existing_goo
 
 # - SSO Permission Set -
 resource "aws_ssoadmin_permission_set" "pset" {
-  for_each = var.permission_sets
+  for_each = local.effective_permission_sets
   name     = each.key
 
   # lookup function retrieves the value of a single element from a map, when provided it's key.

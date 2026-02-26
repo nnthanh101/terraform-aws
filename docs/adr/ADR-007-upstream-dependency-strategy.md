@@ -33,17 +33,17 @@ Module strategy for Identity Center: fork `aws-ia/terraform-aws-iam-identity-cen
 
 | Sprint | Action |
 |--------|--------|
-| Sprint 1 | aws-samples wrapper (current — 18 LOC, YAML audit) |
-| Sprint 2 | Fork aws-ia, strip AWSCC, add YAML config, rebrand |
-| Sprint 3+ | ABAC, JIT, SCIM extensions on forked module |
-| v1.0 | Registry publish with real ARN outputs |
+| Sprint 1 | Fork+rebrand DELIVERED — 337 LOC, 14 resource types, YAML config layer |
+| Sprint 2 | ABAC, JIT, SCIM extensions on forked module |
+| Sprint 3+ | Multi-region, cross-account federation patterns |
+| v1.0.0 | Registry publish at `app.terraform.io/app/oceansoft/` |
 
 ## Where
 
 - Fork source: `github.com/aws-ia/terraform-aws-iam-identity-center`
-- Target: `nnthanh101/oceansoft.io` (Registry: `nnthanh101/terraform-aws/aws`)
+- Target: `oceansoft/iam-identity-center/aws` (Registry: `app.terraform.io/app/oceansoft/`)
 - Region: us-east-1 (Identity Center global service)
-- Config: `modules/identity-center/configs/*.yml` (YAML audit trail retained)
+- Config: `modules/iam-identity-center/examples/*.yaml` (YAML audit trail retained)
 
 ## How
 
@@ -53,6 +53,36 @@ Module strategy for Identity Center: fork `aws-ia/terraform-aws-iam-identity-cen
 4. Retain full outputs (ARNs, IDs) for downstream composition
 5. Rebrand to `nnthanh101` namespace, publish to Terraform Registry
 6. Side-by-side test with Sprint 1 YAML configs
+
+## Clone + Rebrand Pattern (Sprint 1 — Delivered)
+
+The IAM Identity Center module at `modules/iam-identity-center/` is a **clone + rebrand**
+of `aws-ia/terraform-aws-iam-identity-center` v1.0.4. There is no `module { source = "..." }`
+block — all resources are defined directly.
+
+### Resource Types (14)
+
+| File | Resources |
+|------|-----------|
+| `main.tf` | `aws_identitystore_group`, `aws_identitystore_user`, `aws_identitystore_group_membership`, `aws_ssoadmin_permission_set`, `aws_ssoadmin_managed_policy_attachment`, `aws_ssoadmin_customer_managed_policy_attachment`, `aws_ssoadmin_permission_set_inline_policy`, `aws_ssoadmin_permissions_boundary_attachment`, `aws_ssoadmin_account_assignment`, `aws_ssoadmin_application`, `aws_ssoadmin_application_assignment`, `aws_ssoadmin_trusted_token_issuer` |
+| `data.tf` | `aws_ssoadmin_instances` (data), `aws_identitystore_group` (data), `aws_identitystore_user` (data), `aws_ssoadmin_permission_set` (data) |
+
+### Architecture
+
+- **`locals.tf`** (224 LOC): Transforms variable inputs via `flatten()` operations for
+  `for_each` iteration. YAML config layer via `yamldecode()` (ADR-008).
+- **`data.tf`**: Fetches SSO instance, existing groups/users, existing permission sets.
+- **`variables.tf`**: Full SCIM user profile (30+ attributes), permission sets
+  (AWS managed, customer managed, inline, boundary), account assignments, applications,
+  ABAC attributes.
+- **`outputs.tf`**: 10 outputs — ARNs, IDs, assignment maps for downstream composition.
+
+### Apache 2.0 Compliance
+
+- Copyright headers on all `.tf` files
+- `LICENSE` file (Apache License 2.0)
+- `NOTICE.txt` with attribution to upstream `aws-ia` (Section 4d)
+- CODEOWNERS at `.github/CODEOWNERS` with per-path review rules
 
 ## Sustainability (2026-2030)
 

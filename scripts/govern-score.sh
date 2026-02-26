@@ -47,8 +47,8 @@ for tf in modules/iam-identity-center/*.tf; do
 done
 $HEADERS_OK && SCORE=$((SCORE+1)) && echo "CP-14: Copyright headers ... PASS" || echo "CP-14: Copyright headers ... FAIL"
 
-# CP-15: FOCUS 1.3 tags in examples
-if grep -rq "CostCenter" examples/ 2>/dev/null; then
+# CP-15: FOCUS 1.2+ tags in examples
+if grep -rq "CostCenter" modules/*/examples/ examples/ 2>/dev/null; then
   SCORE=$((SCORE+1)) && echo "CP-15: FOCUS tags in examples ... PASS"
 else
   echo "CP-15: FOCUS tags in examples ... FAIL"

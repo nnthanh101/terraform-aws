@@ -1,6 +1,27 @@
 # Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
 # Derived from aws-ia/terraform-aws-iam-identity-center v1.0.4 (Apache-2.0). See NOTICE.
 
+# - YAML Configuration Layer (ADR-008: Auditor-Friendly YAML API) -
+# When config_path is set, reads YAML configs and merges with HCL variable values.
+# YAML values take precedence over HCL variable defaults.
+# When config_path is empty (default), falls back to HCL variables only.
+locals {
+  _yaml_config_enabled = var.config_path != ""
+
+  # Read YAML files if config_path is set; empty maps otherwise
+  _yaml_permission_sets = local._yaml_config_enabled ? try(
+    yamldecode(file("${var.config_path}/permission_sets.yaml")), {}
+  ) : {}
+
+  _yaml_account_assignments = local._yaml_config_enabled ? try(
+    yamldecode(file("${var.config_path}/account_assignments.yaml")), {}
+  ) : {}
+
+  # Effective values: YAML overrides HCL (merge = right wins on key collision)
+  effective_permission_sets     = merge(var.permission_sets, local._yaml_permission_sets)
+  effective_account_assignments = merge(var.account_assignments, local._yaml_account_assignments)
+}
+
 # - Users and Groups -
 locals {
   # Create a new local variable by flattening the complex type given in the variable "sso_users"
@@ -34,8 +55,6 @@ locals {
 }
 
 
-
-
 # - Permission Sets and Policies -
 locals {
   # - Fetch SSO Instance ARN and SSO Instance ID -
@@ -49,13 +68,11 @@ locals {
 
   # pset_name is the attribute name for each permission set map/object
   # pset_index is the corresponding index of the map of maps (which is the variable permission_sets)
-  aws_managed_permission_sets                           = { for pset_name, pset_index in var.permission_sets : pset_name => pset_index if can(pset_index.aws_managed_policies) }
-  customer_managed_permission_sets                      = { for pset_name, pset_index in var.permission_sets : pset_name => pset_index if can(pset_index.customer_managed_policies) }
-  inline_policy_permission_sets                         = { for pset_name, pset_index in var.permission_sets : pset_name => pset_index if can(pset_index.inline_policy) }
-  permissions_boundary_aws_managed_permission_sets      = { for pset_name, pset_index in var.permission_sets : pset_name => pset_index if can(pset_index.permissions_boundary.managed_policy_arn) }
-  permissions_boundary_customer_managed_permission_sets = { for pset_name, pset_index in var.permission_sets : pset_name => pset_index if can(pset_index.permissions_boundary.customer_managed_policy_reference) }
-
-
+  aws_managed_permission_sets                           = { for pset_name, pset_index in local.effective_permission_sets : pset_name => pset_index if can(pset_index.aws_managed_policies) }
+  customer_managed_permission_sets                      = { for pset_name, pset_index in local.effective_permission_sets : pset_name => pset_index if can(pset_index.customer_managed_policies) }
+  inline_policy_permission_sets                         = { for pset_name, pset_index in local.effective_permission_sets : pset_name => pset_index if can(pset_index.inline_policy) }
+  permissions_boundary_aws_managed_permission_sets      = { for pset_name, pset_index in local.effective_permission_sets : pset_name => pset_index if can(pset_index.permissions_boundary.managed_policy_arn) }
+  permissions_boundary_customer_managed_permission_sets = { for pset_name, pset_index in local.effective_permission_sets : pset_name => pset_index if can(pset_index.permissions_boundary.customer_managed_policy_reference) }
 
 
   # When using the 'for' expression in Terraform:
@@ -134,19 +151,18 @@ locals {
   # Create a new local variable by flattening the complex type given in the variable "account_assignments"
   # This will be a 'tuple'
   flatten_account_assignment_data = flatten([
-    for this_assignment in keys(var.account_assignments) : [
-      for account in var.account_assignments[this_assignment].account_ids : [
-        for pset in var.account_assignments[this_assignment].permission_sets : {
+    for this_assignment in keys(local.effective_account_assignments) : [
+      for account in local.effective_account_assignments[this_assignment].account_ids : [
+        for pset in local.effective_account_assignments[this_assignment].permission_sets : {
           permission_set = pset
-          principal_name = var.account_assignments[this_assignment].principal_name
-          principal_type = var.account_assignments[this_assignment].principal_type
-          principal_idp  = var.account_assignments[this_assignment].principal_idp
+          principal_name = local.effective_account_assignments[this_assignment].principal_name
+          principal_type = local.effective_account_assignments[this_assignment].principal_type
+          principal_idp  = local.effective_account_assignments[this_assignment].principal_idp
           account_id     = length(regexall("[0-9]{12}", account)) > 0 ? account : lookup(local.accounts_ids_maps, account, null)
         }
       ]
     ]
   ])
-
 
   #  Convert the flatten_account_assignment_data tuple into a map.
   # Since we will be using this local in a for_each, it must either be a map or a set of strings
@@ -155,7 +171,7 @@ locals {
   }
 
   # List of permission sets, groups, and users that are defined in this module
-  this_permission_sets = keys(var.permission_sets)
+  this_permission_sets = keys(local.effective_permission_sets)
   this_groups = [
     for group in var.sso_groups : group.group_name
   ]

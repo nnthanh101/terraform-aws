@@ -36,6 +36,11 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+# Environment files (secrets — NEVER commit)
+.env
+.env.local
+.env.*.local
+
 # ADLC Evidence (ephemeral)
 tmp/
 

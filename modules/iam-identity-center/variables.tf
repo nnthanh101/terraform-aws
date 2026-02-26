@@ -177,7 +177,12 @@ variable "sso_instance_access_control_attributes" {
 }
 
 variable "config_path" {
-  description = "Path to YAML configuration directory for APRA CPS 234 audit trail."
+  description = "Path to YAML configuration directory for APRA CPS 234 audit trail. When set, reads permission_sets.yaml and account_assignments.yaml from this directory, merged with HCL variable values (YAML values take precedence)."
   type        = string
   default     = ""
+
+  validation {
+    condition     = var.config_path == "" || can(regex("^[a-zA-Z0-9_./-]+$", var.config_path))
+    error_message = "config_path must contain only alphanumeric characters, dots, underscores, hyphens, and forward slashes."
+  }
 }

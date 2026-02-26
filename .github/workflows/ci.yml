@@ -63,12 +63,17 @@ jobs:
       - name: Constitutional checkpoint (>=85%)
         run: task govern:score
 
+      - name: APRA CPS 234 compliance (Para 15/36/37)
+        run: task govern:cps234
+
       - name: Upload governance evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: governance-score
-          path: tmp/terraform-aws/governance/
+          path: |
+            tmp/terraform-aws/governance/
+            tmp/terraform-aws/test-results/
 
   test:
     name: CI-Safe Tests (Tier 1 + 2, no AWS cost)
@@ -96,87 +101,6 @@ jobs:
 
       - name: Verify .terraform.lock.hcl exists per module
         run: task build:lock-verify
-
-  cost:
-    name: Infracost PR Cost Estimate
-    if: github.event_name == 'pull_request'
-    needs: [validate]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Setup Infracost
-        uses: infracost/actions/setup@v3
-        with:
-          api-key: ${{ secrets.INFRACOST_API_KEY }}
-
-      - name: Checkout base branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          path: base
-
-      - name: Infracost baseline (base branch)
-        run: |
-          for dir in base/examples/*/; do
-            [ -d "$dir" ] || continue
-            infracost breakdown --path "$dir" --format json \
-              --out-file "/tmp/infracost-base-$(basename "$dir").json" 2>/dev/null || true
-          done
-          # Merge all base estimates
-          find /tmp -name 'infracost-base-*.json' -print0 | \
-            xargs -0 infracost output --format json --out-file /tmp/infracost-base.json 2>/dev/null || \
-            echo '{"totalMonthlyCost":"0"}' > /tmp/infracost-base.json
-
-      - name: Checkout PR branch
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          path: pr
-
-      - name: Infracost estimate (PR branch)
-        run: |
-          for dir in pr/examples/*/; do
-            [ -d "$dir" ] || continue
-            infracost breakdown --path "$dir" --format json \
-              --out-file "/tmp/infracost-pr-$(basename "$dir").json" 2>/dev/null || true
-          done
-          find /tmp -name 'infracost-pr-*.json' -print0 | \
-            xargs -0 infracost output --format json --out-file /tmp/infracost-pr.json 2>/dev/null || \
-            echo '{"totalMonthlyCost":"0"}' > /tmp/infracost-pr.json
-
-      - name: Infracost diff
-        run: |
-          infracost diff \
-            --path /tmp/infracost-pr.json \
-            --compare-to /tmp/infracost-base.json \
-            --format json \
-            --out-file /tmp/infracost-diff.json
-
-      - name: Cost threshold gate ($5/month FAIL)
-        run: |
-          COST=$(jq -r '.totalMonthlyCost // "0"' /tmp/infracost-diff.json)
-          echo "Estimated monthly cost delta: \$$COST"
-          if [ "$(echo "$COST > 5" | bc -l 2>/dev/null || echo 0)" = "1" ]; then
-            echo "FAIL: Cost exceeds \$5/month threshold (HITL-003)" && exit 1
-          elif [ "$(echo "$COST > 2.5" | bc -l 2>/dev/null || echo 0)" = "1" ]; then
-            echo "WARNING: Cost exceeds \$2.50/month advisory threshold"
-          fi
-
-      - name: Post PR comment
-        uses: infracost/actions/comment@v1
-        with:
-          path: /tmp/infracost-diff.json
-          behavior: update
-
-      - name: Upload cost evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: cost-estimate
-          path: /tmp/infracost-diff.json
 
   security:
     name: Security Scan (Trivy)

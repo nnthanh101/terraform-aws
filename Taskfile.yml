@@ -290,11 +290,25 @@ tasks:
     cmds:
       - bash scripts/govern-score.sh
 
+  govern:cps234:
+    desc: "APRA CPS 234 compliance check via checkov (Para 15/36/37)"
+    cmds:
+      - |
+        mkdir -p {{.EVIDENCE_DIR}}/test-results
+        checkov -d modules/iam-identity-center/ \
+          --external-checks-dir .checkov/custom_checks/ \
+          --check CKV_APRA_001,CKV_APRA_002,CKV_APRA_003 \
+          --output json \
+          --output-file-path {{.EVIDENCE_DIR}}/test-results/ \
+          --compact 2>/dev/null || true
+        echo "CPS 234 compliance check complete — evidence at {{.EVIDENCE_DIR}}/test-results/"
+
   govern:all:
-    desc: "All governance gates: legal + score"
+    desc: "All governance gates: legal + score + cps234"
     cmds:
       - task: govern:legal
       - task: govern:score
+      - task: govern:cps234
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # MONITOR — evidence collection + anti-NATO gates

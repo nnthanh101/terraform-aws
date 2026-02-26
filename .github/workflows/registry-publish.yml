@@ -1,0 +1,62 @@
+# Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
+name: Registry Publish
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: registry-publish-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate & Lint
+    runs-on: ubuntu-latest
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Quick CI (fmt + validate + lint + legal)
+        run: task ci:quick
+
+  test:
+    name: Tier 1 Snapshot Tests
+    needs: [validate]
+    runs-on: ubuntu-latest
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Run Tier 1 tests (8 snapshot tests, $0 cost)
+        run: task test:tier1
+
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: tmp/terraform-aws/test-results/
+
+  release:
+    name: Create GitHub Release
+    needs: [test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create release (TFC auto-detects via VCS)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "${{ github.ref_name }}" --generate-notes --title "${{ github.ref_name }}"
