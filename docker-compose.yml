@@ -13,6 +13,7 @@ services:
     volumes:
       - .:/workspace:cached
       - ${HOME}/.aws:/home/os/.aws:ro
+      - /var/run/docker.sock:/var/run/docker.sock  # act: local CI YAML testing
     environment:
       - ADLC_PROJECT=terraform-aws
       - ADLC_VERSION=3.3.0

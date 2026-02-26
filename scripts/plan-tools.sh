@@ -12,7 +12,7 @@ ver() {
 }
 
 PASS=0; FAIL=0
-TOOLS="terraform terragrunt tflint checkov trivy infracost aws az go task starship git node npm cdk kubectl helm k3d"
+TOOLS="terraform terragrunt tflint checkov trivy infracost aws az go task starship git node npm cdk kubectl helm k3d act"
 
 for tool in $TOOLS; do
   if command -v "$tool" >/dev/null 2>&1; then
