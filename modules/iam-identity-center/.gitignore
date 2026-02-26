@@ -39,7 +39,7 @@ tf.plan
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
-.terraform.lock.hcl
+# .terraform.lock.hcl — MUST be committed per ADR-004 (multi-platform provider locking)
 
 go.mod
 go.sum

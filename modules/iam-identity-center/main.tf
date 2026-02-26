@@ -81,7 +81,7 @@ resource "aws_identitystore_user" "sso_users" {
     locality = each.value.locality
     //(Optional) The name that is typically displayed when the address is shown for display.
     // Default value is the provided street address, locality, region, postal code, and country.
-    formatted = each.value.address_formatted != null ? each.value.address_formatted : join(" ", [lookup(each.value, "street_address", ""), lookup(each.value, "locality", ""), lookup(each.value, "region", ""), lookup(each.value, "postal_code", ""), lookup(each.value, "country", "")])
+    formatted = each.value.address_formatted != null ? each.value.address_formatted : join(" ", [each.value.street_address != null ? each.value.street_address : "", each.value.locality != null ? each.value.locality : "", each.value.region != null ? each.value.region : "", each.value.postal_code != null ? each.value.postal_code : "", each.value.country != null ? each.value.country : ""])
     // Default value is null.
     postal_code = each.value.postal_code
     // (Optional) When true, this is the primary address associated with the user.

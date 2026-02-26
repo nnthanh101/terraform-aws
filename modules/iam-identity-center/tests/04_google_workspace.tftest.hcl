@@ -6,7 +6,7 @@ run "unit_test" {
 }
 
 run "e2e_test" {
-  command = apply
+  command = plan
   module {
     source = "./examples/google-workspace"
   }

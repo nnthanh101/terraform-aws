@@ -1,0 +1,103 @@
+# Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
+name: Provider Upgrade
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # Monday 02:00 UTC (12:00 AEST)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (detect drift only, no PR)'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: provider-upgrade
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  upgrade-locks:
+    name: Upgrade Provider Locks
+    runs-on: ubuntu-latest
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
+    outputs:
+      drift_detected: ${{ steps.drift.outputs.drift_detected }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upgrade providers (init -upgrade + lock 4 platforms)
+        run: bash scripts/build-lock-upgrade.sh
+
+      - name: Detect provider drift
+        id: drift
+        run: |
+          DRIFT=0
+          for dir in modules/*/; do
+            [ -f "${dir}.terraform.lock.hcl" ] || continue
+            git diff --exit-code "${dir}.terraform.lock.hcl" || DRIFT=1
+          done
+          if [ "$DRIFT" -eq 0 ]; then
+            echo "No provider drift detected"
+            echo "drift_detected=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Provider drift detected — lock files changed"
+            echo "drift_detected=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload upgraded lock files
+        if: steps.drift.outputs.drift_detected == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: upgraded-lock-files
+          path: modules/*/.terraform.lock.hcl
+
+      - name: Upload upgrade evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lock-upgrade-evidence
+          path: tmp/terraform-aws/lock-upgrade/
+
+  open-pr:
+    name: Create/Update Provider Upgrade PR
+    needs: [upgrade-locks]
+    if: needs.upgrade-locks.outputs.drift_detected == 'true' && github.event.inputs.dry_run != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download upgraded lock files
+        uses: actions/download-artifact@v4
+        with:
+          name: upgraded-lock-files
+          path: modules/
+
+      - name: Create or update PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: chore/provider-lock-upgrade
+          commit-message: 'chore: upgrade provider lock files (4 platforms)'
+          title: 'chore: Upgrade provider lock files'
+          body: |
+            ## Automated Provider Lock Upgrade
+
+            Weekly drift detection found provider updates within version constraints (ADR-003: >= 6.28, < 7.0).
+
+            **Changes**: Updated `.terraform.lock.hcl` files across all modules for 4 platforms:
+            - `linux_amd64`, `linux_arm64`, `darwin_amd64`, `darwin_arm64`
+
+            **Safeguard**: Blog S8a — Automated provider upgrade
+            **Validation**: CI will run `build:lock-verify` + Tier 1 tests on this PR
+
+            ---
+            *Created by `provider-upgrade.yml` (Monday 02:00 UTC)*
+          labels: terraform,automation,provider-upgrade
+          delete-branch: true

@@ -41,13 +41,13 @@ variable "sso_users" {
     phone_number_type       = optional(string, null)
     is_primary_phone_number = optional(bool, true)
     # Address
-    country            = optional(string, " ")
-    locality           = optional(string, " ")
+    country            = optional(string, null)
+    locality           = optional(string, null)
     address_formatted  = optional(string)
-    postal_code        = optional(string, " ")
+    postal_code        = optional(string, null)
     is_primary_address = optional(bool, true)
-    region             = optional(string, " ")
-    street_address     = optional(string, " ")
+    region             = optional(string, null)
+    street_address     = optional(string, null)
     address_type       = optional(string, null)
     # Additional
     user_type          = optional(string, null)
@@ -62,7 +62,7 @@ variable "sso_users" {
 
   validation {
     condition     = alltrue([for user in values(var.sso_users) : length(user.user_name) > 1 && length(user.user_name) <= 128])
-    error_message = "The name of one of the defined IAM Identity Store (SSO) Users is too long. User_names can be a maxmium of 128 characters. Please ensure all user_names are 100 characters or less, and try again."
+    error_message = "The name of one of the defined IAM Identity Store (SSO) Users is too long. User_names can be a maximum of 128 characters. Please ensure all user_names are 128 characters or less, and try again."
   }
 }
 variable "existing_sso_users" {
@@ -88,6 +88,14 @@ variable "permission_sets" {
   description = "Permission Sets that you wish to create in IAM Identity Center. This variable is a map of maps containing Permission Set names as keys. See permission_sets description in README for information about map values."
   type        = any
   default     = {}
+
+  validation {
+    condition = alltrue([
+      for k, v in var.permission_sets :
+      !can(v.session_duration) || can(regex("^PT[0-9]+H$", v.session_duration))
+    ])
+    error_message = "session_duration must follow ISO 8601 format (e.g., PT4H, PT8H)."
+  }
 }
 variable "existing_permission_sets" {
   description = "Names of the existing permission_sets that you wish to reference from IAM Identity Center."
@@ -177,9 +185,19 @@ variable "sso_instance_access_control_attributes" {
 }
 
 variable "default_tags" {
-  description = "Default tags applied to all taggable resources. Must include APRA CPS 234 (data_classification) and FOCUS 1.2+ required tags (x_cost_center, x_project, x_environment, x_service_name)."
+  description = "Tags applied to all permission sets. Overrides module defaults. Required keys when non-empty: CostCenter, Project, Environment, DataClassification."
   type        = map(string)
   default     = {}
+
+  validation {
+    condition = length(var.default_tags) == 0 || alltrue([
+      contains(keys(var.default_tags), "CostCenter"),
+      contains(keys(var.default_tags), "Project"),
+      contains(keys(var.default_tags), "Environment"),
+      contains(keys(var.default_tags), "DataClassification"),
+    ])
+    error_message = "When default_tags is provided, it must include: CostCenter, Project, Environment, DataClassification."
+  }
 }
 
 variable "config_path" {

@@ -5,6 +5,14 @@
 module "identity_center" {
   source = "../../modules/iam-identity-center"
 
+  default_tags = {
+    CostCenter         = "platform"
+    Project            = "iam-identity-center"
+    Environment        = "test"
+    ServiceName        = "sso"
+    DataClassification = "internal"
+  }
+
   sso_groups = {
     PlatformTeam = {
       group_name        = "PlatformTeam"
@@ -39,13 +47,13 @@ module "identity_center" {
     Admin = {
       description          = "Full administrator access"
       session_duration     = "PT4H"
-      tags                 = { CostCenter = "platform" }
+      tags                 = {}
       aws_managed_policies = ["arn:aws:iam::aws:policy/AdministratorAccess"]
     }
     ReadOnly = {
       description          = "Read-only access for auditors"
       session_duration     = "PT8H"
-      tags                 = { CostCenter = "platform" }
+      tags                 = {}
       aws_managed_policies = ["arn:aws:iam::aws:policy/ReadOnlyAccess"]
     }
   }

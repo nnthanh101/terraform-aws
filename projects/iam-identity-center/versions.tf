@@ -16,11 +16,12 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project     = "terraform-aws"
-      Environment = "sandbox"
-      CostCenter  = "platform"
-      Compliance  = "APRA-CPS234"
-      ManagedBy   = "terraform"
+      CostCenter         = "platform"
+      Project            = "iam-identity-center"
+      Environment        = "sandbox"
+      ServiceName        = "sso"
+      DataClassification = "internal"
+      ManagedBy          = "terraform"
     }
   }
 }

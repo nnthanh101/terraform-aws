@@ -5,22 +5,22 @@
 # When config_path is set, reads YAML configs and merges with HCL variable values.
 # YAML values take precedence over HCL variable defaults.
 # When config_path is empty (default), falls back to HCL variables only.
-# - APRA CPS 234 + FOCUS 1.2+ Compliance Tags -
+# - 5 Canonical Tags: Enterprise + FOCUS (via Cost Allocation Tags) + CPS 234 -
 # These baseline tags are merged into every permission set. Consumer-supplied
 # var.default_tags values take precedence; per-permission-set tags override both.
 # The literal fallback values satisfy checkov static analysis when the module is
 # evaluated without caller-supplied defaults.
 locals {
-  _compliance_baseline_tags = {
-    data_classification = "internal"
-    x_cost_center       = "platform"
-    x_project           = "iam-identity-center"
-    x_environment       = "unset"
-    x_service_name      = "sso"
-  }
-
-  # Effective compliance tags: baseline < var.default_tags < per-pset tags (applied in main.tf)
-  _effective_default_tags = merge(local._compliance_baseline_tags, var.default_tags)
+  # 5 canonical tags: enterprise + FOCUS (via Cost Allocation Tags) + CPS 234
+  # Defaults satisfy checkov when consumers don't provide default_tags.
+  # Per-pset tags (in main.tf:171 merge) can still override individual keys.
+  _effective_default_tags = merge({
+    CostCenter         = "platform"
+    Project            = "iam-identity-center"
+    Environment        = "unset"
+    ServiceName        = "sso"
+    DataClassification = "internal"
+  }, var.default_tags)
 }
 
 locals {

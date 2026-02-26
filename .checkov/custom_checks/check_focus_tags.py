@@ -10,7 +10,7 @@ import re
 from checkov.common.models.enums import CheckCategories, CheckResult
 from checkov.terraform.checks.resource.base_resource_check import BaseResourceCheck
 
-FOCUS_REQUIRED_TAGS = ["x_cost_center", "x_project", "x_environment", "x_service_name"]
+FOCUS_REQUIRED_TAGS = ["CostCenter", "Project", "Environment", "ServiceName"]
 
 # Resources that support tags in aws_ssoadmin / aws_identitystore
 TAGGABLE_RESOURCES = [
@@ -52,7 +52,7 @@ def _resolve_tags(conf: dict) -> dict:
 
 class FocusTagComplianceCheck(BaseResourceCheck):
     def __init__(self) -> None:
-        name = "Ensure FOCUS 1.2+ required tags are present for cost attribution"
+        name = "Ensure cost allocation tags are present for FOCUS 1.2+ exports"
         id = "CKV_CUSTOM_FOCUS_001"
         supported_resources = TAGGABLE_RESOURCES
         categories = [CheckCategories.GENERAL_SECURITY]
@@ -63,7 +63,7 @@ class FocusTagComplianceCheck(BaseResourceCheck):
 
         missing = [t for t in FOCUS_REQUIRED_TAGS if t not in tags]
         if missing:
-            self.details.append(f"Missing FOCUS 1.2+ tags: {', '.join(missing)}")
+            self.details.append(f"Missing cost allocation tags: {', '.join(missing)}")
             return CheckResult.FAILED
         return CheckResult.PASSED
 

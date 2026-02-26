@@ -80,6 +80,7 @@ tasks:
         echo "    task build:lock           Provider lock (4 platforms)"
         echo "    task build:docs           terraform-docs README generation"
         echo "    task build:lock-verify    Verify lock files exist (CI gate)"
+        echo "    task build:lock-upgrade  Upgrade + relock providers (4 platforms)"
         echo "    task build:all            All BUILD gates"
         echo ""
         echo "  TEST      3-tier testing (ADR-002 + ADR-004)"
@@ -193,6 +194,14 @@ tasks:
     cmds:
       - bash scripts/build-lock-verify.sh
 
+  build:lock-upgrade:
+    desc: "Upgrade providers + regenerate lock files (4 platforms)"
+    cmds:
+      - task: _exec
+        vars:
+          CMD: "bash scripts/build-lock-upgrade.sh"
+      - task: build:lock-verify
+
   build:docs:
     desc: "terraform-docs README tables for all modules"
     cmds:
@@ -296,13 +305,16 @@ tasks:
     desc: "APRA CPS 234 compliance check via checkov (Para 15/36/37)"
     cmds:
       - |
-        mkdir -p {{.EVIDENCE_DIR}}/test-results
+        mkdir -p {{.EVIDENCE_DIR}}/test-results {{.EVIDENCE_DIR}}/evidence
         checkov -d modules/iam-identity-center/ \
           --external-checks-dir .checkov/custom_checks/ \
           --check CKV_APRA_001,CKV_APRA_002,CKV_APRA_003 \
           --output json \
           --output-file-path {{.EVIDENCE_DIR}}/test-results/ \
           --compact 2>/dev/null || true
+        cat > "{{.EVIDENCE_DIR}}/evidence/cps234-compliance-$(date +%Y-%m-%d).json" <<CPSEOF
+        {"date":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","standard":"APRA CPS 234","checks":["CKV_APRA_001","CKV_APRA_002","CKV_APRA_003"],"evidence_path":"{{.EVIDENCE_DIR}}/test-results/"}
+        CPSEOF
         echo "CPS 234 compliance check complete — evidence at {{.EVIDENCE_DIR}}/test-results/"
 
   govern:all:
