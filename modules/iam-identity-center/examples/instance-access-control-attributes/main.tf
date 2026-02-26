@@ -1,13 +1,13 @@
 module "aws-iam-identity-center" {
   source = "../.." // local example
 
-  // APRA CPS 234 + FOCUS 1.2+ required compliance tags applied to all taggable resources
+  // Canonical tags: enterprise + FOCUS (via Cost Allocation Tags) + CPS 234
   default_tags = {
-    data_classification = "internal"
-    x_cost_center       = "platform"
-    x_project           = "iam-identity-center"
-    x_environment       = "example"
-    x_service_name      = "sso"
+    CostCenter         = "platform"
+    Project            = "iam-identity-center"
+    Environment        = "example"
+    ServiceName        = "sso"
+    DataClassification = "internal"
   }
 
   //Create desired access control attributes

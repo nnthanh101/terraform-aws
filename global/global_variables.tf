@@ -46,7 +46,7 @@ variable "owner" {
 }
 
 variable "cost_center" {
-  description = "Cost allocation unit for FinOps showback/chargeback (FOCUS 1.2+ x_cost_center)"
+  description = "Cost allocation unit for FinOps showback/chargeback (maps to CostCenter tag)"
   type        = string
   default     = "platform"
 }

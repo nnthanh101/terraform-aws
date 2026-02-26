@@ -52,6 +52,7 @@ Every completion claim needs artifacts: `tmp/terraform-aws/coordination-logs/`, 
 | `NATO_VIOLATION` | Claiming done without evidence | `detect-nato-violation.sh` hook |
 | `RAW_TOOL_OVER_SKILL` | Using raw Edit/Bash instead of ADLC commands/skills/tasks | Use table above |
 | `BARE_METAL_TOOLS` | Running tflint/checkov/terraform on host | Container-first via `_exec` |
+| `TEXT_OUTPUT_BYPASS` | Delivering implementation content in text output without PO+CA coordination — hooks cannot intercept text responses | Rules-layer prohibition in adlc-governance.md; coordination logs must exist before any implementation content |
 
 ## Architecture
 

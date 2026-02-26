@@ -1,3 +1,4 @@
+# Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
 name: Infracost
 
 on:
@@ -54,7 +55,7 @@ jobs:
           # Merge all base estimates
           find /tmp -name 'infracost-base-*.json' -print0 | \
             xargs -0 infracost output --format json --out-file /tmp/infracost-base.json 2>/dev/null || \
-            echo '{"totalMonthlyCost":"0"}' > /tmp/infracost-base.json
+            echo '{"version":"0.2","totalMonthlyCost":"0","totalHourlyCost":"0","currency":"USD","projects":[],"timeGenerated":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > /tmp/infracost-base.json
 
       - name: Checkout PR branch
         uses: actions/checkout@v4
@@ -70,7 +71,7 @@ jobs:
           done
           find /tmp -name 'infracost-pr-*.json' -print0 | \
             xargs -0 infracost output --format json --out-file /tmp/infracost-pr.json 2>/dev/null || \
-            echo '{"totalMonthlyCost":"0"}' > /tmp/infracost-pr.json
+            echo '{"version":"0.2","totalMonthlyCost":"0","totalHourlyCost":"0","currency":"USD","projects":[],"timeGenerated":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > /tmp/infracost-pr.json
 
       - name: Infracost diff
         run: |
@@ -85,16 +86,30 @@ jobs:
           COST=$(jq -r '.totalMonthlyCost // "0"' /tmp/infracost-diff.json)
           echo "Estimated monthly cost delta: \$$COST"
           python3 -c "
-          import sys
+          import sys, os
           cost = float('${COST}' or '0')
           if cost > 5:
               print('FAIL: Cost exceeds \$5/month threshold (HITL-003)')
               sys.exit(1)
           elif cost > 2.5:
               print('WARNING: Cost exceeds \$2.50/month advisory threshold')
+              with open(os.environ['GITHUB_ENV'], 'a') as f:
+                  f.write('COST_WARNING=true\n')
           else:
               print(f'PASS: Cost delta \${cost:.2f}/month within threshold')
           "
+
+      - name: Post cost warning to PR
+        if: env.COST_WARNING == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## Cost Warning\n\nMonthly delta in WARNING range ($2.50-$5.00). Review resource sizing before merging.\n\n> Infracost CI (AC-2-10)'
+            });
 
       - name: Post PR comment
         uses: infracost/actions/comment@v1

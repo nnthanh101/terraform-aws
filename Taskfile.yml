@@ -36,7 +36,7 @@ tasks:
   # INTERNAL — container-first execution helper
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # WHY:  "Working on my machine ≠ deployed" — bare-metal pip/brew is non-reproducible.
-  #       The devcontainer image ({{.IMAGE}}) has all 18 tools pre-installed.
+  #       The devcontainer image ({{.IMAGE}}) has all 19 tools pre-installed.
   #       This helper ensures tasks execute INSIDE the container by default.
   # HOW:  1. Already inside container (/.dockerenv) → run directly
   #       2. Container running → docker exec into it
@@ -80,6 +80,7 @@ tasks:
         echo "    task build:lock           Provider lock (4 platforms)"
         echo "    task build:docs           terraform-docs README generation"
         echo "    task build:lock-verify    Verify lock files exist (CI gate)"
+        echo "    task build:lock-upgrade  Upgrade + relock providers (4 platforms)"
         echo "    task build:all            All BUILD gates"
         echo ""
         echo "  TEST      3-tier testing (ADR-002 + ADR-004)"
@@ -113,6 +114,7 @@ tasks:
         echo "    task ci:quick             Fast: validate + lint + legal (<60s)"
         echo "    task ci:full              Full: build + test + govern + security"
         echo "    task ci:local             Local mirror of CI jobs (6 jobs, no extras)"
+        echo "    task ci:act               Local CI YAML test via act (workflow structure)"
         echo ""
         echo "  SPRINT    Milestone validation"
         echo "    task sprint:validate      7-gate sprint validation"
@@ -128,7 +130,7 @@ tasks:
       - bash scripts/plan-cost.sh
 
   plan:tools:
-    desc: "Verify 18 tools in {{.IMAGE}} devcontainer"
+    desc: "Verify 19 tools in {{.IMAGE}} devcontainer"
     cmds:
       - bash scripts/plan-tools.sh
 
@@ -191,6 +193,14 @@ tasks:
     desc: "Verify .terraform.lock.hcl exists per module (CI gate)"
     cmds:
       - bash scripts/build-lock-verify.sh
+
+  build:lock-upgrade:
+    desc: "Upgrade providers + regenerate lock files (4 platforms)"
+    cmds:
+      - task: _exec
+        vars:
+          CMD: "bash scripts/build-lock-upgrade.sh"
+      - task: build:lock-verify
 
   build:docs:
     desc: "terraform-docs README tables for all modules"
@@ -295,13 +305,16 @@ tasks:
     desc: "APRA CPS 234 compliance check via checkov (Para 15/36/37)"
     cmds:
       - |
-        mkdir -p {{.EVIDENCE_DIR}}/test-results
+        mkdir -p {{.EVIDENCE_DIR}}/test-results {{.EVIDENCE_DIR}}/evidence
         checkov -d modules/iam-identity-center/ \
           --external-checks-dir .checkov/custom_checks/ \
           --check CKV_APRA_001,CKV_APRA_002,CKV_APRA_003 \
           --output json \
           --output-file-path {{.EVIDENCE_DIR}}/test-results/ \
           --compact 2>/dev/null || true
+        cat > "{{.EVIDENCE_DIR}}/evidence/cps234-compliance-$(date +%Y-%m-%d).json" <<CPSEOF
+        {"date":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","standard":"APRA CPS 234","checks":["CKV_APRA_001","CKV_APRA_002","CKV_APRA_003"],"evidence_path":"{{.EVIDENCE_DIR}}/test-results/"}
+        CPSEOF
         echo "CPS 234 compliance check complete — evidence at {{.EVIDENCE_DIR}}/test-results/"
 
   govern:all:
@@ -382,6 +395,33 @@ tasks:
       - task: govern:all
       - task: security:trivy
       - task: monitor:verify
+
+  ci:act:
+    desc: "Local CI YAML test via act (tests workflow YAML structure, not just scripts)"
+    cmds:
+      - |
+        if [ -f /.dockerenv ]; then
+          export PATH="${HOME}/.local/bin:${PATH}"
+          mkdir -p tmp/terraform-aws/ci-act
+          act push \
+            --job validate \
+            --workflows .github/workflows/ci.yml \
+            --platform ubuntu-latest={{.IMAGE}} \
+            --rm \
+            --env CI=true \
+            2>&1 | tee tmp/terraform-aws/ci-act/act-$(date +%Y-%m-%d).log
+        else
+          docker exec --user 0 -w /workspace {{.CONTAINER}} bash -c \
+            "export PATH=/home/os/.local/bin:\${PATH} && \
+            mkdir -p tmp/terraform-aws/ci-act && \
+            act push \
+              --job validate \
+              --workflows .github/workflows/ci.yml \
+              --platform ubuntu-latest={{.IMAGE}} \
+              --rm \
+              --env CI=true \
+              2>&1 | tee tmp/terraform-aws/ci-act/act-\$(date +%Y-%m-%d).log"
+        fi
 
   ci:local:
     desc: "Local mirror of .github/workflows/ci.yml (6 jobs, container-first)"

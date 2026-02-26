@@ -6,6 +6,14 @@ module "aws-iam-identity-center" {
   source = "../.." // local example
   # source = "aws-ia/iam-identity-center/aws" // remote example
 
+  default_tags = {
+    CostCenter         = "platform"
+    Project            = "iam-identity-center"
+    Environment        = "example"
+    ServiceName        = "sso"
+    DataClassification = "internal"
+  }
+
   // Create desired GROUPS in IAM Identity Center
   sso_groups = {
     Admin : {

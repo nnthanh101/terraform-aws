@@ -2,6 +2,14 @@ module "aws-iam-identity-center" {
   source = "../.." // local example
   # source = "aws-ia/iam-identity-center/aws" // remote example
 
+  default_tags = {
+    CostCenter         = "platform"
+    Project            = "iam-identity-center"
+    Environment        = "example"
+    ServiceName        = "sso"
+    DataClassification = "internal"
+  }
+
   // Create desired GROUPS in IAM Identity Center
   sso_groups = {
     Admin : {
@@ -46,13 +54,13 @@ module "aws-iam-identity-center" {
       description          = "Provides AWS full access permissions.",
       session_duration     = "PT4H", // how long until session expires - this means 4 hours. max is 12 hours
       aws_managed_policies = ["arn:aws:iam::aws:policy/AdministratorAccess"]
-      tags                 = { ManagedBy = "Terraform", CostCenter = "platform-engineering", Environment = "production" }
+      tags                 = { ManagedBy = "Terraform" }
     },
     ViewOnlyAccess = {
       description          = "Provides AWS view only permissions.",
       session_duration     = "PT3H", // how long until session expires - this means 3 hours. max is 12 hours
       aws_managed_policies = ["arn:aws:iam::aws:policy/job-function/ViewOnlyAccess"]
-      tags                 = { ManagedBy = "Terraform", CostCenter = "platform-engineering", Environment = "production" }
+      tags                 = { ManagedBy = "Terraform" }
     },
   }
 

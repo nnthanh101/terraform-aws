@@ -50,6 +50,14 @@ module "aws-iam-identity-center" {
   source = "../.." // local example
   # source = "aws-ia/iam-identity-center/aws" // remote example
 
+  default_tags = {
+    CostCenter         = "platform"
+    Project            = "iam-identity-center"
+    Environment        = "example"
+    ServiceName        = "sso"
+    DataClassification = "internal"
+  }
+
   existing_sso_groups = {
     AWSControlTowerAdmins : {
       group_name = "AWSControlTowerAdmins" # this must be the name of a sso group that already exists in your AWS account

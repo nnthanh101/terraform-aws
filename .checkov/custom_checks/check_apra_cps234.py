@@ -48,10 +48,10 @@ def _resolve_tags(conf: dict) -> dict:
 
 
 class APRADataClassificationCheck(BaseResourceCheck):
-    """CPS 234 Para 15: All IAM resources must have data_classification tag."""
+    """CPS 234 Para 15: All IAM resources must have DataClassification tag."""
 
     def __init__(self) -> None:
-        name = "Ensure APRA CPS 234 data_classification tag is present with valid value"
+        name = "Ensure APRA CPS 234 DataClassification tag is present with valid value"
         id = "CKV_APRA_001"
         supported_resources = ["aws_ssoadmin_permission_set"]
         categories = [CheckCategories.GENERAL_SECURITY]
@@ -60,7 +60,7 @@ class APRADataClassificationCheck(BaseResourceCheck):
     def scan_resource_conf(self, conf: dict) -> CheckResult:
         tags = _resolve_tags(conf)
 
-        classification = tags.get("data_classification", [None])
+        classification = tags.get("DataClassification", [None])
         if isinstance(classification, list):
             classification = classification[0] if classification else None
 
