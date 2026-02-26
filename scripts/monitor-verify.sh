@@ -5,7 +5,7 @@ set -euo pipefail
 EVIDENCE_DIR="${EVIDENCE_DIR:-tmp/terraform-aws}"
 
 PASS=0; FAIL=0
-for dir in coordination-logs test-results security-scans cost-reports terraform-plans screenshots legal evidence; do
+for dir in coordination-logs test-results security-scans cost-reports terraform-plans screenshots legal-audit evidence; do
   if [ -d "$EVIDENCE_DIR/$dir" ]; then
     PASS=$((PASS+1))
   else

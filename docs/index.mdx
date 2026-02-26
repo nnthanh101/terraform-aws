@@ -1,0 +1,39 @@
+---
+sidebar_position: 1
+title: terraform-aws
+---
+
+# terraform-aws
+
+Registry-publishable Terraform modules with ADLC governance, 3-tier testing, and FOCUS 1.2+ FinOps compliance.
+
+## Modules
+
+| Module | Region | Status | Description |
+|--------|--------|--------|-------------|
+| [identity-center](./modules/identity-center) | us-east-1 | Sprint 1-2 | AWS IAM Identity Center (SSO) with YAML config API |
+| [ecs-platform](./modules/ecs-platform) | ap-southeast-2 | Sprint 2 | ECS Fargate platform with service mesh |
+| [fullstack-web](./modules/fullstack-web) | ap-southeast-2 | Sprint 2+ | Composite web application stack |
+
+## Architecture Decisions
+
+See [ADR index](./adr/) for all architecture decision records.
+
+## Quick Start
+
+```bash
+task validate       # terraform fmt + validate
+task lint           # tflint + checkov
+task test           # 3-tier test suite
+task legal:audit    # Apache 2.0 compliance
+```
+
+## Registry
+
+- **Namespace**: `nnthanh101/terraform-aws/aws`
+- **Terraform**: `>= 1.10.0`
+- **AWS Provider**: `>= 5.95, < 7.0`
+
+## Integration
+
+Documentation powered by [DevOps-TechDocs](https://github.com/1xOps/DevOps-TechDocs) (added as git submodule into this project).

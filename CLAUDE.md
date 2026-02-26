@@ -1,7 +1,7 @@
 # terraform-aws
 
 > Terraform Registry-publishable modules with ADLC governance, 3-tier testing, and FOCUS 1.2+ FinOps compliance
-> **Version:** 0.1.0 | **Terraform:** >= 1.10.0 | **AWS Provider:** >= 5.95, < 7.0
+> **Version:** 0.1.0 | **Terraform:** >= 1.11.0 | **AWS Provider:** >= 6.28, < 7.0
 
 ## Architecture
 
