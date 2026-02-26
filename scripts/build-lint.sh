@@ -29,7 +29,7 @@ fi
 # checkov: security scanning on modules/
 if command -v checkov >/dev/null 2>&1; then
   echo "Running checkov security scan..."
-  checkov -d modules/ --framework terraform --quiet || LINT_PASS=false
+  checkov -d modules/ --framework terraform --quiet --external-checks-dir .checkov/custom_checks/ || LINT_PASS=false
 else
   echo "FAIL: checkov not installed (required for security scan)" && exit 1
 fi
