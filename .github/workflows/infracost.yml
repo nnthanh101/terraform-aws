@@ -47,7 +47,7 @@ jobs:
 
       - name: Infracost baseline (base branch)
         run: |
-          for dir in base/examples/*/; do
+          for dir in base/modules/*/examples/*/; do
             [ -d "$dir" ] || continue
             infracost breakdown --path "$dir" --format json \
               --out-file "/tmp/infracost-base-$(basename "$dir").json" 2>/dev/null || true
@@ -64,7 +64,7 @@ jobs:
 
       - name: Infracost estimate (PR branch)
         run: |
-          for dir in pr/examples/*/; do
+          for dir in pr/modules/*/examples/*/; do
             [ -d "$dir" ] || continue
             infracost breakdown --path "$dir" --format json \
               --out-file "/tmp/infracost-pr-$(basename "$dir").json" 2>/dev/null || true
