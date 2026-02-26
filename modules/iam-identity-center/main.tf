@@ -168,7 +168,7 @@ resource "aws_ssoadmin_permission_set" "pset" {
   description      = lookup(each.value, "description", null)
   relay_state      = lookup(each.value, "relay_state", null)      // (Optional) URL used to redirect users within the application during the federation authentication process
   session_duration = lookup(each.value, "session_duration", null) // The length of time that the application user sessions are valid in the ISO-8601 standard
-  tags             = lookup(each.value, "tags", {})
+  tags             = merge(local._effective_default_tags, lookup(each.value, "tags", {}))
 }
 
 

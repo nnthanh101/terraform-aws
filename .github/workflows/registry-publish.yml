@@ -18,10 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Quick CI (fmt + validate + lint + legal)
         run: task ci:quick
@@ -32,10 +31,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Run Tier 1 tests (8 snapshot tests, $0 cost)
         run: task test:tier1

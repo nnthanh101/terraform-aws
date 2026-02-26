@@ -6,10 +6,45 @@
 
 from __future__ import annotations
 
+import ast
+import re
+
 from checkov.common.models.enums import CheckCategories, CheckResult
 from checkov.terraform.checks.resource.base_resource_check import BaseResourceCheck
 
 VALID_DATA_CLASSIFICATIONS = {"public", "internal", "confidential", "restricted"}
+
+
+def _resolve_tags(conf: dict) -> dict:
+    """Extract a tags dict from a resource conf, handling merge() expressions.
+
+    Checkov resolves variable references and locals but cannot evaluate Terraform
+    built-in functions such as merge(). When a resource uses:
+        tags = merge(local._effective_default_tags, lookup(each.value, "tags", {}))
+    checkov stores a string like:
+        "${merge(${merge({'key': 'val', ...}, {})}, lookup(...))}"
+    This helper extracts all non-nested dict literals from that string and merges
+    them so the check can validate tags guaranteed by local._effective_default_tags.
+    """
+    tags = conf.get("tags", [{}])
+    if isinstance(tags, list):
+        tags = tags[0] if tags else {}
+
+    if isinstance(tags, dict):
+        return tags
+
+    # tags is a string expression — extract all non-nested dict literals
+    tags_str = str(tags)
+    merged: dict = {}
+    for match in re.findall(r"\{[^{}]*\}", tags_str):
+        try:
+            candidate = ast.literal_eval(match)
+            if isinstance(candidate, dict):
+                merged.update(candidate)
+        except (ValueError, SyntaxError):
+            pass
+
+    return merged
 
 
 class APRADataClassificationCheck(BaseResourceCheck):
@@ -23,11 +58,7 @@ class APRADataClassificationCheck(BaseResourceCheck):
         super().__init__(name=name, id=id, categories=categories, supported_resources=supported_resources)
 
     def scan_resource_conf(self, conf: dict) -> CheckResult:
-        tags = conf.get("tags", [{}])
-        if isinstance(tags, list):
-            tags = tags[0] if tags else {}
-        if not isinstance(tags, dict):
-            return CheckResult.FAILED
+        tags = _resolve_tags(conf)
 
         classification = tags.get("data_classification", [None])
         if isinstance(classification, list):
