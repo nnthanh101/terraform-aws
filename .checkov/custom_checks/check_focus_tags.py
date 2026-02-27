@@ -15,6 +15,7 @@ FOCUS_REQUIRED_TAGS = ["CostCenter", "Project", "Environment", "ServiceName"]
 # Resources that support tags in aws_ssoadmin / aws_identitystore
 TAGGABLE_RESOURCES = [
     "aws_ssoadmin_permission_set",
+    "aws_ssoadmin_application",
 ]
 
 

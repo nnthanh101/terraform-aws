@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Tier 1 tests (8 snapshot tests, $0 cost)
+      - name: Run Tier 1 tests (9 snapshot tests, $0 cost)
         run: task test:tier1
 
       - name: Upload test evidence

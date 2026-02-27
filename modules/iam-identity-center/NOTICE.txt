@@ -5,3 +5,19 @@ Licensed under the Apache License, Version 2.0 (the "License"). You may not use 
     http://aws.amazon.com/apache2.0/
 
 or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+---
+
+This module is derived from aws-ia/terraform-aws-iam-identity-center v1.0.4
+(https://github.com/aws-ia/terraform-aws-iam-identity-center).
+
+Copyright 2026 nnthanh101@gmail.com (oceansoft.io). All Rights Reserved.
+Published as oceansoft/iam-identity-center/aws under Apache License, Version 2.0.
+
+Modifications from upstream:
+- Rebranded for Terraform Registry publication (oceansoft namespace)
+- Added YAML configuration layer (yamldecode) for APRA CPS 234 auditor-friendly input
+- Added default_tags variable with FOCUS 1.2+ and CPS 234 tag validation
+- Added Terraform check blocks for YAML input validation
+- Added 4-tier tag taxonomy (Mandatory, FinOps FOCUS, Compliance CPS 234, Operational)
+- Provider constraint updated to >= 6.28, < 7.0 (ADR-003)
