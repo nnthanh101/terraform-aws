@@ -35,8 +35,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Tier 1 tests (9 snapshot tests, $0 cost)
-        run: task test:tier1
+      - name: Run Tier 1 tests (18 snapshot tests, $0 cost)
+        run: |
+          mkdir -p tmp/terraform-aws/test-results
+          task test:tier1 2>&1 | tee tmp/terraform-aws/test-results/tier1-snapshot.log
+          echo "exit_code=${PIPESTATUS[0]}" >> tmp/terraform-aws/test-results/tier1-summary.txt
+          echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> tmp/terraform-aws/test-results/tier1-summary.txt
+          echo "tag=${GITHUB_REF_NAME:-unknown}" >> tmp/terraform-aws/test-results/tier1-summary.txt
+          exit ${PIPESTATUS[0]}
 
       - name: Upload test evidence
         if: always()
