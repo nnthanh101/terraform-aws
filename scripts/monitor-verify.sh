@@ -1,11 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
-# Verify 6 evidence directories exist (anti-NATO gate)
+# Verify 7 evidence directories exist (anti-NATO gate)
 EVIDENCE_DIR="${EVIDENCE_DIR:-tmp/terraform-aws}"
 
 PASS=0; FAIL=0
-for dir in coordination-logs test-results security-scans cost-reports legal-audit evidence; do
+for dir in coordination-logs test-results security-scans cost-reports legal-audit evidence governance; do
   if [ -d "$EVIDENCE_DIR/$dir" ]; then
     PASS=$((PASS+1))
   else

@@ -242,7 +242,18 @@ resource "aws_ssoadmin_account_assignment" "account_assignment" {
 
   principal_type = each.value.principal_type
 
-  # Conditional use of resource or data source to reference the principal_id depending on if the principal_type is "GROUP" or "USER" and if the principal_idp is "INTERNAL" or "EXTERNAL". "INTERNAL" aligns with users or groups that were created with this module and use the default IAM Identity Store as the IdP. "EXTERNAL" aligns with users or groups that were created outside of this module (e.g. via external IdP such as EntraID, Okta, Google, etc.) and were synced via SCIM to IAM Identity Center.
+  # principal_id resolution — decision matrix:
+  #
+  #   principal_type | principal_idp | Source
+  #   ───────────────┼───────────────┼──────────────────────────────────────────────────
+  #   GROUP          | INTERNAL      | aws_identitystore_group.sso_groups[name].group_id
+  #   USER           | INTERNAL      | aws_identitystore_user.sso_users[name].user_id
+  #   GROUP          | EXTERNAL      | data.aws_identitystore_group.existing_sso_groups[name].group_id
+  #   USER           | EXTERNAL      | data.aws_identitystore_user.existing_sso_users[name].user_id
+  #   USER           | GOOGLE        | data.aws_identitystore_user.existing_google_sso_users[name].user_id
+  #
+  #   INTERNAL = created by this module (IAM Identity Store as IdP)
+  #   EXTERNAL = created outside this module (EntraID/Okta/Google synced via SCIM)
 
   principal_id = each.value.principal_type == "GROUP" && each.value.principal_idp == "INTERNAL" ? aws_identitystore_group.sso_groups[each.value.principal_name].group_id : (each.value.principal_type == "USER" && each.value.principal_idp == "INTERNAL" ? aws_identitystore_user.sso_users[each.value.principal_name].user_id : (each.value.principal_type == "GROUP" && each.value.principal_idp == "EXTERNAL" ? data.aws_identitystore_group.existing_sso_groups[each.value.principal_name].group_id : (each.value.principal_type == "USER" && each.value.principal_idp == "EXTERNAL" ? data.aws_identitystore_user.existing_sso_users[each.value.principal_name].user_id : (each.value.principal_type == "USER" && each.value.principal_idp == "GOOGLE") ? data.aws_identitystore_user.existing_google_sso_users[each.value.principal_name].user_id : null)))
 
@@ -271,7 +282,7 @@ resource "aws_ssoadmin_application" "sso_apps" {
       }
     }
   }
-  tags = each.value.tags
+  tags = merge(local._effective_default_tags, each.value.tags != null ? each.value.tags : {})
 }
 
 # SSO - Applications Assigments Configuration 

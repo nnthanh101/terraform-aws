@@ -30,9 +30,6 @@ modules/iam-identity-center/examples/ @oceansoft/compliance-reviewers @nnthanh10
 # CI/CD workflows — requires platform engineering review
 .github/workflows/ @oceansoft/platform-engineers @nnthanh101
 
-# ADRs — requires cloud-architect review and sign-off
-docs/adr/ @oceansoft/cloud-architects @nnthanh101
-
 # Legal files — requires compliance review (Apache 2.0, NOTICE.txt)
 modules/iam-identity-center/LICENSE @oceansoft/compliance-reviewers
 modules/iam-identity-center/NOTICE.txt @oceansoft/compliance-reviewers

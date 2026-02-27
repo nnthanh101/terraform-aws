@@ -106,8 +106,7 @@ tasks:
         echo "    task operate:down         Stop all containers"
         echo "    task starship:configure   Configure Starship prompt"
         echo ""
-        echo "  DOCS      Documentation sync (DevOps-TechDocs)"
-        echo "    task docs:sync            Sync docs/ into TechDocs submodule"
+        echo "  DOCS      Documentation (DevOps-TechDocs is canonical source)"
         echo "    task docs:dev             Docusaurus dev server (port 5001)"
         echo ""
         echo "  CI        Composite pipelines"
@@ -118,6 +117,7 @@ tasks:
         echo ""
         echo "  SPRINT    Milestone validation"
         echo "    task sprint:validate      7-gate sprint validation"
+        echo "    task registry:preflight   Registry publish pre-flight (VERSION + CHANGELOG)"
         echo ""
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -227,15 +227,32 @@ tasks:
       - task: _exec
         vars:
           CMD: |
-            if ls tests/snapshot/*.tftest.hcl 1>/dev/null 2>&1; then
-              echo "Running native Terraform tests (ADR-004)..."
-              cd tests/snapshot && terraform init -backend=false -input=false && terraform test -verbose
-            elif [ -d tests/snapshot ] && ls tests/snapshot/*.go 1>/dev/null 2>&1; then
-              echo "Running Go Terratest snapshot tests..."
-              cd tests/snapshot && go test -v -timeout 30s ./...
-            else
-              echo "FAIL: No snapshot tests found (.tftest.hcl or .go)" && exit 1
-            fi
+            REPO_ROOT=$(pwd)
+            FAILED_MODULES=""
+            PASSED_MODULES=""
+            for MODULE_DIR in "${REPO_ROOT}"/modules/*/; do
+              MODULE_NAME=$(basename "${MODULE_DIR}")
+              if ls "${MODULE_DIR}"tests/*.tftest.hcl 1>/dev/null 2>&1 || ls "${MODULE_DIR}"tests/snapshot/*.tftest.hcl 1>/dev/null 2>&1; then
+                echo "==> Tier 1: testing module ${MODULE_NAME}"
+                cd "${MODULE_DIR}"
+                if terraform init -backend=false -input=false -upgrade 1>/dev/null 2>&1 && terraform test -verbose; then
+                  PASSED_MODULES="${PASSED_MODULES} ${MODULE_NAME}"
+                else
+                  echo "FAIL: ${MODULE_NAME} test failed"
+                  FAILED_MODULES="${FAILED_MODULES} ${MODULE_NAME}"
+                fi
+                cd "${REPO_ROOT}"
+              else
+                echo "SKIP: ${MODULE_NAME} — no .tftest.hcl files found"
+              fi
+            done
+            echo ""
+            echo "=== Tier 1 Summary ==="
+            [ -n "${PASSED_MODULES}" ] && echo "PASS:${PASSED_MODULES}"
+            [ -n "${FAILED_MODULES}" ] && echo "FAIL:${FAILED_MODULES}"
+            [ -z "${PASSED_MODULES}" ] && [ -z "${FAILED_MODULES}" ] && echo "SKIP: No modules with .tftest.hcl tests found" && exit 1
+            [ -n "${FAILED_MODULES}" ] && exit 1
+            exit 0
 
   test:tier2:
     desc: "Tier 2: LocalStack integration tests (free, 30-60s). Needs: task build:env:localstack"
@@ -304,18 +321,9 @@ tasks:
   govern:cps234:
     desc: "APRA CPS 234 compliance check via checkov (Para 15/36/37)"
     cmds:
-      - |
-        mkdir -p {{.EVIDENCE_DIR}}/test-results {{.EVIDENCE_DIR}}/evidence
-        checkov -d modules/iam-identity-center/ \
-          --external-checks-dir .checkov/custom_checks/ \
-          --check CKV_APRA_001,CKV_APRA_002,CKV_APRA_003 \
-          --output json \
-          --output-file-path {{.EVIDENCE_DIR}}/test-results/ \
-          --compact 2>/dev/null || true
-        cat > "{{.EVIDENCE_DIR}}/evidence/cps234-compliance-$(date +%Y-%m-%d).json" <<CPSEOF
-        {"date":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","standard":"APRA CPS 234","checks":["CKV_APRA_001","CKV_APRA_002","CKV_APRA_003"],"evidence_path":"{{.EVIDENCE_DIR}}/test-results/"}
-        CPSEOF
-        echo "CPS 234 compliance check complete — evidence at {{.EVIDENCE_DIR}}/test-results/"
+      - task: _exec
+        vars:
+          CMD: "EVIDENCE_DIR={{.EVIDENCE_DIR}} bash scripts/govern-cps234.sh"
 
   govern:all:
     desc: "All governance gates: legal + score + cps234"
@@ -338,7 +346,7 @@ tasks:
       - task: test:tier1
 
   monitor:verify:
-    desc: "Verify 6 evidence directories exist (anti-NATO gate)"
+    desc: "Verify 7 evidence directories exist (anti-NATO gate)"
     cmds:
       - bash scripts/monitor-verify.sh
 
@@ -357,13 +365,8 @@ tasks:
       - bash scripts/starship-configure.sh
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  # DOCS — documentation sync (DevOps-TechDocs submodule)
+  # DOCS — DevOps-TechDocs is the canonical documentation source
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  docs:sync:
-    desc: "Sync docs/ into DevOps-TechDocs submodule"
-    cmds:
-      - bash scripts/docs-sync.sh
 
   docs:dev:
     desc: "Start Docusaurus dev server (port 5001, requires docs/site submodule)"
@@ -449,3 +452,29 @@ tasks:
     desc: "Sprint validation: 5 blocking gates + 2 advisory checks (sprint-agnostic)"
     cmds:
       - scripts/validate-sprint.sh
+
+  registry:preflight:
+    desc: "Registry publish pre-flight: ci:quick + test:tier1 + legal + VERSION check + CHANGELOG check"
+    cmds:
+      - task: ci:quick
+      - task: test:tier1
+      - task: govern:legal
+      - |
+        echo "=== VERSION Consistency Check ==="
+        ROOT_VERSION=$(cat VERSION 2>/dev/null || echo "MISSING")
+        MODULE_VERSION=$(cat modules/iam-identity-center/VERSION 2>/dev/null || echo "MISSING")
+        if [ "$ROOT_VERSION" != "$MODULE_VERSION" ]; then
+          echo "FAIL: VERSION mismatch — root=$ROOT_VERSION, module=$MODULE_VERSION"
+          exit 1
+        fi
+        echo "PASS: VERSION aligned ($ROOT_VERSION)"
+      - |
+        echo "=== CHANGELOG Check ==="
+        if [ ! -f CHANGELOG.md ]; then
+          echo "WARN: No CHANGELOG.md found (advisory)"
+        elif grep -q "^## .*$(cat VERSION)" CHANGELOG.md; then
+          echo "PASS: CHANGELOG contains entry for v$(cat VERSION)"
+        else
+          echo "WARN: CHANGELOG.md missing entry for v$(cat VERSION) (advisory)"
+        fi
+        echo "PASSED: registry:preflight"

@@ -38,6 +38,33 @@ locals {
   # Effective values: YAML overrides HCL (merge = right wins on key collision)
   effective_permission_sets     = merge(var.permission_sets, local._yaml_permission_sets)
   effective_account_assignments = merge(var.account_assignments, local._yaml_account_assignments)
+
+  # AC-3-10: Pre-compute validation results for check blocks below.
+  # Variables-block validation only covers var.permission_sets (HCL path); YAML-merged
+  # entries bypass it entirely. These locals expose the same predicates so check blocks
+  # can surface failures at plan time regardless of the ingestion path.
+
+  # Collect all pset names whose session_duration is present but violates ISO 8601.
+  # Accepts PT<n>H (hours) or PT<n>M (minutes) — the two formats used in AWS SSO.
+  _invalid_session_duration_psets = [
+    for k, v in local.effective_permission_sets :
+    k if can(v.session_duration) && !can(regex("^PT[0-9]+[HM]$", v.session_duration))
+  ]
+
+  # Collect all pset names whose consumer-supplied tags (var.default_tags merged with
+  # per-pset tags) are missing CostCenter or DataClassification. Uses var.default_tags
+  # (not _effective_default_tags which includes hardcoded fallbacks for checkov) so the
+  # check fires when consumers forget required tags, matching deployment reality.
+  _consumer_pset_tags = {
+    for k, v in local.effective_permission_sets :
+    k => merge(var.default_tags, try(v.tags, {}))
+  }
+  _invalid_tag_psets = [
+    for k, merged_tags in local._consumer_pset_tags :
+    k if length(merged_tags) > 0 && (
+      !contains(keys(merged_tags), "CostCenter") || !contains(keys(merged_tags), "DataClassification")
+    )
+  ]
 }
 
 # - Users and Groups -
@@ -206,6 +233,27 @@ locals {
   #   for user in var.existing_google_sso_users : user.user_name
   # ]
 
+}
+
+# - AC-3-10: YAML Validation Check Blocks (Terraform >= 1.5) -
+# These check blocks validate effective_permission_sets AFTER the YAML merge, catching
+# values that bypass the variables.tf validation block (which only covers var.permission_sets).
+# Failures surface as plan-time warnings (non-blocking by Terraform design) — they become
+# blocking when run inside a CI pipeline that treats check failures as errors (e.g. via
+# `terraform plan -detailed-exitcode` + stderr inspection).
+
+check "yaml_session_duration_format" {
+  assert {
+    condition     = length(local._invalid_session_duration_psets) == 0
+    error_message = "APRA CPS 234 / AC-3-10: The following permission sets (possibly from YAML) have a session_duration that does not match ISO 8601 PT<n>H or PT<n>M format: ${jsonencode(local._invalid_session_duration_psets)}. Correct the YAML file or the HCL variable value."
+  }
+}
+
+check "yaml_required_tag_keys" {
+  assert {
+    condition     = length(local._invalid_tag_psets) == 0
+    error_message = "APRA CPS 234 / AC-3-10: The following permission sets (possibly from YAML) have a tags map that is missing required keys CostCenter and/or DataClassification: ${jsonencode(local._invalid_tag_psets)}. Add the missing tag keys."
+  }
 }
 
 locals {

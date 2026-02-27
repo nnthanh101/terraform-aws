@@ -22,8 +22,11 @@ variable "existing_sso_groups" {
 variable "sso_users" {
   description = "Names of the users you wish to create in IAM Identity Center."
   type = map(object({
-    display_name     = optional(string)
-    user_name        = string
+    display_name = optional(string)
+    user_name    = string
+    # NOTE: Empty list [] is intentionally valid — represents a standalone user
+    # without group assignments (e.g. service accounts, direct permission set users).
+    # A validation requiring length > 0 would be a BREAKING CHANGE for existing consumers.
     group_membership = list(string)
     # Name
     given_name       = string
@@ -92,9 +95,9 @@ variable "permission_sets" {
   validation {
     condition = alltrue([
       for k, v in var.permission_sets :
-      !can(v.session_duration) || can(regex("^PT[0-9]+H$", v.session_duration))
+      !can(v.session_duration) || can(regex("^PT[0-9]+[HM]$", v.session_duration))
     ])
-    error_message = "session_duration must follow ISO 8601 format (e.g., PT4H, PT8H)."
+    error_message = "session_duration must follow ISO 8601 format in hours or minutes (e.g., PT4H, PT8H, PT30M)."
   }
 }
 variable "existing_permission_sets" {
@@ -119,7 +122,7 @@ variable "account_assignments" {
   default = {}
 }
 
-# Applications 
+# Applications
 variable "sso_applications" {
   description = "List of applications to be created in IAM Identity Center"
   type = map(object({

@@ -29,8 +29,19 @@ jobs:
           output-method: replace
           git-push: false
 
-      # Sprint 3: Cross-repo sync to DevOps-TechDocs
-      # Requires: HITL setup of PAT or GitHub App token for cross-repo write
+      # ─── Cross-repo sync to DevOps-TechDocs (HITL Setup Required) ─────────
+      # Prerequisites (HITL gates — cannot be automated):
+      #   H1: git submodule add https://github.com/1xOps/DevOps-TechDocs.git docs/site
+      #   H2: Create fine-grained PAT (Contents: Read+Write, scoped to 1xOps/DevOps-TechDocs)
+      #   H3: Add PAT as repo secret: DOCS_SYNC_PAT
+      # Once H1-H3 complete, uncomment the step below:
       # - name: Sync to DevOps-TechDocs
+      #   env:
+      #     GH_TOKEN: ${{ secrets.DOCS_SYNC_PAT }}
       #   run: |
-      #     echo "Deferred to Sprint 3 (HITL gate: PAT token required)"
+      #     git submodule update --init docs/site
+      #     bash scripts/docs-sync.sh
+      #     cd docs/site
+      #     git add -A
+      #     git diff --cached --quiet || git commit -m "chore: sync terraform-aws module docs"
+      #     git push origin main

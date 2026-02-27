@@ -43,6 +43,7 @@ echo ""
 # Advisory gates (WARN, not FAIL)
 advisory "A1. Tier 2 LocalStack tests"     test -d tests/localstack -a -n "$(ls tests/localstack/*.go 2>/dev/null)"
 advisory "A2. Coordination log (PO today)"   test -n "$(ls "$EVIDENCE_DIR"/coordination-logs/product-owner-"$(date +%Y-%m-%d)"*.json 2>/dev/null)"
+advisory "A3. APRA CPS 234 compliance"      task govern:cps234
 
 echo ""
 echo "  Result: $PASS/$TOTAL gates passed, $WARN advisory warnings"

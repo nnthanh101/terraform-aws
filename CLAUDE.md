@@ -68,9 +68,9 @@ Every completion claim needs artifacts: `tmp/terraform-aws/coordination-logs/`, 
 |-----|----------|
 | ADR-001 | Module naming: kebab-case |
 | ADR-002 | Registry structure: oceansoft/terraform-aws/aws |
-| ADR-003 | Provider constraints: >= 5.95, < 7.0 |
+| ADR-003 | Provider constraints: >= 6.28, < 7.0; terraform >= 1.11.0 |
 | ADR-004 | 3-tier testing: snapshot/localstack/integration |
-| ADR-005 | Example naming: {stage}-{domain}-{variant} |
+| ADR-005 | Example naming: {tier}-{descriptor} (mvp-/poc-/production-) |
 | ADR-006 | S3 native state locking (no DynamoDB) |
 
 ## Quick Commands (Taskfile.yml)
