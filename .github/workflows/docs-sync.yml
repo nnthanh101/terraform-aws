@@ -1,8 +1,5 @@
 # Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
-name: Docs Sync (DevOps-TechDocs)
-
-# Sprint 2: Stub workflow — generates terraform-docs README per module
-# Sprint 3: Wire cross-repo sync to DevOps-TechDocs (requires HITL PAT setup)
+name: Generate Module README
 
 on:
   push:
@@ -27,21 +24,5 @@ jobs:
           working-dir: modules/iam-identity-center
           output-file: README.md
           output-method: replace
-          git-push: false
-
-      # ─── Cross-repo sync to DevOps-TechDocs (HITL Setup Required) ─────────
-      # Prerequisites (HITL gates — cannot be automated):
-      #   H1: git submodule add https://github.com/1xOps/DevOps-TechDocs.git docs/site
-      #   H2: Create fine-grained PAT (Contents: Read+Write, scoped to 1xOps/DevOps-TechDocs)
-      #   H3: Add PAT as repo secret: DOCS_SYNC_PAT
-      # Once H1-H3 complete, uncomment the step below:
-      # - name: Sync to DevOps-TechDocs
-      #   env:
-      #     GH_TOKEN: ${{ secrets.DOCS_SYNC_PAT }}
-      #   run: |
-      #     git submodule update --init docs/site
-      #     bash scripts/docs-sync.sh
-      #     cd docs/site
-      #     git add -A
-      #     git diff --cached --quiet || git commit -m "chore: sync terraform-aws module docs"
-      #     git push origin main
+          git-push: true
+          git-commit-message: "docs: auto-generate module README [skip ci]"
