@@ -106,10 +106,8 @@ tasks:
         echo "    task operate:down         Stop all containers"
         echo "    task starship:configure   Configure Starship prompt"
         echo ""
-        echo "  DOCS      Documentation sync (DevOps-TechDocs)"
-        echo "    task docs:sync            Sync docs/ into TechDocs submodule"
+        echo "  DOCS      Documentation (DevOps-TechDocs is canonical source)"
         echo "    task docs:dev             Docusaurus dev server (port 5001)"
-        echo "    task docs:validate-sync   Cross-repo docs sync validation (MD5)"
         echo ""
         echo "  CI        Composite pipelines"
         echo "    task ci:quick             Fast: validate + lint + legal (<60s)"
@@ -367,13 +365,8 @@ tasks:
       - bash scripts/starship-configure.sh
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  # DOCS — documentation sync (DevOps-TechDocs submodule)
+  # DOCS — DevOps-TechDocs is the canonical documentation source
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  docs:sync:
-    desc: "Sync docs/ into DevOps-TechDocs submodule"
-    cmds:
-      - bash scripts/docs-sync.sh
 
   docs:dev:
     desc: "Start Docusaurus dev server (port 5001, requires docs/site submodule)"
@@ -385,11 +378,6 @@ tasks:
           exit 0
         fi
         cd docs/site && npm install && npm run start -- --port 5001
-
-  docs:validate-sync:
-    desc: "Validate docs sync between terraform-aws and DevOps-TechDocs (MD5 comparison)"
-    cmds:
-      - bash scripts/docs-validate-sync.sh
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # CI — composite pipelines
