@@ -22,8 +22,8 @@ variable "existing_sso_groups" {
 variable "sso_users" {
   description = "Names of the users you wish to create in IAM Identity Center."
   type = map(object({
-    display_name     = optional(string)
-    user_name        = string
+    display_name = optional(string)
+    user_name    = string
     # NOTE: Empty list [] is intentionally valid — represents a standalone user
     # without group assignments (e.g. service accounts, direct permission set users).
     # A validation requiring length > 0 would be a BREAKING CHANGE for existing consumers.
@@ -122,7 +122,7 @@ variable "account_assignments" {
   default = {}
 }
 
-# Applications 
+# Applications
 variable "sso_applications" {
   description = "List of applications to be created in IAM Identity Center"
   type = map(object({

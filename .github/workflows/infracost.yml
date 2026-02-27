@@ -81,6 +81,18 @@ jobs:
             --format json \
             --out-file /tmp/infracost-diff.json
 
+      - name: Annotate free-tier modules
+        run: |
+          COST=$(jq -r '.totalMonthlyCost // "0"' /tmp/infracost-diff.json)
+          RESOURCE_COUNT=$(jq '[.projects[]?.breakdown.resources // [] | length] | add // 0' /tmp/infracost-diff.json)
+          if [ "$(python3 -c "print(float('${COST}' or '0') == 0)")" = "True" ]; then
+            MSG="Infracost: All $RESOURCE_COUNT resources in this PR are free-tier (e.g. IAM Identity Center = \$0/month). The '-' in cost columns indicates no pricing data in Infracost's DB — not missing configuration."
+            echo "::notice::$MSG"
+            echo "FREE_TIER=true" >> "$GITHUB_ENV"
+            mkdir -p tmp/terraform-aws/cost-reports
+            echo "$MSG" > "tmp/terraform-aws/cost-reports/free-tier-annotation-$(date +%Y-%m-%d).txt"
+          fi
+
       - name: Cost threshold gate ($5/month FAIL)
         run: |
           COST=$(jq -r '.totalMonthlyCost // "0"' /tmp/infracost-diff.json)
@@ -116,6 +128,18 @@ jobs:
         with:
           path: /tmp/infracost-diff.json
           behavior: update
+
+      - name: Post free-tier clarification
+        if: env.FREE_TIER == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## FinOps Note\n\nAll resources in this PR are **free-tier** (IAM Identity Center = $0/month).\n\nThe `-` shown in Infracost cost columns means the resource has no pricing data in Infracost\'s database — it does **not** indicate missing or broken cost estimation.\n\n> Infracost CI — free-tier annotation'
+            });
 
       - name: Persist cost evidence
         if: always()
