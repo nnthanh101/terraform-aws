@@ -31,7 +31,6 @@ jobs:
         run: |
           mkdir -p tmp/terraform-aws/release-logs
           TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          # Unquoted <<EOF intentional: allows ${{ }} GHA expressions (expanded before shell) and ${TIMESTAMP} shell var
           cat <<EOF > tmp/terraform-aws/release-logs/release-please-${{ github.run_id }}.json
           {
             "timestamp": "${TIMESTAMP}",
