@@ -504,12 +504,24 @@ tasks:
         fi
 
   registry:preflight:
-    desc: "Registry publish pre-flight: tag-check + ci:quick + test:tier1 + legal + CHANGELOG check [MODULE={{.MODULE}}]"
+    desc: "Registry publish pre-flight: per-module VERSION + tag-check + ci:quick + test:tier1 + legal + CHANGELOG check [MODULE={{.MODULE}}]"
     cmds:
       - task: release:tag-check
       - task: ci:quick
       - task: test:tier1
       - task: govern:legal
+      - |
+        echo "=== Per-Module VERSION Check ==="
+        MODULE_VERSION=$(cat {{.MODULE_DIR}}/VERSION 2>/dev/null || echo "MISSING")
+        if [ "$MODULE_VERSION" = "MISSING" ]; then
+          echo "FAIL: {{.MODULE_DIR}}/VERSION not found"
+          exit 1
+        fi
+        if ! echo "$MODULE_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+          echo "FAIL: {{.MODULE_DIR}}/VERSION contains invalid semver: $MODULE_VERSION"
+          exit 1
+        fi
+        echo "PASS: {{.MODULE}} VERSION=$MODULE_VERSION (valid semver)"
       - |
         echo "=== CHANGELOG Check ==="
         CHANGELOG_FILE="{{.MODULE_DIR}}/CHANGELOG.md"

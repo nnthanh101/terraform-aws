@@ -55,6 +55,7 @@ jobs:
       - name: Quick CI (fmt + validate + lint + legal)
         env:
           MODULE: ${{ needs.resolve.outputs.module }}
+          MODULE_DIR: ${{ needs.resolve.outputs.module_dir }}
         run: task ci:quick
 
   test:

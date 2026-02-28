@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [iam-identity-center]  # expand: ecs-platform, fullstack-web
+        module: [iam-identity-center, ecs-platform, fullstack-web]
     container:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
       options: --user 0
@@ -26,10 +26,16 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Terraform fmt + validate
-        run: task build:validate MODULE=${{ matrix.module }}
+        env:
+          MODULE: ${{ matrix.module }}
+          MODULE_DIR: modules/${{ matrix.module }}
+        run: task build:validate
 
       - name: Lint (tflint + checkov)
-        run: task build:lint MODULE=${{ matrix.module }}
+        env:
+          MODULE: ${{ matrix.module }}
+          MODULE_DIR: modules/${{ matrix.module }}
+        run: task build:lint
 
   legal:
     name: Legal Audit
