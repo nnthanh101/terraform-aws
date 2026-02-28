@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "simple",
+  "tag-separator": "/",
+  "include-component-in-tag": true,
+  "changelog-sections": [
+    {"type": "feat",     "section": "Features"},
+    {"type": "fix",      "section": "Bug Fixes"},
+    {"type": "perf",     "section": "Performance Improvements"},
+    {"type": "refactor", "section": "Code Refactoring"},
+    {"type": "security", "section": "Security"},
+    {"type": "test",     "section": "Tests"},
+    {"type": "docs",     "section": "Documentation"},
+    {"type": "ci",       "section": "CI/CD"},
+    {"type": "chore",    "section": "Miscellaneous", "hidden": true}
+  ],
+  "packages": {
+    "modules/iam-identity-center": {
+      "release-type": "simple",
+      "component": "iam-identity-center",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": ["VERSION"],
+      "bump-minor-pre-major": true
+    },
+    "modules/ecs-platform": {
+      "release-type": "simple",
+      "component": "ecs-platform",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": ["VERSION"],
+      "bump-minor-pre-major": true
+    },
+    "modules/fullstack-web": {
+      "release-type": "simple",
+      "component": "fullstack-web",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": ["VERSION"],
+      "bump-minor-pre-major": true
+    }
+  }
+}

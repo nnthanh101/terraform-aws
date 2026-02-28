@@ -3,7 +3,9 @@ name: Registry Publish
 
 on:
   push:
-    tags: ['v*']
+    tags:
+      - '*/v*'    # module-prefixed: iam-identity-center/v1.2.0, ecs-platform/v0.1.0
+      - 'v[0-9]*' # legacy: global tags v1.1.0 (deprecated — remove in Phase 4)
 
 permissions:
   contents: read
@@ -13,8 +15,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  resolve:
+    name: Resolve Module from Tag
+    runs-on: ubuntu-latest
+    outputs:
+      module: ${{ steps.module-info.outputs.module }}
+      version: ${{ steps.module-info.outputs.version }}
+      module_dir: ${{ steps.module-info.outputs.module_dir }}
+    steps:
+      - name: Extract module info from tag
+        id: module-info
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          if [[ "$TAG" == *"/"* ]]; then
+            # module-prefixed tag: iam-identity-center/v1.2.0
+            MODULE_NAME="${TAG%/v*}"
+            MODULE_VERSION="${TAG#*/}"
+          else
+            # legacy global tag: v1.1.0 — default to iam-identity-center
+            MODULE_NAME="iam-identity-center"
+            MODULE_VERSION="${TAG}"
+            echo "WARN: Legacy global tag '$TAG' — defaulting module to $MODULE_NAME (deprecated, use module-prefixed tags)"
+          fi
+          echo "module=${MODULE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "version=${MODULE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "module_dir=modules/${MODULE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "Resolved: module=${MODULE_NAME}, version=${MODULE_VERSION}, dir=modules/${MODULE_NAME}"
+
   validate:
-    name: Validate & Lint
+    name: Validate & Lint (${{ needs.resolve.outputs.module }})
+    needs: [resolve]
     runs-on: ubuntu-latest
     container:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
@@ -23,11 +53,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Quick CI (fmt + validate + lint + legal)
+        env:
+          MODULE: ${{ needs.resolve.outputs.module }}
         run: task ci:quick
 
   test:
-    name: Tier 1 Snapshot Tests
-    needs: [validate]
+    name: Tier 1 Snapshot Tests (${{ needs.resolve.outputs.module }})
+    needs: [resolve, validate]
     runs-on: ubuntu-latest
     container:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
@@ -35,26 +67,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Tier 1 tests (18 snapshot tests, $0 cost)
+      - name: Run Tier 1 tests (snapshot tests, $0 cost)
+        env:
+          MODULE: ${{ needs.resolve.outputs.module }}
+          MODULE_NAME: ${{ needs.resolve.outputs.module }}
+          MODULE_DIR: ${{ needs.resolve.outputs.module_dir }}
         run: |
-          mkdir -p tmp/terraform-aws/test-results
-          task test:tier1 2>&1 | tee tmp/terraform-aws/test-results/tier1-snapshot.log
-          echo "exit_code=${PIPESTATUS[0]}" >> tmp/terraform-aws/test-results/tier1-summary.txt
-          echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> tmp/terraform-aws/test-results/tier1-summary.txt
-          echo "tag=${GITHUB_REF_NAME:-unknown}" >> tmp/terraform-aws/test-results/tier1-summary.txt
-          exit ${PIPESTATUS[0]}
+          set -o pipefail
+          mkdir -p "tmp/terraform-aws/registry-publish/${MODULE_NAME}"
+          task test:tier1 2>&1 | tee "tmp/terraform-aws/registry-publish/${MODULE_NAME}/tier1-snapshot.log"
+          TEST_EXIT=$?
+          echo "exit_code=${TEST_EXIT}" >> "tmp/terraform-aws/registry-publish/${MODULE_NAME}/tier1-summary.txt"
+          echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "tmp/terraform-aws/registry-publish/${MODULE_NAME}/tier1-summary.txt"
+          echo "module=${MODULE_NAME}" >> "tmp/terraform-aws/registry-publish/${MODULE_NAME}/tier1-summary.txt"
+          echo "tag=${GITHUB_REF_NAME:-unknown}" >> "tmp/terraform-aws/registry-publish/${MODULE_NAME}/tier1-summary.txt"
+          exit $TEST_EXIT
 
       - name: Upload test evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
-          path: tmp/terraform-aws/test-results/
+          name: test-results-${{ needs.resolve.outputs.module }}
+          path: tmp/terraform-aws/registry-publish/${{ needs.resolve.outputs.module }}/
 
   release:
-    name: Create GitHub Release
-    needs: [test]
-    if: startsWith(github.ref, 'refs/tags/v')
+    name: Create GitHub Release (${{ needs.resolve.outputs.module }} ${{ needs.resolve.outputs.version }})
+    needs: [resolve, test]
+    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -64,10 +103,13 @@ jobs:
       - name: Create release (idempotent — skip if exists)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MODULE_NAME: ${{ needs.resolve.outputs.module }}
+          MODULE_VERSION: ${{ needs.resolve.outputs.version }}
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="${GITHUB_REF#refs/tags/}"
+          RELEASE_TITLE="${MODULE_NAME} ${MODULE_VERSION}"
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists — skipping"
           else
-            gh release create "$TAG" --generate-notes --title "$TAG"
+            gh release create "$TAG" --generate-notes --title "${RELEASE_TITLE}"
           fi
