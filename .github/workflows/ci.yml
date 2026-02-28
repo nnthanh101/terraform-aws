@@ -102,6 +102,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Generate lock files (gitignored — regenerate fresh in CI)
+        run: |
+          for dir in modules/*/; do
+            if ls "$dir"*.tf 1>/dev/null 2>&1; then
+              echo "==> terraform init: $dir"
+              terraform -chdir="$dir" init -backend=false -input=false -upgrade 2>/dev/null
+            fi
+          done
+
       - name: Verify .terraform.lock.hcl exists per module
         run: task build:lock-verify
 

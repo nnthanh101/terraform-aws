@@ -12,7 +12,7 @@
 
 ## Quick Start
 
-See [QUICKSTART.md](QUICKSTART.md) for the full manager workflow.
+See **[QUICKSTART.md](QUICKSTART.md)** for the 5-command manager workflow (start, validate, release, pre-flight, status).
 
 ```bash
 task build:env      # Start devcontainer
@@ -33,11 +33,7 @@ task security:trivy     # Trivy misconfiguration scan
 
 ## Release
 
-Each module is versioned independently. Merge conventional commits to `main` and
-release-please automatically opens a release PR, bumps the module version, and
-publishes to the Terraform Registry on merge.
-
-See [QUICKSTART.md](QUICKSTART.md) for the per-module release workflow and
-`registry:preflight` pre-release checklist.
+Fully automated: conventional commits → release-please PR → HITL merge → auto-tag → API publish to TFC.
+See **[QUICKSTART.md](QUICKSTART.md)** for details. HITL effort: merge one PR.
 
 <!-- Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE. -->
