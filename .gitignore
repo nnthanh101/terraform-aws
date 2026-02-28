@@ -59,3 +59,5 @@ Thumbs.db
 # Infracost
 .infracost/
 .checkov/custom_checks/__pycache__
+
+.terraform.lock.hcl
