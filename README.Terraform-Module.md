@@ -27,3 +27,17 @@ curl -s --header "Authorization: Bearer $TFC_TOKEN" --header "Content-Type:appli
 
 ---
 
+Next steps:
+
+1. Click "Publish module" — TFC registers the module but shows "no versions" (no tag exists yet)
+2. Merge Legal-Compliance → main (your uncommitted files need to land on main first):
+
+# From your local machine
+git checkout main && git pull origin main
+git merge Legal-Compliance
+git push origin main
+3. Push a tag to trigger TFC ingestion:
+git tag v1.1.0
+git push origin v1.1.0
+4. Verify at TFC Registry > Modules > iam-identity-center/aws — should show version 1.1.0 with no
+SIC-001 error
