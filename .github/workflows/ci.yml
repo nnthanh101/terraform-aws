@@ -16,6 +16,7 @@ jobs:
     name: Validate & Lint (${{ matrix.module }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         module: [iam-identity-center]  # expand: ecs-platform, fullstack-web
     container:
@@ -25,10 +26,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Terraform fmt + validate
-        run: task build:validate
+        run: task build:validate MODULE=${{ matrix.module }}
 
       - name: Lint (tflint + checkov)
-        run: task build:lint
+        run: task build:lint MODULE=${{ matrix.module }}
 
   legal:
     name: Legal Audit

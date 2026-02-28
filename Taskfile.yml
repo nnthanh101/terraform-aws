@@ -20,6 +20,12 @@ version: '3'
 #   task ci:full             # Full pipeline: build + test + govern + security
 #   task sprint:validate     # Sprint milestone: 7-gate validation
 #
+# MODULE variable (default: iam-identity-center):
+#   task build:validate MODULE=ecs-platform     # Validate one module
+#   task test:tier1 MODULE=fullstack-web         # Test one module
+#   task registry:preflight MODULE=ecs-platform  # Preflight one module
+#   task modules:list                            # Show all available modules
+#
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 vars:
@@ -30,6 +36,8 @@ vars:
   IMAGE: "nnthanh101/terraform:2.6.0"
   SCORING_MODEL: "50biz-30tech-20infra"
   REGISTRY_NAMESPACE: oceansoft
+  MODULE: '{{.MODULE | default "iam-identity-center"}}'
+  MODULE_DIR: 'modules/{{.MODULE | default "iam-identity-center"}}'
 
 tasks:
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -68,6 +76,10 @@ tasks:
         echo "  terraform-aws — ADLC Enterprise Taskfile"
         echo "  ─────────────────────────────────────────"
         echo ""
+        echo "  MODULE variable (default: iam-identity-center)"
+        echo "    task <task> MODULE=ecs-platform   # target a specific module"
+        echo "    task modules:list                 # list all available modules"
+        echo ""
         echo "  PLAN      Cost estimation & tool verification"
         echo "    task plan:cost            Infracost per-module estimate"
         echo "    task plan:tools           Verify 18 devcontainer tools"
@@ -75,8 +87,8 @@ tasks:
         echo "  BUILD     Format, validate, lint, lock, docs"
         echo "    task build:env            Start devcontainer (30s timeout)"
         echo "    task build:env:localstack Start devcontainer + LocalStack"
-        echo "    task build:validate       terraform fmt + validate"
-        echo "    task build:lint           tflint + checkov security scan"
+        echo "    task build:validate       terraform fmt + validate [MODULE=]"
+        echo "    task build:lint           tflint + checkov security scan [MODULE=]"
         echo "    task build:lock           Provider lock (4 platforms)"
         echo "    task build:docs           terraform-docs README generation"
         echo "    task build:lock-verify    Verify lock files exist (CI gate)"
@@ -84,14 +96,14 @@ tasks:
         echo "    task build:all            All BUILD gates"
         echo ""
         echo "  TEST      3-tier testing (ADR-002 + ADR-004)"
-        echo "    task test:tier1           Tier 1: .tftest.hcl snapshots (free, 2-3s)"
+        echo "    task test:tier1           Tier 1: .tftest.hcl snapshots (free, 2-3s) [MODULE=]"
         echo "    task test:tier2           Tier 2: LocalStack integration (free, 30-60s)"
         echo "    task test:tier3           Tier 3: Real AWS (HITL gate, \$\$)"
         echo "    task test:ci              CI-safe: Tier 1 + 2 (no cost)"
         echo "    task test:all             All 3 tiers (Tier 3 needs HITL)"
         echo ""
         echo "  SECURITY  IaC vulnerability scanning"
-        echo "    task security:trivy       Trivy misconfig scan per module"
+        echo "    task security:trivy       Trivy misconfig scan per module [MODULE=]"
         echo ""
         echo "  GOVERN    Legal + constitutional compliance"
         echo "    task govern:legal         Apache 2.0 audit (5 checks)"
@@ -117,7 +129,9 @@ tasks:
         echo ""
         echo "  SPRINT    Milestone validation"
         echo "    task sprint:validate      7-gate sprint validation"
-        echo "    task registry:preflight   Registry publish pre-flight (VERSION + CHANGELOG)"
+        echo "    task registry:preflight   Registry publish pre-flight [MODULE=]"
+        echo "    task release:tag-check    Verify git tag does not already exist in remote"
+        echo "    task modules:list         List all available modules"
         echo ""
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -125,9 +139,9 @@ tasks:
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   plan:cost:
-    desc: "Infracost estimate per module -> {{.EVIDENCE_DIR}}/cost-reports/"
+    desc: "Infracost estimate per module -> {{.EVIDENCE_DIR}}/cost-reports/ [MODULE={{.MODULE}}]"
     cmds:
-      - bash scripts/plan-cost.sh
+      - MODULE={{.MODULE}} MODULE_DIR={{.MODULE_DIR}} bash scripts/plan-cost.sh
 
   plan:tools:
     desc: "Verify 19 tools in {{.IMAGE}} devcontainer"
@@ -169,18 +183,18 @@ tasks:
         echo "FAIL: LocalStack not healthy after 120s" && exit 1
 
   build:validate:
-    desc: "terraform fmt -check + validate all modules (no credentials needed)"
+    desc: "terraform fmt -check + validate [MODULE={{.MODULE}}] (no credentials needed)"
     cmds:
       - task: _exec
         vars:
-          CMD: "bash scripts/build-validate.sh"
+          CMD: "MODULE={{.MODULE}} MODULE_DIR={{.MODULE_DIR}} bash scripts/build-validate.sh"
 
   build:lint:
-    desc: "tflint + checkov security scan on modules/"
+    desc: "tflint + checkov security scan [MODULE={{.MODULE}}]"
     cmds:
       - task: _exec
         vars:
-          CMD: "bash scripts/build-lint.sh"
+          CMD: "MODULE={{.MODULE}} MODULE_DIR={{.MODULE_DIR}} bash scripts/build-lint.sh"
 
   build:lock:
     desc: "terraform providers lock (4 platforms) -> .terraform.lock.hcl per module"
@@ -222,7 +236,7 @@ tasks:
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   test:tier1:
-    desc: "Tier 1: .tftest.hcl snapshot tests (free, 2-3s, no credentials)"
+    desc: "Tier 1: .tftest.hcl snapshot tests (free, 2-3s, no credentials) [MODULE={{.MODULE}}]"
     cmds:
       - task: _exec
         vars:
@@ -230,7 +244,14 @@ tasks:
             REPO_ROOT=$(pwd)
             FAILED_MODULES=""
             PASSED_MODULES=""
-            for MODULE_DIR in "${REPO_ROOT}"/modules/*/; do
+            TARGET_MODULE="{{.MODULE}}"
+            if [ -n "${TARGET_MODULE}" ] && [ "${TARGET_MODULE}" != "all" ]; then
+              MODULE_DIRS="${REPO_ROOT}/modules/${TARGET_MODULE}/"
+            else
+              MODULE_DIRS="${REPO_ROOT}/modules/*/"
+            fi
+            for MODULE_DIR in ${MODULE_DIRS}; do
+              [ -d "${MODULE_DIR}" ] || { echo "FAIL: module directory not found: ${MODULE_DIR}"; exit 1; }
               MODULE_NAME=$(basename "${MODULE_DIR}")
               if ls "${MODULE_DIR}"tests/*.tftest.hcl 1>/dev/null 2>&1 || ls "${MODULE_DIR}"tests/snapshot/*.tftest.hcl 1>/dev/null 2>&1; then
                 echo "==> Tier 1: testing module ${MODULE_NAME}"
@@ -298,11 +319,11 @@ tasks:
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   security:trivy:
-    desc: "Trivy misconfig scan per module -> {{.EVIDENCE_DIR}}/security-scans/"
+    desc: "Trivy misconfig scan [MODULE={{.MODULE}}] -> {{.EVIDENCE_DIR}}/security-scans/"
     cmds:
       - task: _exec
         vars:
-          CMD: "bash scripts/security-trivy.sh"
+          CMD: "MODULE={{.MODULE}} MODULE_DIR={{.MODULE_DIR}} bash scripts/security-trivy.sh"
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # GOVERN — legal, constitutional checkpoints
@@ -453,28 +474,51 @@ tasks:
     cmds:
       - scripts/validate-sprint.sh
 
-  registry:preflight:
-    desc: "Registry publish pre-flight: ci:quick + test:tier1 + legal + VERSION check + CHANGELOG check"
+  modules:list:
+    desc: "List all available modules"
     cmds:
+      - ls -1 modules/
+
+  release:tag-check:
+    desc: "Verify per-module git tag does not already exist in remote [MODULE={{.MODULE}}]"
+    cmds:
+      - |
+        VERSION=$(cat {{.MODULE_DIR}}/VERSION 2>/dev/null || echo "MISSING")
+        if [ "$VERSION" = "MISSING" ]; then
+          echo "FAIL: {{.MODULE_DIR}}/VERSION not found" && exit 1
+        fi
+        TAG="{{.MODULE}}/v${VERSION}"
+        echo "=== Tag Collision Check ==="
+        echo "Checking remote for tag: ${TAG}"
+        mkdir -p tmp/terraform-aws/evidence
+        if git ls-remote --tags origin "refs/tags/${TAG}" 2>/dev/null | grep -q "${TAG}"; then
+          MSG="FAIL: tag ${TAG} already exists in remote — bump {{.MODULE_DIR}}/VERSION before tagging"
+          echo "${MSG}"
+          echo "${MSG}" > tmp/terraform-aws/evidence/tag-check-$(date +%Y-%m-%d).txt
+          exit 1
+        else
+          MSG="PASS: tag ${TAG} is available — safe to push"
+          echo "${MSG}"
+          echo "${MSG}" > tmp/terraform-aws/evidence/tag-check-$(date +%Y-%m-%d).txt
+          exit 0
+        fi
+
+  registry:preflight:
+    desc: "Registry publish pre-flight: tag-check + ci:quick + test:tier1 + legal + CHANGELOG check [MODULE={{.MODULE}}]"
+    cmds:
+      - task: release:tag-check
       - task: ci:quick
       - task: test:tier1
       - task: govern:legal
       - |
-        echo "=== VERSION Consistency Check ==="
-        ROOT_VERSION=$(cat VERSION 2>/dev/null || echo "MISSING")
-        MODULE_VERSION=$(cat modules/iam-identity-center/VERSION 2>/dev/null || echo "MISSING")
-        if [ "$ROOT_VERSION" != "$MODULE_VERSION" ]; then
-          echo "FAIL: VERSION mismatch — root=$ROOT_VERSION, module=$MODULE_VERSION"
-          exit 1
-        fi
-        echo "PASS: VERSION aligned ($ROOT_VERSION)"
-      - |
         echo "=== CHANGELOG Check ==="
-        if [ ! -f CHANGELOG.md ]; then
-          echo "WARN: No CHANGELOG.md found (advisory)"
-        elif grep -q "^## .*$(cat VERSION)" CHANGELOG.md; then
-          echo "PASS: CHANGELOG contains entry for v$(cat VERSION)"
+        CHANGELOG_FILE="{{.MODULE_DIR}}/CHANGELOG.md"
+        MODULE_VERSION=$(cat {{.MODULE_DIR}}/VERSION 2>/dev/null || echo "MISSING")
+        if [ ! -f "$CHANGELOG_FILE" ]; then
+          echo "WARN: No ${CHANGELOG_FILE} found (advisory — release-please will create it)"
+        elif grep -q "^## .*${MODULE_VERSION}" "$CHANGELOG_FILE"; then
+          echo "PASS: ${CHANGELOG_FILE} contains entry for v${MODULE_VERSION}"
         else
-          echo "WARN: CHANGELOG.md missing entry for v$(cat VERSION) (advisory)"
+          echo "WARN: ${CHANGELOG_FILE} missing entry for v${MODULE_VERSION} (advisory)"
         fi
-        echo "PASSED: registry:preflight"
+        echo "PASSED: registry:preflight [MODULE={{.MODULE}}]"
