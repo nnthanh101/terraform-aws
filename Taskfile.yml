@@ -108,6 +108,7 @@ tasks:
         echo "  GOVERN    Legal + constitutional compliance"
         echo "    task govern:legal         Apache 2.0 audit (5 checks)"
         echo "    task govern:score         15 checkpoints (>=85% threshold)"
+        echo "    task govern:naming        ADR-011 naming audit (5 layers)"
         echo "    task govern:all           All governance gates"
         echo ""
         echo "  MONITOR   Evidence collection & anti-NATO"
@@ -347,12 +348,18 @@ tasks:
         vars:
           CMD: "EVIDENCE_DIR={{.EVIDENCE_DIR}} bash scripts/govern-cps234.sh"
 
+  govern:naming:
+    desc: "ADR-011 naming convention audit (5 layers, exit 1 on fail) -> {{.EVIDENCE_DIR}}/governance/naming-audit-YYYY-MM-DD.json"
+    cmds:
+      - bash scripts/govern-naming.sh
+
   govern:all:
-    desc: "All governance gates: legal + score + cps234"
+    desc: "All governance gates: legal + score + cps234 + naming"
     cmds:
       - task: govern:legal
       - task: govern:score
       - task: govern:cps234
+      - task: govern:naming
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # MONITOR — evidence collection + anti-NATO gates
@@ -411,6 +418,7 @@ tasks:
       - task: build:validate
       - task: build:lint
       - task: govern:legal
+      - task: govern:naming
 
   ci:full:
     desc: "Full CI: build + test + govern + security + verify"

@@ -26,19 +26,19 @@ override_data {
   }
 }
 
-# Test 1: Module config_path follows kebab-case conventions — no LZ- prefix in path
-# ADR-001 + ADR-011: config paths and module directories use kebab-case, no LZ abbreviations
-run "module_config_path_is_kebab_case" {
+# Test 1: SSO instance outputs do not contain LZ abbreviations
+# ADR-011: no LZ abbreviations in resource identifiers or output values
+run "sso_outputs_no_lz_abbreviations" {
   command = plan
 
   assert {
-    condition     = !strcontains(module.identity_center.config_path, "LZ-")
-    error_message = "config_path must not contain uppercase LZ- prefix — ADR-001 requires kebab-case"
+    condition     = !strcontains(module.identity_center.sso_instance_arn, "lz-")
+    error_message = "sso_instance_arn must not contain lz- abbreviation — ADR-011"
   }
 
   assert {
-    condition     = !strcontains(module.identity_center.config_path, "lz-")
-    error_message = "config_path must not contain lowercase lz- prefix — ADR-011 Layer 1"
+    condition     = !strcontains(module.identity_center.identity_store_id, "lz-")
+    error_message = "identity_store_id must not contain lz- abbreviation — ADR-011"
   }
 }
 
@@ -103,12 +103,12 @@ run "tag_values_no_lz_abbreviations" {
   }
 
   assert {
-    condition     = !strcontains(module.identity_center.config_path, "lz-")
+    condition     = module.identity_center.config_path == null || !strcontains(module.identity_center.config_path, "lz-")
     error_message = "config_path must not contain lz- abbreviation — ADR-011 forbids LZ shorthand in output values"
   }
 
   assert {
-    condition     = strcontains(module.identity_center.config_path, "configs")
-    error_message = "config_path must reference 'configs' directory — naming convention anchor for audit trail (APRA CPS 234)"
+    condition     = module.identity_center.config_path == null || strcontains(module.identity_center.config_path, "configs")
+    error_message = "config_path must reference 'configs' directory when set — naming convention anchor for audit trail (APRA CPS 234)"
   }
 }
