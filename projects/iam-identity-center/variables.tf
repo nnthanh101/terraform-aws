@@ -6,10 +6,22 @@ variable "account_id" {
   default     = null
 }
 
-variable "sso_region" {
-  description = "AWS region for IAM Identity Center (global endpoint). Defaults to us-east-1."
+variable "security_account_id" {
+  description = "AWS account ID of the dedicated security/audit account. Optional — omit for single-account sandbox deployments."
   type        = string
-  default     = "us-east-1"
+  default     = null
+}
+
+variable "workload_account_id" {
+  description = "AWS account ID of the primary workload account. Optional — omit for single-account sandbox deployments."
+  type        = string
+  default     = null
+}
+
+variable "sso_region" {
+  description = "AWS region where IAM Identity Center is enabled."
+  type        = string
+  default     = "ap-southeast-2"
 }
 
 variable "default_tags" {

@@ -188,10 +188,10 @@ locals {
 # - Account Assignments -
 locals {
 
-  accounts_ids_maps = {
-    for idx, account in data.aws_organizations_organization.organization.accounts : account.name => account.id
-    if account.status == "ACTIVE" && can(data.aws_organizations_organization.organization.accounts)
-  }
+  accounts_ids_maps = var.enable_organizations_lookup ? {
+    for idx, account in data.aws_organizations_organization.organization[0].accounts : account.name => account.id
+    if account.status == "ACTIVE" && can(data.aws_organizations_organization.organization[0].accounts)
+  } : {}
 
   # Create a new local variable by flattening the complex type given in the variable "account_assignments"
   # This will be a 'tuple'
