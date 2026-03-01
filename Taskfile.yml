@@ -128,10 +128,11 @@ tasks:
         echo "    task ci:act               Local CI YAML test via act (workflow structure)"
         echo ""
         echo "  SPRINT    Milestone validation"
-        echo "    task sprint:validate      7-gate sprint validation"
-        echo "    task registry:preflight   Registry publish pre-flight [MODULE=]"
-        echo "    task release:tag-check    Verify git tag does not already exist in remote"
-        echo "    task modules:list         List all available modules"
+        echo "    task sprint:validate        7-gate sprint validation"
+        echo "    task registry:preflight     Registry publish pre-flight [MODULE=]"
+        echo "    task release:tag-check      Verify git tag does not already exist in remote"
+        echo "    task registry:bootstrap-tag Bootstrap per-module TFC tag (HITL push) [MODULE=]"
+        echo "    task modules:list           List all available modules"
         echo ""
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -503,13 +504,65 @@ tasks:
           exit 0
         fi
 
+  registry:bootstrap-tag:
+    desc: "Bootstrap per-module tag for TFC Registry [MODULE={{.MODULE}}] [COMMIT=HEAD]"
+    vars:
+      COMMIT: '{{.COMMIT | default "HEAD"}}'
+    cmds:
+      - |
+        VERSION=$(cat {{.MODULE_DIR}}/VERSION 2>/dev/null || echo "MISSING")
+        if [ "$VERSION" = "MISSING" ]; then
+          echo "FAIL: {{.MODULE_DIR}}/VERSION not found" && exit 1
+        fi
+        TAG="{{.MODULE}}/v${VERSION}"
+        COMMIT_SHA=$(git rev-parse {{.COMMIT}})
+        echo "=== Bootstrap Per-Module Tag ==="
+        echo "  Module:  {{.MODULE}}"
+        echo "  Version: ${VERSION}"
+        echo "  Tag:     ${TAG}"
+        echo "  Commit:  ${COMMIT_SHA}"
+        echo ""
+        if git ls-remote --tags origin "refs/tags/${TAG}" 2>/dev/null | grep -q "${TAG}"; then
+          echo "SKIP: ${TAG} already exists in remote — nothing to do"
+          exit 0
+        fi
+        git tag "${TAG}" "${COMMIT_SHA}"
+        echo "PASS: Created local tag ${TAG} on ${COMMIT_SHA}"
+        echo ""
+        echo "=== HITL Actions Required ==="
+        echo "  1. Verify TFC tag prefix is: {{.MODULE}}/"
+        echo "  2. Push tag: git push origin ${TAG}"
+        echo "  3. Verify: gh run list --workflow=registry-publish.yml --limit=3"
+
   registry:preflight:
-    desc: "Registry publish pre-flight: tag-check + ci:quick + test:tier1 + legal + CHANGELOG check [MODULE={{.MODULE}}]"
+    desc: "Registry publish pre-flight: per-module VERSION + tag-check + ci:quick + test:tier1 + legal + CHANGELOG check [MODULE={{.MODULE}}]"
     cmds:
       - task: release:tag-check
       - task: ci:quick
       - task: test:tier1
       - task: govern:legal
+      - |
+        echo "=== Per-Module VERSION Check ==="
+        MODULE_VERSION=$(cat {{.MODULE_DIR}}/VERSION 2>/dev/null || echo "MISSING")
+        if [ "$MODULE_VERSION" = "MISSING" ]; then
+          echo "FAIL: {{.MODULE_DIR}}/VERSION not found"
+          exit 1
+        fi
+        if ! echo "$MODULE_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+          echo "FAIL: {{.MODULE_DIR}}/VERSION contains invalid semver: $MODULE_VERSION"
+          exit 1
+        fi
+        echo "PASS: {{.MODULE}} VERSION=$MODULE_VERSION (valid semver)"
+      - |
+        echo "=== Global Tag Conflict Check ==="
+        MODULE_VERSION=$(cat {{.MODULE_DIR}}/VERSION 2>/dev/null)
+        GLOBAL_TAG="v${MODULE_VERSION}"
+        if git ls-remote --tags origin "refs/tags/${GLOBAL_TAG}" 2>/dev/null | grep -q "${GLOBAL_TAG}"; then
+          echo "WARN: Global tag ${GLOBAL_TAG} exists in remote — TFC may receive ambiguous publish event"
+          echo "WARN: Delete global tag before pushing per-module tag: git push origin :refs/tags/${GLOBAL_TAG}"
+        else
+          echo "PASS: No global tag conflict for v${MODULE_VERSION}"
+        fi
       - |
         echo "=== CHANGELOG Check ==="
         CHANGELOG_FILE="{{.MODULE_DIR}}/CHANGELOG.md"

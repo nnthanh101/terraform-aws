@@ -1,13 +1,13 @@
 <!-- Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE. -->
-# Quickstart
+# terraform-aws — Quickstart
 
-> Manager-facing guide for terraform-aws monorepo. 5 commands to validate, release, and monitor.
+> Registry: `oceansoft/iam-identity-center/aws` | Tag format: `MODULE/vX.Y.Z`
 
 ## 1. Start
 
 ```bash
-task build:env          # Start devcontainer (30s timeout)
-task plan:tools         # Verify 19 tools available
+task build:env          # Start devcontainer (18 tools, 30s)
+task plan:tools         # Verify tools available
 ```
 
 ## 2. Validate
@@ -20,54 +20,84 @@ task ci:full            # Full: build + test + govern + security
 
 ## 3. Release
 
-This repo uses [release-please](https://github.com/googleapis/release-please) for automated releases.
-
-**Workflow** (no manual `git tag` needed):
-
-1. Merge PRs with [Conventional Commits](https://www.conventionalcommits.org/) to `main`
-2. release-please opens a Release PR per module (e.g., `iam-identity-center/v1.2.0`)
-3. Merge the Release PR — release-please creates the tag + GitHub Release
-4. `registry-publish.yml` triggers on tag push — validates, tests, publishes to TFC Registry
-
-**Conventional Commit examples:**
+Fully automated. HITL action = merge one PR.
 
 ```
-feat(iam-identity-center): add permission set for developers
+Enterprise team pushes feat:/fix: commits to main
+             │
+             ▼
+┌─────────────────────────┐
+│  release-please.yml     │  AUTO
+│  - Detect version bump  │  feat: → MINOR, fix: → PATCH
+│  - Create/update PR     │  Bump VERSION + CHANGELOG
+│  - PR accumulates       │  Until HITL merges
+└──────────┬──────────────┘
+           │
+    HITL: merge Release PR (ONLY human step)
+           │
+           ▼
+┌─────────────────────────┐
+│  release-please.yml     │  AUTO (on merge to main)
+│  - Create git tag       │  iam-identity-center/v1.1.2
+│  - Create GitHub Release│  With auto-generated notes
+└──────────┬──────────────┘
+           │
+           ▼
+┌─────────────────────────┐
+│  registry-publish.yml   │  AUTO (triggered by tag */v*)
+│  1. Resolve module name │  → iam-identity-center
+│  2. Validate + lint     │  → ci:quick in container
+│  3. Tier 1 tests        │  → snapshot tests
+│  4. GitHub Release      │  → idempotent (skip if exists)
+│  5. Publish to TFC ★    │  → API upload (bypasses SIC)
+│  6. Verify status=ok    │  → polls TFC API
+└──────────┬──────────────┘
+           │
+           ▼
+   TFC Registry: v1.1.2 ✓
+   Enterprise team can consume module
+```
+
+Conventional commit examples:
+```
+feat(iam-identity-center): add developer permission set
 fix(ecs-platform): correct task definition memory limit
-docs(fullstack-web): update ALB configuration examples
 ```
 
-**Important:** Do NOT run `git tag` or `gh release create` manually — release-please owns version state. See anti-pattern `RELEASE_PLEASE_DOUBLE_RELEASE`.
+> **WARNING: RELEASE_PLEASE_DOUBLE_RELEASE**
+> NEVER run `git tag` or `gh release create` manually.
+> release-please owns version state. Manual tags create duplicate releases.
+> The only HITL action is: **merge the Release PR**.
 
 ## 4. Pre-flight
 
-Before release-please creates a tag, verify readiness:
-
 ```bash
 task registry:preflight MODULE=iam-identity-center
-# Runs: tag-check + ci:quick + test:tier1 + legal + changelog check
+# Runs: tag-check + ci:quick + test:tier1 + legal + changelog
 ```
 
 ## 5. Status
 
 ```bash
-task modules:list                              # List all modules
-gh run list --workflow=ci.yml --limit=5        # Recent CI runs
-gh run list --workflow=registry-publish.yml --limit=5  # Recent publishes
-gh pr list --label="autorelease: pending"      # Pending release PRs
+task modules:list                                       # List modules
+gh run list --workflow=ci.yml --limit=5                 # CI runs
+gh run list --workflow=registry-publish.yml --limit=5   # Publish runs
+gh pr list --label="autorelease: pending"               # Release PRs
 ```
 
-## Module Overview
+## 6. Troubleshooting
 
-| Module | Version | Status |
-|--------|---------|--------|
-| `iam-identity-center` | 1.1.0 | Active — TFC Registry published |
-| `ecs-platform` | 1.0.0 | Stub — scaffolding only |
-| `fullstack-web` | 1.0.0 | Stub — scaffolding only |
+| Symptom | Fix |
+|---------|-----|
+| TFC "no tags" / SIC-001 | API-driven publish bypasses SIC — `registry-publish.yml` uploads via TFC API automatically |
+| release-please PR not created | Verify conventional commit format (`feat:`, `fix:`) |
+| `registry-publish.yml` skips | Tag must be per-module format: `MODULE/vX.Y.Z` |
+| VERSION mismatch | release-please `extra-files` bumps atomically — don't edit VERSION manually |
 
-## Useful Links
+## Module Reference
 
-- [Taskfile reference](Taskfile.yml) — `task --list` for all commands
-- [CI workflow](.github/workflows/ci.yml) — PR validation matrix
-- [Registry publish workflow](.github/workflows/registry-publish.yml) — tag-triggered publish
-- [Release-please config](release-please-config.json) — per-module release configuration
+| Module | Version | Status | Registry |
+|--------|---------|--------|----------|
+| `iam-identity-center` | 1.1.1 | Active | `oceansoft/iam-identity-center/aws` |
+| `ecs-platform` | 1.0.0 | Stub | — |
+| `fullstack-web` | 1.0.0 | Stub | — |

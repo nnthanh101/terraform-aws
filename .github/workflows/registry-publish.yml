@@ -5,7 +5,6 @@ on:
   push:
     tags:
       - '*/v*'    # module-prefixed: iam-identity-center/v1.2.0, ecs-platform/v0.1.0
-      - 'v[0-9]*' # legacy: global tags v1.1.0 (deprecated — remove in Phase 4)
 
 permissions:
   contents: read
@@ -28,14 +27,10 @@ jobs:
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
           if [[ "$TAG" == *"/"* ]]; then
-            # module-prefixed tag: iam-identity-center/v1.2.0
             MODULE_NAME="${TAG%/v*}"
             MODULE_VERSION="${TAG#*/}"
           else
-            # legacy global tag: v1.1.0 — default to iam-identity-center
-            MODULE_NAME="iam-identity-center"
-            MODULE_VERSION="${TAG}"
-            echo "WARN: Legacy global tag '$TAG' — defaulting module to $MODULE_NAME (deprecated, use module-prefixed tags)"
+            echo "FAIL: Tag '$TAG' is not per-module format (expected: MODULE/vX.Y.Z)" && exit 1
           fi
           echo "module=${MODULE_NAME}" >> "$GITHUB_OUTPUT"
           echo "version=${MODULE_VERSION}" >> "$GITHUB_OUTPUT"
@@ -55,6 +50,7 @@ jobs:
       - name: Quick CI (fmt + validate + lint + legal)
         env:
           MODULE: ${{ needs.resolve.outputs.module }}
+          MODULE_DIR: ${{ needs.resolve.outputs.module_dir }}
         run: task ci:quick
 
   test:
@@ -113,3 +109,81 @@ jobs:
           else
             gh release create "$TAG" --generate-notes --title "${RELEASE_TITLE}"
           fi
+
+  publish:
+    name: Publish to TFC (${{ needs.resolve.outputs.module }} ${{ needs.resolve.outputs.version }})
+    needs: [resolve, test, release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create clean module tarball
+        env:
+          MODULE_DIR: ${{ needs.resolve.outputs.module_dir }}
+        run: |
+          tar -czf /tmp/module.tar.gz \
+            --exclude='.terraform' \
+            --exclude='.terraform.lock.hcl' \
+            --exclude='.config' \
+            --exclude='.project_automation' \
+            --exclude='.pre-commit-config.yaml' \
+            --exclude='.copier-answers.yml' \
+            --exclude='.project_config.yml' \
+            --exclude='.checkov.yml' \
+            -C "${MODULE_DIR}" .
+
+      - name: Create TFC module version
+        id: create-version
+        env:
+          TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
+          MODULE_NAME: ${{ needs.resolve.outputs.module }}
+          MODULE_VERSION: ${{ needs.resolve.outputs.version }}
+        run: |
+          VERSION="${MODULE_VERSION#v}"
+          RESPONSE=$(curl -s -X POST \
+            -H "Authorization: Bearer ${TFE_TOKEN}" \
+            -H "Content-Type: application/vnd.api+json" \
+            -d "{\"data\":{\"type\":\"registry-module-versions\",\"attributes\":{\"version\":\"${VERSION}\"}}}" \
+            "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${MODULE_NAME}/aws/versions")
+          UPLOAD_URL=$(echo "$RESPONSE" | jq -r '.data.links.upload')
+          if [ "$UPLOAD_URL" = "null" ] || [ -z "$UPLOAD_URL" ]; then
+            echo "ERROR: Failed to create version — check TFE_TOKEN and module exists"
+            echo "$RESPONSE" | jq .
+            exit 1
+          fi
+          echo "upload_url=${UPLOAD_URL}" >> "$GITHUB_OUTPUT"
+          echo "Created version ${VERSION}, upload URL obtained"
+
+      - name: Upload module to TFC
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X PUT -H "Content-Type: application/octet-stream" \
+            --data-binary @/tmp/module.tar.gz \
+            "${{ steps.create-version.outputs.upload_url }}")
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "ERROR: Upload failed with HTTP ${HTTP_CODE}"
+            exit 1
+          fi
+          echo "Upload successful (HTTP ${HTTP_CODE})"
+
+      - name: Verify TFC ingestion
+        env:
+          TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
+          MODULE_NAME: ${{ needs.resolve.outputs.module }}
+          MODULE_VERSION: ${{ needs.resolve.outputs.version }}
+        run: |
+          VERSION="${MODULE_VERSION#v}"
+          for i in 1 2 3 4 5; do
+            sleep 5
+            STATUS=$(curl -s \
+              -H "Authorization: Bearer ${TFE_TOKEN}" \
+              "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${MODULE_NAME}/aws" \
+              | jq -r ".data.attributes.\"version-statuses\"[] | select(.version==\"${VERSION}\") | .status")
+            echo "Attempt ${i}: version ${VERSION} status = ${STATUS}"
+            if [ "$STATUS" = "ok" ]; then
+              echo "TFC Registry publish verified: ${MODULE_NAME} v${VERSION} ✓"
+              exit 0
+            fi
+          done
+          echo "ERROR: Version ${VERSION} did not reach 'ok' status after 25s"
+          exit 1

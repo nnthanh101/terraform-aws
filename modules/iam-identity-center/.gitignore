@@ -39,7 +39,8 @@ tf.plan
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
-# .terraform.lock.hcl — MUST be committed per ADR-004 (multi-platform provider locking)
+# .terraform.lock.hcl — excluded from published modules (causes TFC SIC-001)
+.terraform.lock.hcl
 
 go.mod
 go.sum

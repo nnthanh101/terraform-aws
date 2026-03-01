@@ -18,7 +18,7 @@ jobs:
     name: Release Please
     runs-on: ubuntu-latest
     steps:
-      - uses: google-github-actions/release-please-action@v4
+      - uses: googleapis/release-please-action@v4
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -30,9 +30,10 @@ jobs:
         if: always()
         run: |
           mkdir -p tmp/terraform-aws/release-logs
+          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           cat <<EOF > tmp/terraform-aws/release-logs/release-please-${{ github.run_id }}.json
           {
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "timestamp": "${TIMESTAMP}",
             "run_id": "${{ github.run_id }}",
             "sha": "${{ github.sha }}",
             "release_created": "${{ steps.release.outputs.release_created }}",

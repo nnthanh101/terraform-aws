@@ -54,6 +54,6 @@ output "identity_store_id" {
 }
 
 output "config_path" {
-  value       = var.config_path != "" ? var.config_path : "${path.module}/configs"
+  value       = var.config_path != "" ? var.config_path : null
   description = "Path to YAML configuration directory for APRA CPS 234 audit trail"
 }
