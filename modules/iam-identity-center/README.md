@@ -1,6 +1,8 @@
 <!-- BEGIN_TF_DOCS -->
 # AWS IAM Identity Center Terraform Module
 
+> Derived from [aws-ia/terraform-aws-iam-identity-center](https://github.com/aws-ia/terraform-aws-iam-identity-center) v1.0.4 (Apache-2.0). See NOTICE.
+
 ## Features
 
 - Dynamic User Creation
@@ -246,7 +248,7 @@ See the `CONTRIBUTING.md` file for information on how to contribute.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.34.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.28, < 7.0 |
 
 ## Resources
 
@@ -287,6 +289,7 @@ See the `CONTRIBUTING.md` file for information on how to contribute.
 | <a name="input_account_assignments"></a> [account\_assignments](#input\_account\_assignments) | List of maps containing mapping between user/group, permission set and assigned accounts list. See account\_assignments description in README for more information about map values. | <pre>map(object({<br/>    principal_name  = string<br/>    principal_type  = string<br/>    principal_idp   = string # acceptable values are either "INTERNAL" or "EXTERNAL"<br/>    permission_sets = list(string)<br/>    account_ids     = list(string)<br/>  }))</pre> | `{}` | no |
 | <a name="input_config_path"></a> [config\_path](#input\_config\_path) | Path to YAML configuration directory for APRA CPS 234 audit trail. When set, reads permission\_sets.yaml and account\_assignments.yaml from this directory, merged with HCL variable values (YAML values take precedence). | `string` | `""` | no |
 | <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | Tags applied to all permission sets. Overrides module defaults. Required keys when non-empty: CostCenter, Project, Environment, DataClassification. | `map(string)` | `{}` | no |
+| <a name="input_enable_organizations_lookup"></a> [enable\_organizations\_lookup](#input\_enable\_organizations\_lookup) | Enable Organizations data source for account-name-to-ID resolution. Set false for standalone accounts or when all account\_assignments use 12-digit account IDs. | `bool` | `true` | no |
 | <a name="input_existing_google_sso_users"></a> [existing\_google\_sso\_users](#input\_existing\_google\_sso\_users) | Names of the existing Google users that you wish to reference from IAM Identity Center. | <pre>map(object({<br/>    user_name        = string<br/>    group_membership = optional(list(string), null) // only used if your IdP only syncs users, and you wish to manage which groups they should go in<br/>  }))</pre> | `{}` | no |
 | <a name="input_existing_permission_sets"></a> [existing\_permission\_sets](#input\_existing\_permission\_sets) | Names of the existing permission\_sets that you wish to reference from IAM Identity Center. | <pre>map(object({<br/>    permission_set_name = string<br/>  }))</pre> | `{}` | no |
 | <a name="input_existing_sso_groups"></a> [existing\_sso\_groups](#input\_existing\_sso\_groups) | Names of the existing groups that you wish to reference from IAM Identity Center. | <pre>map(object({<br/>    group_name = string<br/>  }))</pre> | `{}` | no |
