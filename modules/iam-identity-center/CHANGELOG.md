@@ -5,82 +5,33 @@ All notable changes to the `iam-identity-center` module will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.8](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.7...iam-identity-center/v1.1.8) (2026-03-01)
+## [1.1.9] (2026-03-02)
 
-### Bug Fixes
+### Enterprise SSO Landing Zone — Production Ready
 
-* fix registry-publish checkout for workflow_dispatch: normalize tag ref to refs/tags/ prefix ([b6a6e58](https://github.com/nnthanh101/terraform-aws/commit/b6a6e58))
-* sync VERSION + manifest + CHANGELOG to v1.1.7 ([90dd2be](https://github.com/nnthanh101/terraform-aws/commit/90dd2be))
+- 4-tier RBAC model deployed: Admin (1h), PowerUser (4h), ReadOnly (8h), SecurityAudit (8h) — enforcing least-privilege session durations per APRA CPS 234
+- 16 AWS resources converged: 4 SSO groups, 4 permission sets, 4 managed policies, 4 account assignments — zero drift
+- 18 Tier 1 snapshot tests passing, 8/8 deployment verification checks, 4/4 cross-validation (ADLC vs CLI vs S3 state)
+- E2E validated: code = deployed = TFC Registry (`oceansoft/iam-identity-center/aws`)
 
-## [1.1.7](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.6...iam-identity-center/v1.1.7) (2026-03-01)
+### Compliance and Governance
 
-### Bug Fixes
+- APRA CPS 234: separation of duties via CODEOWNERS, RBAC tiering with session duration controls
+- Apache 2.0: LICENSE + NOTICE.txt + file-level copyright headers
+- FOCUS 1.2+: cost allocation tags on all resources
+- 3-way cross-validation evidence: ADLC task output vs raw AWS CLI vs Terraform state
 
-* sync VERSION, CHANGELOG, and manifest to match release-please v1.1.6 ([90dd2be](https://github.com/nnthanh101/terraform-aws/commit/90dd2be))
+### Module Capabilities
 
-## [1.1.6](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.3...iam-identity-center/v1.1.6) (2026-03-01)
+- Wrapper module consuming `aws-ia/terraform-aws-iam-identity-center` v1.0.4
+- YAML-decoded inputs for SSO users, groups, permission sets, and account assignments
+- Account-level SSO support (standalone accounts without AWS Organizations)
+- 8 consumer example patterns covering common enterprise SSO scenarios
+- S3 native state locking (`use_lockfile = true`, no DynamoDB)
 
-### Bug Fixes
+### Technical
 
-* resolve CI/CD pipeline failures: InfraCost + Checkov APRA/FOCUS tag compliance ([c1f614d](https://github.com/nnthanh101/terraform-aws/commit/c1f614d02263b6fc52db21d9f2cf7e2236a30e63)), ([283f174](https://github.com/nnthanh101/terraform-aws/commit/283f1748cd5c3c582806942cf68b1e33bfbb2050)), ([71f4fca](https://github.com/nnthanh101/terraform-aws/commit/71f4fcabf500130798b64d725e8c6902235bb080)), ([3982cae](https://github.com/nnthanh101/terraform-aws/commit/3982cae7d9a54c8d37d09fb21e014eea5f572e85))
-* sync VERSION files to match release-please manifest (1.1.1 to 1.1.2) ([#27](https://github.com/nnthanh101/terraform-aws/issues/27)) ([ad2eb92](https://github.com/nnthanh101/terraform-aws/commit/ad2eb92b2f1b2cd63deba258ecf9975b8c20759a))
-* update NOTICE.txt with sprint modifications (4-tier SSO, ADR-011 naming) ([444c87f](https://github.com/nnthanh101/terraform-aws/commit/444c87fdaa969cf2ecc089635e7209edcdf0140e))
-
-### Documentation
-
-* auto-generate module README [skip ci] ([24668c6](https://github.com/nnthanh101/terraform-aws/commit/24668c65df2303231c00de9f38fb688a3ebf4381))
-
-## [1.1.2](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.1...iam-identity-center/v1.1.2) (2026-02-28)
-
-### Bug Fixes
-
-* resolve CI/CD pipeline failures: InfraCost + Checkov APRA/FOCUS tag compliance ([c1f614d](https://github.com/nnthanh101/terraform-aws/commit/c1f614d02263b6fc52db21d9f2cf7e2236a30e63)), ([283f174](https://github.com/nnthanh101/terraform-aws/commit/283f1748cd5c3c582806942cf68b1e33bfbb2050)), ([71f4fca](https://github.com/nnthanh101/terraform-aws/commit/71f4fcabf500130798b64d725e8c6902235bb080)), ([3982cae](https://github.com/nnthanh101/terraform-aws/commit/3982cae7d9a54c8d37d09fb21e014eea5f572e85))
-
-## [1.0.0] - 2026-02-26
-
-### Added
-
-- Full wrapper module for AWS IAM Identity Center consuming `aws-ia/terraform-aws-iam-identity-center` v1.0.4 (ADR-007 upstream dependency strategy)
-- YAML-decoded variable inputs for SSO users, groups, permission sets, and account assignments
-- 8 consumer example patterns:
-  - `create-users-and-groups` — Create new SSO users and groups from scratch
-  - `existing-users-and-groups` — Reference pre-existing Identity Store entities
-  - `create-users-and-groups-with-customer-managed-policies` — Customer-managed IAM policies
-  - `google-workspace` — Google Workspace IdP integration
-  - `inline-policy` — Inline permission set policies
-  - `instance-access-control-attributes` — ABAC via instance access control
-  - `create-apps-and-assignments` — SSO application assignments
-  - `existing-users-groups-create-apps` — Existing entities with new app assignments
-- 8 test files (`.tftest.hcl`) with Tier 1 snapshot testing (ADR-004 3-tier strategy)
-- Apache 2.0 licensing with copyright headers on all `.tf` files
-- `NOTICE.txt` upstream attribution for `aws-ia/terraform-aws-iam-identity-center` v1.0.4 (Apache 2.0 Section 4d)
-- `CODEOWNERS` with 7 path-specific ownership entries (APRA CPS 234 separation of duties)
-- `.terraform.lock.hcl` for multi-platform provider reproducibility
-- `README.md` auto-generated via `terraform-docs`
-
-### Architecture Decisions
-
-- **ADR-001**: Module naming convention (kebab-case)
-- **ADR-003**: Provider constraints `>= 6.28, < 7.0` (no AWSCC dependency)
-- **ADR-004**: 3-tier testing strategy (snapshot/localstack/integration)
-- **ADR-006**: S3 native state locking (`use_lockfile = true`, no DynamoDB)
-- **ADR-007**: Upstream dependency strategy (fork + rebrand path)
-
-### Compliance
-
-- APRA CPS 234 Attachment H: Separation of duties enforced via CODEOWNERS
-- Apache 2.0: Full LICENSE, NOTICE.txt, file-level copyright headers
-- FOCUS 1.2+: Cost allocation tags in example configurations
-
-### Provider Requirements
-
-- Terraform `>= 1.11.0`
-- AWS Provider `>= 6.28, < 7.0`
-
-### Registry
-
-- Namespace: `oceansoft/iam-identity-center/aws`
-- Publication target: `app.terraform.io/app/oceansoft/`
-
-[Unreleased]: https://github.com/nnthanh101/terraform-aws/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/nnthanh101/terraform-aws/releases/tag/v1.0.0
+- Terraform >= 1.11.0, AWS Provider >= 6.28, < 7.0
+- Registry: `oceansoft/iam-identity-center/aws` at `app.terraform.io/app/oceansoft/`
+- CI/CD: release-please automation, Checkov + InfraCost + Trivy scanning
+- ADRs: 001 (naming), 003 (providers), 004 (3-tier testing), 006 (state locking), 007 (upstream strategy)
