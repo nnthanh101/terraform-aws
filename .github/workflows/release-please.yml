@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 concurrency:
   group: release-please-${{ github.ref }}
@@ -19,7 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       releases_created: ${{ steps.release.outputs.releases_created }}
-      tag_name: ${{ steps.release.outputs['iam-identity-center--tag_name'] }}
+      iam_tag: ${{ steps.release.outputs['iam-identity-center--tag_name'] }}
+      ecs_tag: ${{ steps.release.outputs['ecs-platform--tag_name'] }}
+      web_tag: ${{ steps.release.outputs['fullstack-web--tag_name'] }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -28,7 +31,6 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # Log release output for evidence trail (anti-NATO)
       - name: Log release outputs
         if: always()
         run: |
@@ -40,9 +42,18 @@ jobs:
             "run_id": "${{ github.run_id }}",
             "sha": "${{ github.sha }}",
             "releases_created": "${{ steps.release.outputs.releases_created }}",
-            "tag_name": "${{ steps.release.outputs['iam-identity-center--tag_name'] }}",
-            "version": "${{ steps.release.outputs['iam-identity-center--version'] }}",
-            "pr_number": "${{ steps.release.outputs['iam-identity-center--pr'] }}"
+            "iam_identity_center": {
+              "tag": "${{ steps.release.outputs['iam-identity-center--tag_name'] }}",
+              "version": "${{ steps.release.outputs['iam-identity-center--version'] }}"
+            },
+            "ecs_platform": {
+              "tag": "${{ steps.release.outputs['ecs-platform--tag_name'] }}",
+              "version": "${{ steps.release.outputs['ecs-platform--version'] }}"
+            },
+            "fullstack_web": {
+              "tag": "${{ steps.release.outputs['fullstack-web--tag_name'] }}",
+              "version": "${{ steps.release.outputs['fullstack-web--version'] }}"
+            }
           }
           EOFLOG
 
@@ -53,21 +64,27 @@ jobs:
           name: release-please-${{ github.run_id }}
           path: tmp/terraform-aws/release-logs/
 
-  # Auto-trigger TFC publish when release-please creates a new release
+  # Auto-trigger TFC publish for each module that got a release
   trigger-publish:
     name: Trigger TFC Publish
     needs: [release-please]
     if: needs.release-please.outputs.releases_created == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Dispatch registry-publish workflow
+      - name: Dispatch registry-publish for each released module
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IAM_TAG: ${{ needs.release-please.outputs.iam_tag }}
+          ECS_TAG: ${{ needs.release-please.outputs.ecs_tag }}
+          WEB_TAG: ${{ needs.release-please.outputs.web_tag }}
         run: |
-          TAG="${{ needs.release-please.outputs.tag_name }}"
-          echo "Release created — triggering registry-publish for tag: ${TAG}"
-          gh workflow run registry-publish.yml \
-            --repo "${{ github.repository }}" \
-            --ref main \
-            -f tag="${TAG}"
-          echo "Registry publish dispatched for ${TAG}"
+          for TAG in "$IAM_TAG" "$ECS_TAG" "$WEB_TAG"; do
+            if [ -n "$TAG" ]; then
+              echo "Dispatching registry-publish for: ${TAG}"
+              gh workflow run registry-publish.yml \
+                --repo "${{ github.repository }}" \
+                --ref main \
+                -f tag="${TAG}"
+              echo "Dispatched: ${TAG}"
+            fi
+          done
