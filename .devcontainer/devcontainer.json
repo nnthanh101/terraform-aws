@@ -35,7 +35,7 @@
 
   "remoteEnv": {
     "ADLC_PROJECT": "terraform-aws",
-    "ADLC_VERSION": "3.3.0",
+    "ADLC_VERSION": "3.3.2",
     "EVIDENCE_DIR": "/workspace/tmp/terraform-aws",
     "LOCALSTACK_ENDPOINT": "http://localstack:4566",
     "AWS_PROFILE": "terraform-aws",

@@ -80,6 +80,25 @@ jobs:
             tmp/terraform-aws/governance/
             tmp/terraform-aws/test-results/
 
+  naming:
+    name: Naming Convention Audit (ADR-011)
+    runs-on: ubuntu-latest
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ADR-011 naming convention (5 layers)
+        run: task govern:naming
+
+      - name: Upload naming evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: naming-audit
+          path: tmp/terraform-aws/governance/naming-audit-*.json
+
   test:
     name: CI-Safe Tests (Tier 1 + 2, no AWS cost)
     needs: [validate]
