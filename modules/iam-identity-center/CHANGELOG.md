@@ -5,6 +5,18 @@ All notable changes to the `iam-identity-center` module will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.3...iam-identity-center/v1.1.4) (2026-03-01)
+
+
+### Bug Fixes
+
+* Github Actions CI/CD + InfraCost +  Checkov APRA+FOCUS tag failures ([c1f614d](https://github.com/nnthanh101/terraform-aws/commit/c1f614d02263b6fc52db21d9f2cf7e2236a30e63))
+* Github Actions CI/CD + InfraCost +  Checkov APRA+FOCUS tag failures ([c1f614d](https://github.com/nnthanh101/terraform-aws/commit/c1f614d02263b6fc52db21d9f2cf7e2236a30e63))
+* Github Actions CI/CD + InfraCost +  Checkov APRA+FOCUS tag failures ([283f174](https://github.com/nnthanh101/terraform-aws/commit/283f1748cd5c3c582806942cf68b1e33bfbb2050))
+* Github Actions CI/CD + InfraCost +  Checkov APRA+FOCUS tag failures ([71f4fca](https://github.com/nnthanh101/terraform-aws/commit/71f4fcabf500130798b64d725e8c6902235bb080))
+* Github Actions CI/CD + InfraCost + Checkov APRA+FOCUS tag failures ([3982cae](https://github.com/nnthanh101/terraform-aws/commit/3982cae7d9a54c8d37d09fb21e014eea5f572e85))
+* sync VERSION files to match release-please manifest (1.1.1 → 1.1.2) ([#27](https://github.com/nnthanh101/terraform-aws/issues/27)) ([ad2eb92](https://github.com/nnthanh101/terraform-aws/commit/ad2eb92b2f1b2cd63deba258ecf9975b8c20759a))
+
 ## [1.1.3](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.2...iam-identity-center/v1.1.3) (2026-03-01)
 
 
