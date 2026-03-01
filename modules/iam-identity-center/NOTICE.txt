@@ -21,3 +21,5 @@ Modifications from upstream:
 - Added Terraform check blocks for YAML input validation
 - Added 4-tier tag taxonomy (Mandatory, FinOps FOCUS, Compliance CPS 234, Operational)
 - Provider constraint updated to >= 6.28, < 7.0 (ADR-003)
+- Added 4-tier Landing Zone SSO (Admin, PowerUser, ReadOnly, SecurityAudit)
+- Added ADR-011 naming convention governance (5-layer stratification)
