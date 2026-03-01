@@ -121,6 +121,7 @@ tasks:
         echo "    task deploy:plan          terraform plan + save [MODULE=]"
         echo "    task deploy:apply         terraform apply (from plan) [MODULE=]"
         echo "    task deploy:destroy       terraform destroy + orphan check [MODULE=]"
+        echo "    task deploy:verify        Cross-validate deployed resources via AWS CLI"
         echo "    task deploy:full          Full cycle: init → preflight → plan → apply"
         echo ""
         echo "  OPERATE   Environment lifecycle"
@@ -429,6 +430,11 @@ tasks:
       - task: deploy:preflight
       - task: deploy:plan
       - task: deploy:apply
+
+  deploy:verify:
+    desc: "Cross-validate deployed resources via AWS CLI [MODULE={{.MODULE}}]"
+    cmds:
+      - MODULE={{.MODULE}} bash scripts/verify-deployment.sh
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # OPERATE — environment lifecycle
