@@ -15,13 +15,15 @@ provider "aws" {
   region = "ap-southeast-2"
 
   default_tags {
-    tags = {
-      CostCenter         = "platform"
-      Project            = "iam-identity-center"
-      Environment        = "sandbox"
-      ServiceName        = "sso"
-      DataClassification = "internal"
-      ManagedBy          = "terraform"
-    }
+    tags = var.default_tags
+  }
+}
+
+provider "aws" {
+  alias  = "identity_center"
+  region = var.sso_region
+
+  default_tags {
+    tags = var.default_tags
   }
 }

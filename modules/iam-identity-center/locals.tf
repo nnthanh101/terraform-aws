@@ -262,7 +262,7 @@ locals {
   # group-application assignments
   apps_groups_assignments = flatten([
     for app in var.sso_applications : [
-      for group in app.group_assignments : {
+      for group in coalesce(app.group_assignments, []) : {
         app_name       = app.name
         group_name     = group
         principal_type = "GROUP"
@@ -274,7 +274,7 @@ locals {
   # user-application assignments
   apps_users_assignments = flatten([
     for app in var.sso_applications : [
-      for user in app.user_assignments : {
+      for user in coalesce(app.user_assignments, []) : {
         app_name       = app.name
         user_name      = user
         principal_type = "USER"
@@ -295,7 +295,7 @@ locals {
   # app assignments access scopes 
   apps_assignments_access_scopes = flatten([
     for app in var.sso_applications : [
-      for ass_acc_scope in app.assignments_access_scope : {
+      for ass_acc_scope in coalesce(app.assignments_access_scope, []) : {
         app_name           = app.name
         authorized_targets = ass_acc_scope.authorized_targets
         scope              = ass_acc_scope.scope

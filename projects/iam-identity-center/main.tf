@@ -2,12 +2,22 @@
 # Example: IAM Identity Center with HCL variable inputs
 # Registry: oceansoft/iam-identity-center/aws
 
+data "aws_caller_identity" "current" {}
+
+locals {
+  account_id = coalesce(var.account_id, data.aws_caller_identity.current.account_id)
+}
+
 module "identity_center" {
   source  = "oceansoft/iam-identity-center/aws"
-  version = "~> 1.0"
+  version = "~> 1.1"
 
   # For local development, use relative path instead:
   # source = "../../modules/iam-identity-center"
+
+  providers = {
+    aws = aws.identity_center
+  }
 
   sso_groups = {
     PlatformTeam = {
@@ -31,7 +41,7 @@ module "identity_center" {
       principal_type  = "GROUP"
       principal_idp   = "INTERNAL"
       permission_sets = ["Admin"]
-      account_ids     = ["123456789012"]
+      account_ids     = [local.account_id]
     }
   }
 }
