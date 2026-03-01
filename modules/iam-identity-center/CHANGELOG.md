@@ -7,77 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.8](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.7...iam-identity-center/v1.1.8) (2026-03-01)
 
-
 ### Bug Fixes
 
 * fix registry-publish checkout for workflow_dispatch: normalize tag ref to refs/tags/ prefix ([b6a6e58](https://github.com/nnthanh101/terraform-aws/commit/b6a6e58))
 * sync VERSION + manifest + CHANGELOG to v1.1.7 ([90dd2be](https://github.com/nnthanh101/terraform-aws/commit/90dd2be))
 
-
 ## [1.1.7](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.6...iam-identity-center/v1.1.7) (2026-03-01)
 
+### Bug Fixes
+
+* sync VERSION, CHANGELOG, and manifest to match release-please v1.1.6 ([90dd2be](https://github.com/nnthanh101/terraform-aws/commit/90dd2be))
+
+## [1.1.6](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.3...iam-identity-center/v1.1.6) (2026-03-01)
 
 ### Bug Fixes
 
-* sync VERSION files to match release-please manifest (1.1.6) ([90dd2be](https://github.com/nnthanh101/terraform-aws/commit/90dd2be))
-* sync CHANGELOG.md with v1.1.6 release section from main ([90dd2be](https://github.com/nnthanh101/terraform-aws/commit/90dd2be))
-* sync .release-please-manifest.json to v1.1.6 ([90dd2be](https://github.com/nnthanh101/terraform-aws/commit/90dd2be))
-
-## [1.1.6](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.5...iam-identity-center/v1.1.6) (2026-03-01)
-
-
-### Bug Fixes
-
-* Github Actions CI/CD + InfraCost +  Checkov APRA+FOCUS tag failures ([c1f614d](https://github.com/nnthanh101/terraform-aws/commit/c1f614d02263b6fc52db21d9f2cf7e2236a30e63))
-* Github Actions CI/CD + InfraCost +  Checkov APRA+FOCUS tag failures ([283f174](https://github.com/nnthanh101/terraform-aws/commit/283f1748cd5c3c582806942cf68b1e33bfbb2050))
-* Github Actions CI/CD + InfraCost +  Checkov APRA+FOCUS tag failures ([71f4fca](https://github.com/nnthanh101/terraform-aws/commit/71f4fcabf500130798b64d725e8c6902235bb080))
-* Github Actions CI/CD + InfraCost + Checkov APRA+FOCUS tag failures ([3982cae](https://github.com/nnthanh101/terraform-aws/commit/3982cae7d9a54c8d37d09fb21e014eea5f572e85))
-* sync VERSION files to match release-please manifest (1.1.1 → 1.1.2) ([#27](https://github.com/nnthanh101/terraform-aws/issues/27)) ([ad2eb92](https://github.com/nnthanh101/terraform-aws/commit/ad2eb92b2f1b2cd63deba258ecf9975b8c20759a))
+* resolve CI/CD pipeline failures: InfraCost + Checkov APRA/FOCUS tag compliance ([c1f614d](https://github.com/nnthanh101/terraform-aws/commit/c1f614d02263b6fc52db21d9f2cf7e2236a30e63)), ([283f174](https://github.com/nnthanh101/terraform-aws/commit/283f1748cd5c3c582806942cf68b1e33bfbb2050)), ([71f4fca](https://github.com/nnthanh101/terraform-aws/commit/71f4fcabf500130798b64d725e8c6902235bb080)), ([3982cae](https://github.com/nnthanh101/terraform-aws/commit/3982cae7d9a54c8d37d09fb21e014eea5f572e85))
+* sync VERSION files to match release-please manifest (1.1.1 to 1.1.2) ([#27](https://github.com/nnthanh101/terraform-aws/issues/27)) ([ad2eb92](https://github.com/nnthanh101/terraform-aws/commit/ad2eb92b2f1b2cd63deba258ecf9975b8c20759a))
 * update NOTICE.txt with sprint modifications (4-tier SSO, ADR-011 naming) ([444c87f](https://github.com/nnthanh101/terraform-aws/commit/444c87fdaa969cf2ecc089635e7209edcdf0140e))
-
 
 ### Documentation
 
 * auto-generate module README [skip ci] ([24668c6](https://github.com/nnthanh101/terraform-aws/commit/24668c65df2303231c00de9f38fb688a3ebf4381))
 
-## [1.1.5](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.4...iam-identity-center/v1.1.5) (2026-03-01)
-
-
-### Bug Fixes
-
-* update NOTICE.txt with sprint modifications (4-tier SSO, ADR-011 naming) ([444c87f](https://github.com/nnthanh101/terraform-aws/commit/444c87fdaa969cf2ecc089635e7209edcdf0140e))
-
-## [1.1.4](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.3...iam-identity-center/v1.1.4) (2026-03-01)
-
-
-### Bug Fixes
-
-* Github Actions CI/CD + InfraCost +  Checkov APRA+FOCUS tag failures ([c1f614d](https://github.com/nnthanh101/terraform-aws/commit/c1f614d02263b6fc52db21d9f2cf7e2236a30e63))
-* Github Actions CI/CD + InfraCost +  Checkov APRA+FOCUS tag failures ([c1f614d](https://github.com/nnthanh101/terraform-aws/commit/c1f614d02263b6fc52db21d9f2cf7e2236a30e63))
-* Github Actions CI/CD + InfraCost +  Checkov APRA+FOCUS tag failures ([283f174](https://github.com/nnthanh101/terraform-aws/commit/283f1748cd5c3c582806942cf68b1e33bfbb2050))
-* Github Actions CI/CD + InfraCost +  Checkov APRA+FOCUS tag failures ([71f4fca](https://github.com/nnthanh101/terraform-aws/commit/71f4fcabf500130798b64d725e8c6902235bb080))
-* Github Actions CI/CD + InfraCost + Checkov APRA+FOCUS tag failures ([3982cae](https://github.com/nnthanh101/terraform-aws/commit/3982cae7d9a54c8d37d09fb21e014eea5f572e85))
-* sync VERSION files to match release-please manifest (1.1.1 → 1.1.2) ([#27](https://github.com/nnthanh101/terraform-aws/issues/27)) ([ad2eb92](https://github.com/nnthanh101/terraform-aws/commit/ad2eb92b2f1b2cd63deba258ecf9975b8c20759a))
-
-## [1.1.3](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.2...iam-identity-center/v1.1.3) (2026-03-01)
-
-
-### Bug Fixes
-
-* sync VERSION files to match release-please manifest (1.1.1 → 1.1.2) ([#27](https://github.com/nnthanh101/terraform-aws/issues/27)) ([ad2eb92](https://github.com/nnthanh101/terraform-aws/commit/ad2eb92b2f1b2cd63deba258ecf9975b8c20759a))
-
 ## [1.1.2](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.1...iam-identity-center/v1.1.2) (2026-02-28)
 
-
 ### Bug Fixes
 
-* Github Actions CI/CD + InfraCost +  Checkov APRA+FOCUS tag failures ([c1f614d](https://github.com/nnthanh101/terraform-aws/commit/c1f614d02263b6fc52db21d9f2cf7e2236a30e63))
-* Github Actions CI/CD + InfraCost +  Checkov APRA+FOCUS tag failures ([c1f614d](https://github.com/nnthanh101/terraform-aws/commit/c1f614d02263b6fc52db21d9f2cf7e2236a30e63))
-* Github Actions CI/CD + InfraCost +  Checkov APRA+FOCUS tag failures ([283f174](https://github.com/nnthanh101/terraform-aws/commit/283f1748cd5c3c582806942cf68b1e33bfbb2050))
-* Github Actions CI/CD + InfraCost +  Checkov APRA+FOCUS tag failures ([71f4fca](https://github.com/nnthanh101/terraform-aws/commit/71f4fcabf500130798b64d725e8c6902235bb080))
-* Github Actions CI/CD + InfraCost + Checkov APRA+FOCUS tag failures ([3982cae](https://github.com/nnthanh101/terraform-aws/commit/3982cae7d9a54c8d37d09fb21e014eea5f572e85))
-
-## [Unreleased]
+* resolve CI/CD pipeline failures: InfraCost + Checkov APRA/FOCUS tag compliance ([c1f614d](https://github.com/nnthanh101/terraform-aws/commit/c1f614d02263b6fc52db21d9f2cf7e2236a30e63)), ([283f174](https://github.com/nnthanh101/terraform-aws/commit/283f1748cd5c3c582806942cf68b1e33bfbb2050)), ([71f4fca](https://github.com/nnthanh101/terraform-aws/commit/71f4fcabf500130798b64d725e8c6902235bb080)), ([3982cae](https://github.com/nnthanh101/terraform-aws/commit/3982cae7d9a54c8d37d09fb21e014eea5f572e85))
 
 ## [1.0.0] - 2026-02-26
 
