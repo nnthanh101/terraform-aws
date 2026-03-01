@@ -109,6 +109,7 @@ tasks:
         echo "    task govern:legal         Apache 2.0 audit (5 checks)"
         echo "    task govern:score         15 checkpoints (>=85% threshold)"
         echo "    task govern:naming        ADR-011 naming audit (5 layers)"
+        echo "    task govern:version-sync  4-file version consistency check [MODULE=]"
         echo "    task govern:all           All governance gates"
         echo ""
         echo "  MONITOR   Evidence collection & anti-NATO"
@@ -121,6 +122,8 @@ tasks:
         echo "    task deploy:plan          terraform plan + save [MODULE=]"
         echo "    task deploy:apply         terraform apply (from plan) [MODULE=]"
         echo "    task deploy:destroy       terraform destroy + orphan check [MODULE=]"
+        echo "    task deploy:verify        Cross-validate deployed resources via AWS CLI"
+        echo "    task deploy:cross-validate  State vs CLI count cross-validation [MODULE=]"
         echo "    task deploy:full          Full cycle: init → preflight → plan → apply"
         echo ""
         echo "  OPERATE   Environment lifecycle"
@@ -361,6 +364,11 @@ tasks:
     cmds:
       - bash scripts/govern-naming.sh
 
+  govern:version-sync:
+    desc: "Validate VERSION + manifest + CHANGELOG + main.tf ref are in sync [MODULE={{.MODULE}}]"
+    cmds:
+      - bash scripts/validate-version-sync.sh {{.MODULE}}
+
   govern:all:
     desc: "All governance gates: legal + score + cps234 + naming"
     cmds:
@@ -429,6 +437,16 @@ tasks:
       - task: deploy:preflight
       - task: deploy:plan
       - task: deploy:apply
+
+  deploy:verify:
+    desc: "Cross-validate deployed resources via AWS CLI [MODULE={{.MODULE}}]"
+    cmds:
+      - MODULE={{.MODULE}} bash scripts/verify-deployment.sh
+
+  deploy:cross-validate:
+    desc: "Post-apply cross-validation: terraform state vs AWS CLI counts [MODULE={{.MODULE}}]"
+    cmds:
+      - MODULE={{.MODULE}} REGION=ap-southeast-2 bash scripts/cross-validate-deploy.sh
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # OPERATE — environment lifecycle

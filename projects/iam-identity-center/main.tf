@@ -7,7 +7,7 @@
 #    source  = "oceansoft/iam-identity-center/aws"
 #    version = "~> 1.1"
 # 2. GitHub release:
-#    source = "github.com/nnthanh101/terraform-aws//modules/iam-identity-center?ref=iam-identity-center/v1.1.7"
+#    source = "github.com/nnthanh101/terraform-aws//modules/iam-identity-center?ref=iam-identity-center/v1.1.8"
 # 3. Local path (monorepo dev):
 #    source = "../../modules/iam-identity-center"
 
