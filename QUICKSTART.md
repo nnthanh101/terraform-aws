@@ -98,6 +98,6 @@ gh pr list --label="autorelease: pending"               # Release PRs
 
 | Module | Version | Status | Registry |
 |--------|---------|--------|----------|
-| `iam-identity-center` | 1.1.1 | Active | `oceansoft/iam-identity-center/aws` |
+| `iam-identity-center` | 1.1.3 | Active | `oceansoft/iam-identity-center/aws` |
 | `ecs-platform` | 1.0.0 | Stub | — |
 | `fullstack-web` | 1.0.0 | Stub | — |
