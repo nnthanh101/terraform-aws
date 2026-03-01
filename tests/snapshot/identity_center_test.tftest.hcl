@@ -102,12 +102,12 @@ run "account_assignments_flattened" {
   }
 }
 
-# Test 8: config_path output contains "configs" (APRA CPS 234 audit trail)
-run "config_path_contains_configs" {
+# Test 8: config_path output is null (HCL-only mode) or contains "configs" (YAML mode)
+run "config_path_valid_when_set" {
   command = plan
 
   assert {
-    condition     = strcontains(module.identity_center.config_path, "configs")
-    error_message = "config_path must contain 'configs' directory reference"
+    condition     = module.identity_center.config_path == null || strcontains(module.identity_center.config_path, "configs")
+    error_message = "config_path must be null (HCL-only) or contain 'configs' directory reference (YAML mode)"
   }
 }

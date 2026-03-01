@@ -233,21 +233,22 @@ See the `CONTRIBUTING.md` file for information on how to contribute.
 
 ## Requirements
 
+## Requirements
+
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 0.14.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 4.35.0 |
-| <a name="requirement_awscc"></a> [awscc](#requirement\_awscc) | >= 0.55.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.11.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.28, < 7.0 |
+
+## Providers
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 4.35.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.34.0 |
 
-## Modules
-
-No modules.
+## Resources
 
 ## Resources
 
@@ -279,27 +280,38 @@ No modules.
 
 ## Inputs
 
+## Inputs
+
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_account_assignments"></a> [account\_assignments](#input\_account\_assignments) | List of maps containing mapping between user/group, permission set and assigned accounts list. See account\_assignments description in README for more information about map values. | <pre>map(object({<br>    principal_name  = string<br>    principal_type  = string<br>    principal_idp   = string # acceptable values are either "INTERNAL" or "EXTERNAL"<br>    permission_sets = list(string)<br>    account_ids     = list(string)<br>  }))</pre> | `{}` | no |
-| <a name="input_existing_google_sso_users"></a> [existing\_google\_sso\_users](#input\_existing\_google\_sso\_users) | Names of the existing Google users that you wish to reference from IAM Identity Center. | <pre>map(object({<br>    user_name        = string<br>    group_membership = optional(list(string), null) // only used if your IdP only syncs users, and you wish to manage which groups they should go in<br>  }))</pre> | `{}` | no |
-| <a name="input_existing_permission_sets"></a> [existing\_permission\_sets](#input\_existing\_permission\_sets) | Names of the existing permission\_sets that you wish to reference from IAM Identity Center. | <pre>map(object({<br>    permission_set_name = string<br>  }))</pre> | `{}` | no |
-| <a name="input_existing_sso_groups"></a> [existing\_sso\_groups](#input\_existing\_sso\_groups) | Names of the existing groups that you wish to reference from IAM Identity Center. | <pre>map(object({<br>    group_name = string<br>  }))</pre> | `{}` | no |
-| <a name="input_existing_sso_users"></a> [existing\_sso\_users](#input\_existing\_sso\_users) | Names of the existing users that you wish to reference from IAM Identity Center. | <pre>map(object({<br>    user_name        = string<br>    group_membership = optional(list(string), null) // only used if your IdP only syncs users, and you wish to manage which groups they should go in<br>  }))</pre> | `{}` | no |
+| <a name="input_account_assignments"></a> [account\_assignments](#input\_account\_assignments) | List of maps containing mapping between user/group, permission set and assigned accounts list. See account\_assignments description in README for more information about map values. | <pre>map(object({<br/>    principal_name  = string<br/>    principal_type  = string<br/>    principal_idp   = string # acceptable values are either "INTERNAL" or "EXTERNAL"<br/>    permission_sets = list(string)<br/>    account_ids     = list(string)<br/>  }))</pre> | `{}` | no |
+| <a name="input_config_path"></a> [config\_path](#input\_config\_path) | Path to YAML configuration directory for APRA CPS 234 audit trail. When set, reads permission\_sets.yaml and account\_assignments.yaml from this directory, merged with HCL variable values (YAML values take precedence). | `string` | `""` | no |
+| <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | Tags applied to all permission sets. Overrides module defaults. Required keys when non-empty: CostCenter, Project, Environment, DataClassification. | `map(string)` | `{}` | no |
+| <a name="input_existing_google_sso_users"></a> [existing\_google\_sso\_users](#input\_existing\_google\_sso\_users) | Names of the existing Google users that you wish to reference from IAM Identity Center. | <pre>map(object({<br/>    user_name        = string<br/>    group_membership = optional(list(string), null) // only used if your IdP only syncs users, and you wish to manage which groups they should go in<br/>  }))</pre> | `{}` | no |
+| <a name="input_existing_permission_sets"></a> [existing\_permission\_sets](#input\_existing\_permission\_sets) | Names of the existing permission\_sets that you wish to reference from IAM Identity Center. | <pre>map(object({<br/>    permission_set_name = string<br/>  }))</pre> | `{}` | no |
+| <a name="input_existing_sso_groups"></a> [existing\_sso\_groups](#input\_existing\_sso\_groups) | Names of the existing groups that you wish to reference from IAM Identity Center. | <pre>map(object({<br/>    group_name = string<br/>  }))</pre> | `{}` | no |
+| <a name="input_existing_sso_users"></a> [existing\_sso\_users](#input\_existing\_sso\_users) | Names of the existing users that you wish to reference from IAM Identity Center. | <pre>map(object({<br/>    user_name        = string<br/>    group_membership = optional(list(string), null) // only used if your IdP only syncs users, and you wish to manage which groups they should go in<br/>  }))</pre> | `{}` | no |
 | <a name="input_permission_sets"></a> [permission\_sets](#input\_permission\_sets) | Permission Sets that you wish to create in IAM Identity Center. This variable is a map of maps containing Permission Set names as keys. See permission\_sets description in README for information about map values. | `any` | `{}` | no |
-| <a name="input_sso_applications"></a> [sso\_applications](#input\_sso\_applications) | List of applications to be created in IAM Identity Center | <pre>map(object({<br>    name                     = string<br>    application_provider_arn = string<br>    description              = optional(string)<br>    portal_options = optional(object({<br>      sign_in_options = optional(object({<br>        application_url = optional(string)<br>        origin          = string<br>      }))<br>      visibility = optional(string)<br>    }))<br>    status              = string # acceptable values are "ENABLED" or "DISABLED"<br>    client_token        = optional(string)<br>    tags                = optional(map(string))<br>    assignment_required = bool # Resource: aws_ssoadmin_application_assignment_configuration<br>    assignments_access_scope = optional(<br>      list(object({<br>        authorized_targets = optional(list(string)) # List of application names<br>        scope              = string<br>      }))<br>    )                                          # Resource: aws_ssoadmin_application_access_scope<br>    group_assignments = optional(list(string)) # Resource aws_ssoadmin_application_assignment, keeping it separated for groups<br>    user_assignments  = optional(list(string)) # Resource aws_ssoadmin_application_assignment, keeping it separated for users<br>  }))</pre> | `{}` | no |
-| <a name="input_sso_groups"></a> [sso\_groups](#input\_sso\_groups) | Names of the groups you wish to create in IAM Identity Center. | <pre>map(object({<br>    group_name        = string<br>    group_description = optional(string, null)<br>  }))</pre> | `{}` | no |
-| <a name="input_sso_instance_access_control_attributes"></a> [sso\_instance\_access\_control\_attributes](#input\_sso\_instance\_access\_control\_attributes) | List of attributes for access control. This is used to create the enable and use attributes for access control. | <pre>list(object({<br>    attribute_name = string<br>    source = set(string)<br>  }))</pre> | `[]` | no |
-| <a name="input_sso_users"></a> [sso\_users](#input\_sso\_users) | Names of the users you wish to create in IAM Identity Center. | <pre>map(object({<br>    display_name     = optional(string)<br>    user_name        = string<br>    group_membership = list(string)<br>    # Name<br>    given_name       = string<br>    middle_name      = optional(string, null)<br>    family_name      = string<br>    name_formatted   = optional(string)<br>    honorific_prefix = optional(string, null)<br>    honorific_suffix = optional(string, null)<br>    # Email<br>    email            = string<br>    email_type       = optional(string, null)<br>    is_primary_email = optional(bool, true)<br>    # Phone Number<br>    phone_number            = optional(string, null)<br>    phone_number_type       = optional(string, null)<br>    is_primary_phone_number = optional(bool, true)<br>    # Address<br>    country            = optional(string, " ")<br>    locality           = optional(string, " ")<br>    address_formatted  = optional(string)<br>    postal_code        = optional(string, " ")<br>    is_primary_address = optional(bool, true)<br>    region             = optional(string, " ")<br>    street_address     = optional(string, " ")<br>    address_type       = optional(string, null)<br>    # Additional<br>    user_type          = optional(string, null)<br>    title              = optional(string, null)<br>    locale             = optional(string, null)<br>    nickname           = optional(string, null)<br>    preferred_language = optional(string, null)<br>    profile_url        = optional(string, null)<br>    timezone           = optional(string, null)<br>  }))</pre> | `{}` | no |
+| <a name="input_sso_applications"></a> [sso\_applications](#input\_sso\_applications) | List of applications to be created in IAM Identity Center | <pre>map(object({<br/>    name                     = string<br/>    application_provider_arn = string<br/>    description              = optional(string)<br/>    portal_options = optional(object({<br/>      sign_in_options = optional(object({<br/>        application_url = optional(string)<br/>        origin          = string<br/>      }))<br/>      visibility = optional(string)<br/>    }))<br/>    status              = string # acceptable values are "ENABLED" or "DISABLED"<br/>    client_token        = optional(string)<br/>    tags                = optional(map(string))<br/>    assignment_required = bool # Resource: aws_ssoadmin_application_assignment_configuration<br/>    assignments_access_scope = optional(<br/>      list(object({<br/>        authorized_targets = optional(list(string)) # List of application names<br/>        scope              = string<br/>      }))<br/>    )                                          # Resource: aws_ssoadmin_application_access_scope<br/>    group_assignments = optional(list(string)) # Resource aws_ssoadmin_application_assignment, keeping it separated for groups<br/>    user_assignments  = optional(list(string)) # Resource aws_ssoadmin_application_assignment, keeping it separated for users<br/>  }))</pre> | `{}` | no |
+| <a name="input_sso_groups"></a> [sso\_groups](#input\_sso\_groups) | Names of the groups you wish to create in IAM Identity Center. | <pre>map(object({<br/>    group_name        = string<br/>    group_description = optional(string, null)<br/>  }))</pre> | `{}` | no |
+| <a name="input_sso_instance_access_control_attributes"></a> [sso\_instance\_access\_control\_attributes](#input\_sso\_instance\_access\_control\_attributes) | List of attributes for access control. This is used to create the enable and use attributes for access control. | <pre>list(object({<br/>    attribute_name = string<br/>    source         = set(string)<br/>  }))</pre> | `[]` | no |
+| <a name="input_sso_users"></a> [sso\_users](#input\_sso\_users) | Names of the users you wish to create in IAM Identity Center. | <pre>map(object({<br/>    display_name = optional(string)<br/>    user_name    = string<br/>    # NOTE: Empty list [] is intentionally valid — represents a standalone user<br/>    # without group assignments (e.g. service accounts, direct permission set users).<br/>    # A validation requiring length > 0 would be a BREAKING CHANGE for existing consumers.<br/>    group_membership = list(string)<br/>    # Name<br/>    given_name       = string<br/>    middle_name      = optional(string, null)<br/>    family_name      = string<br/>    name_formatted   = optional(string)<br/>    honorific_prefix = optional(string, null)<br/>    honorific_suffix = optional(string, null)<br/>    # Email<br/>    email            = string<br/>    email_type       = optional(string, null)<br/>    is_primary_email = optional(bool, true)<br/>    # Phone Number<br/>    phone_number            = optional(string, null)<br/>    phone_number_type       = optional(string, null)<br/>    is_primary_phone_number = optional(bool, true)<br/>    # Address<br/>    country            = optional(string, null)<br/>    locality           = optional(string, null)<br/>    address_formatted  = optional(string)<br/>    postal_code        = optional(string, null)<br/>    is_primary_address = optional(bool, true)<br/>    region             = optional(string, null)<br/>    street_address     = optional(string, null)<br/>    address_type       = optional(string, null)<br/>    # Additional<br/>    user_type          = optional(string, null)<br/>    title              = optional(string, null)<br/>    locale             = optional(string, null)<br/>    nickname           = optional(string, null)<br/>    preferred_language = optional(string, null)<br/>    profile_url        = optional(string, null)<br/>    timezone           = optional(string, null)<br/>  }))</pre> | `{}` | no |
+
+## Outputs
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
 | <a name="output_account_assignment_data"></a> [account\_assignment\_data](#output\_account\_assignment\_data) | Tuple containing account assignment data |
+| <a name="output_config_path"></a> [config\_path](#output\_config\_path) | Path to YAML configuration directory for APRA CPS 234 audit trail |
+| <a name="output_identity_store_id"></a> [identity\_store\_id](#output\_identity\_store\_id) | The ID of the Identity Store |
+| <a name="output_permission_set_arns"></a> [permission\_set\_arns](#output\_permission\_set\_arns) | A map of permission set name to ARN |
 | <a name="output_principals_and_assignments"></a> [principals\_and\_assignments](#output\_principals\_and\_assignments) | Map containing account assignment data |
 | <a name="output_sso_applications_arns"></a> [sso\_applications\_arns](#output\_sso\_applications\_arns) | A map of SSO Applications ARNs created by this module |
 | <a name="output_sso_applications_group_assignments"></a> [sso\_applications\_group\_assignments](#output\_sso\_applications\_group\_assignments) | A map of SSO Applications assignments with groups created by this module |
 | <a name="output_sso_applications_user_assignments"></a> [sso\_applications\_user\_assignments](#output\_sso\_applications\_user\_assignments) | A map of SSO Applications assignments with users created by this module |
 | <a name="output_sso_groups_ids"></a> [sso\_groups\_ids](#output\_sso\_groups\_ids) | A map of SSO groups ids created by this module |
+| <a name="output_sso_instance_arn"></a> [sso\_instance\_arn](#output\_sso\_instance\_arn) | The ARN of the SSO instance |
+| <a name="output_sso_users_ids"></a> [sso\_users\_ids](#output\_sso\_users\_ids) | A map of SSO user IDs created by this module |
 <!-- END_TF_DOCS -->

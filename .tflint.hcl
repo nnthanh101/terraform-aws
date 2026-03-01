@@ -22,3 +22,11 @@ rule "terraform_required_version" {
 rule "terraform_required_providers" {
   enabled = false
 }
+
+# ADR-011: Enforce snake_case for all Terraform naming conventions
+# Applies to: variables, outputs, locals, data sources, resources, and modules
+# Built-in tflint core rule — no extra plugin required
+rule "terraform_naming_convention" {
+  enabled = true
+  format  = "snake_case"
+}

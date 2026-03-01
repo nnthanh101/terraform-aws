@@ -1,7 +1,6 @@
 formatter: markdown table
 
-header-from: ""
-footer-from: ""
+header-from: .header.md
 
 content: |-
   {{ .Header }}

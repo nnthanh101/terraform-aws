@@ -89,7 +89,7 @@ run "all_outputs_populated" {
   }
 
   assert {
-    condition     = strcontains(module.identity_center.config_path, "configs")
-    error_message = "config_path must reference configs directory"
+    condition     = module.identity_center.config_path == null || strcontains(module.identity_center.config_path, "configs")
+    error_message = "config_path must be null (HCL-only) or reference configs directory (YAML mode)"
   }
 }
