@@ -41,7 +41,7 @@ fi
 # HCL identifier: hyphens → underscores (iam-identity-center → iam_identity_center)
 MODULE_SLUG=$(echo "$MODULE" | sed 's/-/_/g')
 
-BUCKET="tfstate-${ACCOUNT_ID}-${REGION}"
+BUCKET="${ACCOUNT_ID}-tfstate-${REGION}"
 STATE_KEY="projects/${MODULE}/terraform.tfstate"
 
 COPYRIGHT="# Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE."
