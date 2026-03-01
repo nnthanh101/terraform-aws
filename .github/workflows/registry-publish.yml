@@ -5,6 +5,12 @@ on:
   push:
     tags:
       - '*/v*'    # module-prefixed: iam-identity-center/v1.2.0, ecs-platform/v0.1.0
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish (e.g., iam-identity-center/v1.1.3)'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -25,7 +31,11 @@ jobs:
       - name: Extract module info from tag
         id: module-info
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
+          if [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
           if [[ "$TAG" == *"/"* ]]; then
             MODULE_NAME="${TAG%/v*}"
             MODULE_VERSION="${TAG#*/}"
@@ -46,6 +56,8 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Quick CI (fmt + validate + lint + legal)
         env:
@@ -62,6 +74,8 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Run Tier 1 tests (snapshot tests, $0 cost)
         env:
@@ -113,9 +127,12 @@ jobs:
   publish:
     name: Publish to TFC (${{ needs.resolve.outputs.module }} ${{ needs.resolve.outputs.version }})
     needs: [resolve, test, release]
+    if: always() && needs.test.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Create clean module tarball
         env:
