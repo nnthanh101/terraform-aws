@@ -167,7 +167,7 @@ fi
 
 # ─── check 5: S3 state file ─────────────────────────────────────────────────
 STATE_BUCKET="${ACCOUNT_ID:-unknown}-tfstate-${REGION}"
-STATE_KEY="${MODULE}/terraform.tfstate"
+STATE_KEY="projects/${MODULE}/terraform.tfstate"
 
 STATE_SIZE=$(aws s3api head-object --bucket "$STATE_BUCKET" --key "$STATE_KEY" --query 'ContentLength' --output text 2>/dev/null || echo "0")
 if [ "$STATE_SIZE" -gt 0 ] 2>/dev/null; then
@@ -184,7 +184,7 @@ if [ -d "$PROJECT_DIR" ]; then
   if [ -n "$OUTPUT_KEYS" ]; then
     OUTPUT_COUNT=$(echo "$OUTPUT_KEYS" | wc -l | tr -d ' ')
     check_pass "terraform output returns ${OUTPUT_COUNT} keys: $(echo "$OUTPUT_KEYS" | tr '\n' ' ')"
-    TF_GROUP_COUNT=$(echo "$TF_OUTPUT" | jq '.group_ids.value // {} | length' 2>/dev/null || echo "0")
+    TF_GROUP_COUNT=$(echo "$TF_OUTPUT" | jq '.sso_groups_ids.value // {} | length' 2>/dev/null || echo "0")
   else
     check_warn "terraform output" "no outputs found — may need terraform init + apply first"
     TF_GROUP_COUNT=0
