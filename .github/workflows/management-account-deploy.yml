@@ -1,0 +1,208 @@
+# Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
+name: Management Account Deploy
+
+# HITL gate: manual trigger only — no automated deploys.
+# IAM Identity Center requires management account (or delegated admin) permissions.
+# cloud-architect + product-owner approval must precede any apply/destroy.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Terraform action to run"
+        required: true
+        default: plan
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+      module:
+        description: "Project module to deploy"
+        required: true
+        default: iam-identity-center
+        type: choice
+        options:
+          - iam-identity-center
+      environment:
+        description: "Target environment (protection rules enforced)"
+        required: true
+        default: sandbox
+        type: choice
+        options:
+          - sandbox
+
+# Concurrency: one deploy per module+environment at a time.
+# A running plan/apply will be cancelled if a new run for the same
+# module+env is dispatched — prevents state corruption.
+concurrency:
+  group: sandbox-deploy-${{ inputs.module }}-${{ inputs.environment }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write   # Required for OIDC AWS authentication
+
+jobs:
+  # ─── pre-flight ────────────────────────────────────────────────────────────
+  pre-flight:
+    name: Pre-flight (${{ inputs.module }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
+    outputs:
+      project_dir: ${{ steps.vars.outputs.project_dir }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set derived variables
+        id: vars
+        run: |
+          echo "project_dir=projects/${{ inputs.module }}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ap-southeast-2
+        # Fallback: set AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY in repo secrets
+        # if OIDC role is not yet configured.
+
+      - name: Run sandbox pre-flight checks
+        env:
+          MODULE: ${{ inputs.module }}
+          ENVIRONMENT: ${{ inputs.environment }}
+          STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+          PROJECT_DIR: projects/${{ inputs.module }}
+        run: bash scripts/sandbox-preflight.sh
+
+      - name: Tier 1 snapshot tests
+        env:
+          MODULE: ${{ inputs.module }}
+          MODULE_DIR: modules/${{ inputs.module }}
+        run: task test:tier1
+
+  # ─── plan ──────────────────────────────────────────────────────────────────
+  plan:
+    name: Plan (${{ inputs.module }})
+    needs: [pre-flight]
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ap-southeast-2
+
+      - name: terraform init
+        run: |
+          terraform -chdir=${{ needs.pre-flight.outputs.project_dir }} \
+            init -input=false
+
+      - name: terraform plan
+        id: plan
+        run: |
+          mkdir -p tmp/terraform-aws/deployment-logs
+          terraform -chdir=${{ needs.pre-flight.outputs.project_dir }} \
+            plan -input=false -no-color \
+            -out=tfplan 2>&1 | tee tmp/terraform-aws/deployment-logs/plan-${{ inputs.module }}-$(date +%Y-%m-%d-%H%M%S).log
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ inputs.module }}-${{ github.run_id }}
+          path: |
+            ${{ needs.pre-flight.outputs.project_dir }}/tfplan
+            tmp/terraform-aws/deployment-logs/
+          retention-days: 7
+
+  # ─── apply ─────────────────────────────────────────────────────────────────
+  apply:
+    name: Apply (${{ inputs.module }})
+    needs: [pre-flight, plan]
+    if: inputs.action == 'apply'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}   # environment protection rule enforces HITL approval
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ap-southeast-2
+
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ inputs.module }}-${{ github.run_id }}
+
+      - name: terraform init
+        run: |
+          terraform -chdir=${{ needs.pre-flight.outputs.project_dir }} \
+            init -input=false
+
+      - name: terraform apply (plan-only, no interactive prompt)
+        run: |
+          mkdir -p tmp/terraform-aws/deployment-logs
+          terraform -chdir=${{ needs.pre-flight.outputs.project_dir }} \
+            apply -input=false -no-color \
+            ${{ needs.pre-flight.outputs.project_dir }}/tfplan \
+            2>&1 | tee tmp/terraform-aws/deployment-logs/apply-${{ inputs.module }}-$(date +%Y-%m-%d-%H%M%S).log
+
+      - name: Upload apply logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apply-logs-${{ inputs.module }}-${{ github.run_id }}
+          path: tmp/terraform-aws/deployment-logs/
+          retention-days: 30
+
+  # ─── destroy ───────────────────────────────────────────────────────────────
+  destroy:
+    name: Destroy (${{ inputs.module }})
+    needs: [pre-flight, plan]
+    if: inputs.action == 'destroy'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}   # environment protection rule enforces HITL approval
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ap-southeast-2
+
+      - name: terraform init
+        run: |
+          terraform -chdir=${{ needs.pre-flight.outputs.project_dir }} \
+            init -input=false
+
+      - name: terraform destroy
+        run: |
+          mkdir -p tmp/terraform-aws/deployment-logs
+          terraform -chdir=${{ needs.pre-flight.outputs.project_dir }} \
+            destroy -input=false -no-color -auto-approve \
+            2>&1 | tee tmp/terraform-aws/deployment-logs/destroy-${{ inputs.module }}-$(date +%Y-%m-%d-%H%M%S).log
+
+      - name: Upload destroy logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: destroy-logs-${{ inputs.module }}-${{ github.run_id }}
+          path: tmp/terraform-aws/deployment-logs/
+          retention-days: 30

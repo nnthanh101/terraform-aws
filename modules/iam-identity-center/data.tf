@@ -5,7 +5,9 @@
 data "aws_ssoadmin_instances" "sso_instance" {}
 
 # Fetch existing AWS Organization
-data "aws_organizations_organization" "organization" {}
+data "aws_organizations_organization" "organization" {
+  count = var.enable_organizations_lookup ? 1 : 0
+}
 
 
 # The local variable 'users_and_their_groups' is a map of values for relevant user information.

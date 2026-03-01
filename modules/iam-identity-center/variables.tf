@@ -203,6 +203,12 @@ variable "default_tags" {
   }
 }
 
+variable "enable_organizations_lookup" {
+  description = "Enable Organizations data source for account-name-to-ID resolution. Set false for standalone accounts or when all account_assignments use 12-digit account IDs."
+  type        = bool
+  default     = true
+}
+
 variable "config_path" {
   description = "Path to YAML configuration directory for APRA CPS 234 audit trail. When set, reads permission_sets.yaml and account_assignments.yaml from this directory, merged with HCL variable values (YAML values take precedence)."
   type        = string

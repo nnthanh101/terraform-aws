@@ -99,6 +99,27 @@ jobs:
           name: naming-audit
           path: tmp/terraform-aws/governance/naming-audit-*.json
 
+  validate-projects:
+    name: Validate Projects (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [iam-identity-center]
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: terraform fmt -check
+        run: terraform fmt -check projects/${{ matrix.project }}
+
+      - name: terraform init + validate (no backend, no credentials)
+        run: |
+          terraform -chdir=projects/${{ matrix.project }} init -backend=false -input=false
+          terraform -chdir=projects/${{ matrix.project }} validate
+
   test:
     name: CI-Safe Tests (Tier 1 + 2, no AWS cost)
     needs: [validate]
