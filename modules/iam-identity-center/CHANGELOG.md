@@ -5,6 +5,13 @@ All notable changes to the `iam-identity-center` module will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.5](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.4...iam-identity-center/v1.1.5) (2026-03-01)
+
+
+### Bug Fixes
+
+* update NOTICE.txt with sprint modifications (4-tier SSO, ADR-011 naming) ([444c87f](https://github.com/nnthanh101/terraform-aws/commit/444c87fdaa969cf2ecc089635e7209edcdf0140e))
+
 ## [1.1.4](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.3...iam-identity-center/v1.1.4) (2026-03-01)
 
 
