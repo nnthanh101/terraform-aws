@@ -27,6 +27,7 @@ jobs:
       module: ${{ steps.module-info.outputs.module }}
       version: ${{ steps.module-info.outputs.version }}
       module_dir: ${{ steps.module-info.outputs.module_dir }}
+      tag_ref: ${{ steps.module-info.outputs.tag_ref }}
     steps:
       - name: Extract module info from tag
         id: module-info
@@ -45,7 +46,9 @@ jobs:
           echo "module=${MODULE_NAME}" >> "$GITHUB_OUTPUT"
           echo "version=${MODULE_VERSION}" >> "$GITHUB_OUTPUT"
           echo "module_dir=modules/${MODULE_NAME}" >> "$GITHUB_OUTPUT"
-          echo "Resolved: module=${MODULE_NAME}, version=${MODULE_VERSION}, dir=modules/${MODULE_NAME}"
+          # Normalize to refs/tags/ prefix for actions/checkout compatibility
+          echo "tag_ref=refs/tags/${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Resolved: module=${MODULE_NAME}, version=${MODULE_VERSION}, dir=modules/${MODULE_NAME}, tag_ref=refs/tags/${TAG}"
 
   validate:
     name: Validate & Lint (${{ needs.resolve.outputs.module }})
@@ -57,7 +60,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          ref: ${{ needs.resolve.outputs.tag_ref }}
 
       - name: Quick CI (fmt + validate + lint + legal)
         env:
@@ -75,7 +78,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          ref: ${{ needs.resolve.outputs.tag_ref }}
 
       - name: Run Tier 1 tests (snapshot tests, $0 cost)
         env:
@@ -132,7 +135,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          ref: ${{ needs.resolve.outputs.tag_ref }}
 
       - name: Create clean module tarball
         env:
