@@ -53,6 +53,8 @@ jobs:
       options: --user 0
     outputs:
       project_dir: ${{ steps.vars.outputs.project_dir }}
+      state_bucket: ${{ steps.resolve.outputs.bucket }}
+      sso_region: ${{ steps.sso.outputs.region }}
     steps:
       - uses: actions/checkout@v4
 
@@ -66,14 +68,25 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
           aws-region: ap-southeast-2
-        # Fallback: set AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY in repo secrets
-        # if OIDC role is not yet configured.
+
+      - name: Resolve state bucket
+        id: resolve
+        run: |
+          BUCKET=$(bash scripts/resolve-state-bucket.sh)
+          echo "bucket=${BUCKET}" >> "$GITHUB_OUTPUT"
+
+      - name: Detect SSO region
+        id: sso
+        if: inputs.module == 'iam-identity-center'
+        run: |
+          SSO_REGION=$(bash scripts/resolve-sso-region.sh)
+          echo "region=${SSO_REGION}" >> "$GITHUB_OUTPUT"
 
       - name: Run sandbox pre-flight checks
         env:
           MODULE: ${{ inputs.module }}
           ENVIRONMENT: ${{ inputs.environment }}
-          STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+          STATE_BUCKET: ${{ steps.resolve.outputs.bucket }}
           PROJECT_DIR: projects/${{ inputs.module }}
         run: bash scripts/sandbox-preflight.sh
 
@@ -101,10 +114,24 @@ jobs:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
           aws-region: ap-southeast-2
 
-      - name: terraform init
+      - name: Write auto.tfvars.json
+        if: inputs.module == 'iam-identity-center'
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          SSO_REGION="${{ needs.pre-flight.outputs.sso_region }}"
+          cat > ${{ needs.pre-flight.outputs.project_dir }}/.auto.tfvars.json <<EJSON
+          {
+            "account_id": "${ACCOUNT_ID}",
+            "sso_region": "${SSO_REGION:-ap-southeast-2}"
+          }
+          EJSON
+
+      - name: terraform init (partial backend config)
         run: |
           terraform -chdir=${{ needs.pre-flight.outputs.project_dir }} \
-            init -input=false
+            init -input=false \
+            -backend-config="bucket=${{ needs.pre-flight.outputs.state_bucket }}" \
+            -backend-config="region=ap-southeast-2"
 
       - name: terraform plan
         id: plan
@@ -147,10 +174,12 @@ jobs:
         with:
           name: tfplan-${{ inputs.module }}-${{ github.run_id }}
 
-      - name: terraform init
+      - name: terraform init (partial backend config)
         run: |
           terraform -chdir=${{ needs.pre-flight.outputs.project_dir }} \
-            init -input=false
+            init -input=false \
+            -backend-config="bucket=${{ needs.pre-flight.outputs.state_bucket }}" \
+            -backend-config="region=ap-southeast-2"
 
       - name: terraform apply (plan-only, no interactive prompt)
         run: |
@@ -187,10 +216,12 @@ jobs:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
           aws-region: ap-southeast-2
 
-      - name: terraform init
+      - name: terraform init (partial backend config)
         run: |
           terraform -chdir=${{ needs.pre-flight.outputs.project_dir }} \
-            init -input=false
+            init -input=false \
+            -backend-config="bucket=${{ needs.pre-flight.outputs.state_bucket }}" \
+            -backend-config="region=ap-southeast-2"
 
       - name: terraform destroy
         run: |
@@ -198,6 +229,22 @@ jobs:
           terraform -chdir=${{ needs.pre-flight.outputs.project_dir }} \
             destroy -input=false -no-color -auto-approve \
             2>&1 | tee tmp/terraform-aws/deployment-logs/destroy-${{ inputs.module }}-$(date +%Y-%m-%d-%H%M%S).log
+
+      - name: Post-destroy orphan check
+        if: inputs.module == 'iam-identity-center'
+        run: |
+          SSO_REGION="${{ needs.pre-flight.outputs.sso_region }}"
+          if [ -n "$SSO_REGION" ]; then
+            INSTANCE_ARN=$(aws sso-admin list-instances --region "$SSO_REGION" --query 'Instances[0].InstanceArn' --output text 2>/dev/null || echo "None")
+            IDENTITY_STORE=$(aws sso-admin list-instances --region "$SSO_REGION" --query 'Instances[0].IdentityStoreId' --output text 2>/dev/null || echo "None")
+            if [ "$INSTANCE_ARN" != "None" ]; then
+              PS_COUNT=$(aws sso-admin list-permission-sets --instance-arn "$INSTANCE_ARN" --region "$SSO_REGION" --query 'PermissionSets | length(@)' --output text 2>/dev/null || echo "?")
+              GRP_COUNT=$(aws identitystore list-groups --identity-store-id "$IDENTITY_STORE" --region "$SSO_REGION" --query 'Groups | length(@)' --output text 2>/dev/null || echo "?")
+              echo "SSO Instance: ${INSTANCE_ARN} (region: ${SSO_REGION})"
+              echo "Permission Sets remaining: ${PS_COUNT}"
+              echo "Groups remaining: ${GRP_COUNT}"
+            fi
+          fi
 
       - name: Upload destroy logs
         if: always()

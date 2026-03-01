@@ -115,6 +115,14 @@ tasks:
         echo "    task monitor:evidence     Collect all evidence artifacts"
         echo "    task monitor:verify       Verify 6 evidence directories"
         echo ""
+        echo "  DEPLOY    Portable deploy lifecycle (any management account)"
+        echo "    task deploy:init          Resolve bucket + SSO + init [MODULE=]"
+        echo "    task deploy:preflight     Pre-flight checks [MODULE=]"
+        echo "    task deploy:plan          terraform plan + save [MODULE=]"
+        echo "    task deploy:apply         terraform apply (from plan) [MODULE=]"
+        echo "    task deploy:destroy       terraform destroy + orphan check [MODULE=]"
+        echo "    task deploy:full          Full cycle: init → preflight → plan → apply"
+        echo ""
         echo "  OPERATE   Environment lifecycle"
         echo "    task operate:down         Stop all containers"
         echo "    task starship:configure   Configure Starship prompt"
@@ -378,6 +386,49 @@ tasks:
     desc: "Verify 7 evidence directories exist (anti-NATO gate)"
     cmds:
       - bash scripts/monitor-verify.sh
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # DEPLOY — portable deploy lifecycle (any management account)
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # WHY:  One workflow works for ANY management account. HITL only: root + enable SSO.
+  # HOW:  Convention-based bucket naming, SSO region auto-detection, partial backend config.
+  # WHO:  Platform engineers deploying IAM Identity Center or other management-account modules.
+
+  deploy:init:
+    desc: "Resolve state bucket + detect SSO region + terraform init [MODULE={{.MODULE}}]"
+    cmds:
+      - MODULE={{.MODULE}} REGION=ap-southeast-2 bash scripts/deploy-init.sh
+
+  deploy:preflight:
+    desc: "Pre-flight checks before plan/apply [MODULE={{.MODULE}}]"
+    cmds:
+      - MODULE={{.MODULE}} ENVIRONMENT=sandbox PROJECT_DIR=projects/{{.MODULE}} bash scripts/sandbox-preflight.sh
+
+  deploy:plan:
+    desc: "terraform plan + save plan file [MODULE={{.MODULE}}]"
+    cmds:
+      - MODULE={{.MODULE}} bash scripts/deploy-plan.sh
+
+  deploy:apply:
+    desc: "terraform apply from saved plan [MODULE={{.MODULE}}]"
+    prompt: "This will APPLY real AWS resources ($$). Continue?"
+    cmds:
+      - MODULE={{.MODULE}} bash scripts/deploy-apply.sh
+
+  deploy:destroy:
+    desc: "terraform destroy + orphan check [MODULE={{.MODULE}}]"
+    prompt: "This will DESTROY all resources for {{.MODULE}}. Continue?"
+    cmds:
+      - MODULE={{.MODULE}} bash scripts/deploy-destroy.sh
+
+  deploy:full:
+    desc: "Full deploy cycle: init → preflight → plan → apply [MODULE={{.MODULE}}]"
+    prompt: "Full deploy will create real AWS resources ($$). Continue?"
+    cmds:
+      - task: deploy:init
+      - task: deploy:preflight
+      - task: deploy:plan
+      - task: deploy:apply
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # OPERATE — environment lifecycle
