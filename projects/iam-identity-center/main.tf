@@ -40,6 +40,10 @@ module "identity_center" {
       group_name        = "SecurityTeam"
       group_description = "Security operations -SecurityAudit access for incident response"
     }
+    AuditTeam = {
+      group_name        = "AuditTeam"
+      group_description = "Audit and compliance team with read-only access"
+    }
   }
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -89,6 +93,12 @@ module "identity_center" {
         CostCenter         = "security"
         DataClassification = "confidential"
       }
+    }
+    ReadOnly = {
+      description          = "Read-only access across all services"
+      session_duration     = "PT8H"
+      aws_managed_policies = ["arn:aws:iam::aws:policy/ReadOnlyAccess"]
+      tags                 = { ManagedBy = "Terraform" }
     }
   }
 
