@@ -29,7 +29,7 @@ fi
 
 BUCKET="${ACCOUNT_ID}-tfstate-${REGION}"
 
-if aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
+if aws s3api head-bucket --bucket "$BUCKET" >/dev/null 2>&1; then
   echo "EXISTS: s3://${BUCKET}" >&2
 else
   echo "CREATING: s3://${BUCKET} in ${REGION}" >&2
