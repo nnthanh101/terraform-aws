@@ -5,6 +5,13 @@ All notable changes to the `iam-identity-center` module will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.2.0...iam-identity-center/v1.2.1) (2026-03-02)
+
+
+### CI/CD
+
+* Fix naming audit, checkov scoping, and registry management ([#50](https://github.com/nnthanh101/terraform-aws/issues/50)) ([0ed8da4](https://github.com/nnthanh101/terraform-aws/commit/0ed8da444c2346c2ab1a3756a6b7a2baab6dee57))
+
 ## [1.2.0](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.1.8...iam-identity-center/v1.2.0) (2026-03-01)
 
 

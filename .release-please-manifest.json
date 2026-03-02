@@ -1,5 +1,6 @@
 {
-  "modules/iam-identity-center": "1.2.0",
-  "modules/ecs": "0.0.0",
-  "modules/fullstack-web": "1.0.0"
+  "modules/iam-identity-center": "1.2.1",
+  "modules/ecs-platform": "1.0.0",
+  "modules/fullstack-web": "1.0.1",
+  "modules/ecs": "1.0.0"
 }
