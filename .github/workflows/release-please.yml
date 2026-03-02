@@ -4,6 +4,8 @@ name: Release Please
 on:
   push:
     branches: [main]
+  pull_request_target:
+    types: [opened, edited, synchronize]
 
 permissions:
   contents: write
@@ -18,12 +20,13 @@ jobs:
   release-please:
     name: Release Please
     runs-on: ubuntu-latest
+    if: github.event_name == 'push'
     outputs:
       releases_created: ${{ steps.release.outputs.releases_created }}
       # release-please v4 monorepo: output keys use package PATH (not component)
       # format: steps.release.outputs['<path>--<field>']
       iam_tag: ${{ steps.release.outputs['modules/iam-identity-center--tag_name'] }}
-      ecs_tag: ${{ steps.release.outputs['modules/ecs-platform--tag_name'] }}
+      ecs_tag: ${{ steps.release.outputs['modules/ecs--tag_name'] }}
       web_tag: ${{ steps.release.outputs['modules/fullstack-web--tag_name'] }}
     steps:
       - uses: googleapis/release-please-action@v4
@@ -49,9 +52,9 @@ jobs:
               "version": "${{ steps.release.outputs['modules/iam-identity-center--version'] }}",
               "release_created": "${{ steps.release.outputs['modules/iam-identity-center--release_created'] }}"
             },
-            "ecs_platform": {
-              "tag": "${{ steps.release.outputs['modules/ecs-platform--tag_name'] }}",
-              "version": "${{ steps.release.outputs['modules/ecs-platform--version'] }}"
+            "ecs": {
+              "tag": "${{ steps.release.outputs['modules/ecs--tag_name'] }}",
+              "version": "${{ steps.release.outputs['modules/ecs--version'] }}"
             },
             "fullstack_web": {
               "tag": "${{ steps.release.outputs['modules/fullstack-web--tag_name'] }}",
@@ -99,3 +102,31 @@ jobs:
             exit 1
           fi
           echo "Total dispatched: ${DISPATCHED}"
+
+  validate-pr-title:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request_target'
+    steps:
+      - uses: amannn/action-semantic-pull-request@v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            fix
+            feat
+            docs
+            ci
+            chore
+            perf
+            refactor
+            security
+            test
+          requireScope: false
+          subjectPattern: ^[A-Z].+$
+          subjectPatternError: |
+            The subject "{subject}" found in the pull request title "{title}"
+            didn't match the configured pattern. Please ensure that the subject
+            starts with an uppercase character.
+          wip: true
+          validateSingleCommit: false

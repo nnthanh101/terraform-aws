@@ -30,6 +30,13 @@ modules/iam-identity-center/examples/ @oceansoft/compliance-reviewers @nnthanh10
 # CI/CD workflows — requires platform engineering review
 .github/workflows/ @oceansoft/platform-engineers @nnthanh101
 
+# ECS module — requires platform engineering review
+modules/ecs/ @oceansoft/platform-engineers @nnthanh101
+modules/ecs/tests/ @oceansoft/platform-engineers @nnthanh101
+modules/ecs/examples/ @oceansoft/compliance-reviewers @nnthanh101
+
 # Legal files — requires compliance review (Apache 2.0, NOTICE.txt)
 modules/iam-identity-center/LICENSE @oceansoft/compliance-reviewers
 modules/iam-identity-center/NOTICE.txt @oceansoft/compliance-reviewers
+modules/ecs/LICENSE @oceansoft/compliance-reviewers
+modules/ecs/NOTICE.txt @oceansoft/compliance-reviewers

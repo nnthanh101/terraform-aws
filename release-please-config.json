@@ -22,9 +22,9 @@
       "extra-files": ["VERSION"],
       "bump-minor-pre-major": true
     },
-    "modules/ecs-platform": {
+    "modules/ecs": {
       "release-type": "simple",
-      "component": "ecs-platform",
+      "component": "ecs",
       "changelog-path": "CHANGELOG.md",
       "extra-files": ["VERSION"],
       "bump-minor-pre-major": true

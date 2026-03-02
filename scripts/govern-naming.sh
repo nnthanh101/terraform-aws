@@ -156,7 +156,7 @@ fi
 # CHECK 3 — Layer 3: Terraform state keys in backend.tf must not use lz- prefix
 #
 # ADR-006 + ADR-011 Layer 3: state keys follow pattern projects/{domain}/terraform.tfstate
-# where {domain} is descriptive kebab-case (iam-identity-center, ecs-platform, etc.)
+# where {domain} is descriptive kebab-case (iam-identity-center, ecs, etc.)
 # and must not start with lz-.
 # ---------------------------------------------------------------------------
 CHECK_NUM=3

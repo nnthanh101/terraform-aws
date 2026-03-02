@@ -4,7 +4,7 @@ name: Registry Publish
 on:
   push:
     tags:
-      - '*/v*'    # module-prefixed: iam-identity-center/v1.2.0, ecs-platform/v0.1.0
+      - '*/v*'    # module-prefixed: iam-identity-center/v1.2.0, ecs/v0.1.0
   workflow_dispatch:
     inputs:
       tag:
