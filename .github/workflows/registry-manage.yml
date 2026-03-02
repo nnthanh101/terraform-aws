@@ -35,6 +35,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Validate inputs
+        env:
+          INPUT_MODULE: ${{ inputs.module }}
+          INPUT_VERSION: ${{ inputs.keep_version }}
+        run: |
+          if ! [[ "$INPUT_MODULE" =~ ^[a-z][a-z0-9-]+$ ]]; then
+            echo "ERROR: module name must be kebab-case alphanumeric (got: '$INPUT_MODULE')"
+            exit 1
+          fi
+          if [ -n "$INPUT_VERSION" ]; then
+            if ! [[ "$INPUT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "ERROR: keep_version must be semver (e.g., 1.2.0) (got: '$INPUT_VERSION')"
+              exit 1
+            fi
+          fi
+
       - name: List module versions
         if: inputs.action == 'list'
         env:

@@ -17,6 +17,12 @@ ORG="${TFC_ORG:-oceansoft}"
 PROVIDER="${TFC_PROVIDER:-aws}"
 DRY_RUN="${DRY_RUN:-false}"
 
+# Input validation (Red Team F-05: prevent path traversal in API URLs)
+[[ "$MODULE" =~ ^[a-z][a-z0-9-]+$ ]] || { echo "ERROR: MODULE must be kebab-case (got: '$MODULE')"; exit 1; }
+[[ "$KEEP_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "ERROR: KEEP_VERSION must be semver (got: '$KEEP_VERSION')"; exit 1; }
+[[ "$ORG" =~ ^[a-zA-Z][a-zA-Z0-9-]+$ ]] || { echo "ERROR: ORG contains invalid chars (got: '$ORG')"; exit 1; }
+[[ "$PROVIDER" =~ ^[a-z]+$ ]] || { echo "ERROR: PROVIDER contains invalid chars (got: '$PROVIDER')"; exit 1; }
+
 API_BASE="https://app.terraform.io/api/v2/organizations/${ORG}/registry-modules/private/${ORG}/${MODULE}/${PROVIDER}"
 
 echo "=== TFC Registry Cleanup ==="
@@ -34,7 +40,7 @@ VERSIONS=$(echo "$VERSIONS_JSON" | jq -r '.data.attributes."version-statuses"[].
 
 if [ -z "$VERSIONS" ]; then
   echo "ERROR: No versions found or API call failed"
-  echo "$VERSIONS_JSON" | jq . 2>/dev/null || echo "$VERSIONS_JSON"
+  echo "API error: $(echo "$VERSIONS_JSON" | jq -r '.errors[0].detail // "unknown"' 2>/dev/null)"
   exit 1
 fi
 
