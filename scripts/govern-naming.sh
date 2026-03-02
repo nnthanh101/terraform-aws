@@ -129,20 +129,33 @@ _check_hcl_name() {
   fi
 }
 
+# Helper: check if a line number in a file is preceded by tflint-ignore comment
+_is_tflint_ignored() {
+  local file="$1" line_num="$2"
+  if [ "$line_num" -le 1 ]; then return 1; fi
+  local prev_line
+  prev_line="$(sed -n "$((line_num - 1))p" "$file")"
+  echo "$prev_line" | grep -q 'tflint-ignore:.*terraform_naming_convention'
+}
+
 while IFS= read -r -d '' tf_file; do
   rel_path="${tf_file#"$REPO_ROOT/"}"
 
-  # Check variable "name" declarations
-  while IFS= read -r var_line; do
-    var_name="$(echo "$var_line" | sed -E 's/^[[:space:]]*variable[[:space:]]+"([^"]+)".*/\1/')"
+  # Check variable "name" declarations (skip tflint-ignored upstream API names)
+  while IFS= read -r var_match; do
+    var_linenum="$(echo "$var_match" | cut -d: -f1)"
+    var_name="$(echo "$var_match" | sed -E 's/^[0-9]+:[[:space:]]*variable[[:space:]]+"([^"]+)".*/\1/')"
+    if _is_tflint_ignored "$tf_file" "$var_linenum"; then continue; fi
     _check_hcl_name "$var_name" "$rel_path" "variable"
-  done < <(grep -E '^[[:space:]]*variable[[:space:]]+"[^"]+"' "$tf_file" 2>/dev/null || true)
+  done < <(grep -nE '^[[:space:]]*variable[[:space:]]+"[^"]+"' "$tf_file" 2>/dev/null || true)
 
-  # Check output "name" declarations
-  while IFS= read -r out_line; do
-    out_name="$(echo "$out_line" | sed -E 's/^[[:space:]]*output[[:space:]]+"([^"]+)".*/\1/')"
+  # Check output "name" declarations (skip tflint-ignored)
+  while IFS= read -r out_match; do
+    out_linenum="$(echo "$out_match" | cut -d: -f1)"
+    out_name="$(echo "$out_match" | sed -E 's/^[0-9]+:[[:space:]]*output[[:space:]]+"([^"]+)".*/\1/')"
+    if _is_tflint_ignored "$tf_file" "$out_linenum"; then continue; fi
     _check_hcl_name "$out_name" "$rel_path" "output"
-  done < <(grep -E '^[[:space:]]*output[[:space:]]+"[^"]+"' "$tf_file" 2>/dev/null || true)
+  done < <(grep -nE '^[[:space:]]*output[[:space:]]+"[^"]+"' "$tf_file" 2>/dev/null || true)
 
 done < <(find "$REPO_ROOT/modules" "$REPO_ROOT/projects" "$REPO_ROOT/global" -name "*.tf" -print0 2>/dev/null)
 

@@ -1,0 +1,59 @@
+# Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
+name: Registry Manage
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action: cleanup (delete old versions) or list (show versions)'
+        required: true
+        type: choice
+        options:
+          - list
+          - cleanup
+      module:
+        description: 'Module name (e.g., iam-identity-center, ecs)'
+        required: true
+        type: string
+      keep_version:
+        description: 'Version to keep (e.g., 1.2.0) — only used with cleanup action'
+        required: false
+        type: string
+      dry_run:
+        description: 'Dry run (show what would be deleted without deleting)'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  manage:
+    name: Registry ${{ inputs.action }} (${{ inputs.module }})
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: List module versions
+        if: inputs.action == 'list'
+        env:
+          TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
+          MODULE: ${{ inputs.module }}
+        run: |
+          RESPONSE=$(curl -s \
+            -H "Authorization: Bearer ${TFE_TOKEN}" \
+            "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${MODULE}/aws")
+          echo "Module: oceansoft/${MODULE}/aws"
+          echo ""
+          echo "Versions:"
+          echo "$RESPONSE" | jq -r '.data.attributes."version-statuses"[] | "  v\(.version) — \(.status)"'
+
+      - name: Cleanup old versions
+        if: inputs.action == 'cleanup'
+        env:
+          TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
+          MODULE: ${{ inputs.module }}
+          KEEP_VERSION: ${{ inputs.keep_version }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: bash scripts/registry-cleanup.sh
