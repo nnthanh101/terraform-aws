@@ -19,9 +19,6 @@ jobs:
     name: Release Please
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
-    permissions:
-      contents: write
-      pull-requests: write
     outputs:
       releases_created: ${{ steps.release.outputs.releases_created }}
       # release-please v4 monorepo: output keys use package PATH (not component)
@@ -50,23 +47,28 @@ jobs:
           RP_WEB_VERSION: ${{ steps.release.outputs['modules/fullstack-web--version'] }}
         run: |
           mkdir -p tmp/terraform-aws/release-logs
-          jq -n \
-            --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --arg run_id "${GITHUB_RUN_ID}" \
-            --arg sha "${GITHUB_SHA}" \
-            --arg releases "$RP_RELEASES_CREATED" \
-            --arg iam_tag "$RP_IAM_TAG" \
-            --arg iam_ver "$RP_IAM_VERSION" \
-            --arg iam_created "$RP_IAM_CREATED" \
-            --arg ecs_tag "$RP_ECS_TAG" \
-            --arg ecs_ver "$RP_ECS_VERSION" \
-            --arg web_tag "$RP_WEB_TAG" \
-            --arg web_ver "$RP_WEB_VERSION" \
-            '{timestamp: $ts, run_id: $run_id, sha: $sha, releases_created: $releases,
-              iam_identity_center: {tag: $iam_tag, version: $iam_ver, release_created: $iam_created},
-              ecs: {tag: $ecs_tag, version: $ecs_ver},
-              fullstack_web: {tag: $web_tag, version: $web_ver}}' \
-            > "tmp/terraform-aws/release-logs/release-please-${GITHUB_RUN_ID}.json"
+          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          cat <<EOFLOG > tmp/terraform-aws/release-logs/release-please-${{ github.run_id }}.json
+          {
+            "timestamp": "${TIMESTAMP}",
+            "run_id": "${{ github.run_id }}",
+            "sha": "${{ github.sha }}",
+            "releases_created": "${{ steps.release.outputs.releases_created }}",
+            "iam_identity_center": {
+              "tag": "${{ steps.release.outputs['modules/iam-identity-center--tag_name'] }}",
+              "version": "${{ steps.release.outputs['modules/iam-identity-center--version'] }}",
+              "release_created": "${{ steps.release.outputs['modules/iam-identity-center--release_created'] }}"
+            },
+            "ecs": {
+              "tag": "${{ steps.release.outputs['modules/ecs--tag_name'] }}",
+              "version": "${{ steps.release.outputs['modules/ecs--version'] }}"
+            },
+            "fullstack_web": {
+              "tag": "${{ steps.release.outputs['modules/fullstack-web--tag_name'] }}",
+              "version": "${{ steps.release.outputs['modules/fullstack-web--version'] }}"
+            }
+          }
+          EOFLOG
 
       - name: Upload release evidence
         if: always()
@@ -114,9 +116,6 @@ jobs:
     name: Validate PR Title
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request_target'
-    permissions:
-      pull-requests: read
-      statuses: write
     steps:
       - uses: amannn/action-semantic-pull-request@v6.1.1
         env:
