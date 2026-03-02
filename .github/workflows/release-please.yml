@@ -8,9 +8,7 @@ on:
     types: [opened, edited, synchronize]
 
 permissions:
-  contents: write
-  pull-requests: write
-  actions: write
+  contents: read
 
 concurrency:
   group: release-please-${{ github.ref }}
@@ -38,6 +36,15 @@ jobs:
 
       - name: Log release outputs
         if: always()
+        env:
+          RP_RELEASES_CREATED: ${{ steps.release.outputs.releases_created }}
+          RP_IAM_TAG: ${{ steps.release.outputs['modules/iam-identity-center--tag_name'] }}
+          RP_IAM_VERSION: ${{ steps.release.outputs['modules/iam-identity-center--version'] }}
+          RP_IAM_CREATED: ${{ steps.release.outputs['modules/iam-identity-center--release_created'] }}
+          RP_ECS_TAG: ${{ steps.release.outputs['modules/ecs--tag_name'] }}
+          RP_ECS_VERSION: ${{ steps.release.outputs['modules/ecs--version'] }}
+          RP_WEB_TAG: ${{ steps.release.outputs['modules/fullstack-web--tag_name'] }}
+          RP_WEB_VERSION: ${{ steps.release.outputs['modules/fullstack-web--version'] }}
         run: |
           mkdir -p tmp/terraform-aws/release-logs
           TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -76,6 +83,8 @@ jobs:
     needs: [release-please]
     if: needs.release-please.outputs.releases_created == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
       - name: Dispatch registry-publish for each released module
         env:
