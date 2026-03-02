@@ -1,0 +1,20 @@
+# Multi-Org S3 Backend Configuration
+# Usage: terraform init -backend-config=backend.hcl
+#
+# Copy and customize per account:
+#   cp backend.hcl.example backend.hcl
+#   # Edit values below, then:
+#   terraform init -backend-config=backend.hcl
+
+bucket         = "ams-terraform-org-state"
+region         = "ap-southeast-2"
+use_lockfile   = true
+
+# Path pattern: tf-org-aws/<account-id>/<module>/terraform.tfstate
+# Example for identity-center in account 123456789012:
+#   key = "tf-org-aws/123456789012/identity-center/terraform.tfstate"
+key            = "tf-org-aws/<ACCOUNT_ID>/<MODULE_NAME>/terraform.tfstate"
+
+# State bucket lives in management account
+# Ensure cross-account access policy exists on this bucket
+encrypt        = true

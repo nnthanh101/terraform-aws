@@ -26,20 +26,10 @@ else
   echo "FAIL: tflint not installed (required for lint gate)" && exit 1
 fi
 
-# checkov: security scanning (scope to MODULE_DIR when set)
+# checkov: security scanning on modules/
 if command -v checkov >/dev/null 2>&1; then
-  CHECKOV_DIR="${MODULE_DIR:-modules/}"
-  CHECKOV_ARGS="-d $CHECKOV_DIR --framework terraform --quiet"
-  # Use module-specific .checkov.yml if it exists
-  if [ -f "$CHECKOV_DIR/.checkov.yml" ]; then
-    CHECKOV_ARGS="$CHECKOV_ARGS --config-file $CHECKOV_DIR/.checkov.yml"
-  fi
-  # Use custom checks if directory exists
-  if [ -d ".checkov/custom_checks/" ]; then
-    CHECKOV_ARGS="$CHECKOV_ARGS --external-checks-dir .checkov/custom_checks/"
-  fi
-  echo "Running checkov security scan on ${CHECKOV_DIR}..."
-  checkov $CHECKOV_ARGS || LINT_PASS=false
+  echo "Running checkov security scan..."
+  checkov -d modules/ --framework terraform --quiet --external-checks-dir .checkov/custom_checks/ || LINT_PASS=false
 else
   echo "FAIL: checkov not installed (required for security scan)" && exit 1
 fi
