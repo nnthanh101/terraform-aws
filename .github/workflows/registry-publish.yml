@@ -17,7 +17,7 @@ permissions:
 
 concurrency:
   group: registry-publish-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   resolve:
@@ -31,17 +31,20 @@ jobs:
     steps:
       - name: Extract module info from tag
         id: module-info
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
-          if [ -n "${{ inputs.tag }}" ]; then
-            TAG="${{ inputs.tag }}"
+          if [ -n "$INPUT_TAG" ]; then
+            TAG="$INPUT_TAG"
           else
             TAG="${GITHUB_REF#refs/tags/}"
           fi
-          if [[ "$TAG" == *"/"* ]]; then
-            MODULE_NAME="${TAG%/v*}"
-            MODULE_VERSION="${TAG#*/}"
+          # Strict format validation: MODULE/vX.Y.Z (kebab-case module name)
+          if [[ "$TAG" =~ ^([a-z][a-z0-9-]+)/v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            MODULE_NAME="${BASH_REMATCH[1]}"
+            MODULE_VERSION="v${BASH_REMATCH[2]}"
           else
-            echo "FAIL: Tag '$TAG' is not per-module format (expected: MODULE/vX.Y.Z)" && exit 1
+            echo "FAIL: Tag '$TAG' does not match MODULE/vX.Y.Z format (e.g., ecs/v0.1.0)" && exit 1
           fi
           echo "module=${MODULE_NAME}" >> "$GITHUB_OUTPUT"
           echo "version=${MODULE_VERSION}" >> "$GITHUB_OUTPUT"
@@ -141,6 +144,13 @@ jobs:
         env:
           MODULE_DIR: ${{ needs.resolve.outputs.module_dir }}
         run: |
+          # Validate module directory is within modules/ boundary
+          CANONICAL_DIR="$(realpath "${MODULE_DIR}")"
+          EXPECTED_PREFIX="$(realpath modules)"
+          if [[ "$CANONICAL_DIR" != "$EXPECTED_PREFIX/"* ]]; then
+            echo "ERROR: MODULE_DIR escapes modules/ boundary: ${MODULE_DIR}"
+            exit 1
+          fi
           tar -czf /tmp/module.tar.gz \
             --exclude='.terraform' \
             --exclude='.terraform.lock.hcl' \
@@ -168,18 +178,20 @@ jobs:
           UPLOAD_URL=$(echo "$RESPONSE" | jq -r '.data.links.upload')
           if [ "$UPLOAD_URL" = "null" ] || [ -z "$UPLOAD_URL" ]; then
             echo "ERROR: Failed to create version — check TFE_TOKEN and module exists"
-            echo "$RESPONSE" | jq .
+            echo "API error: $(echo "$RESPONSE" | jq -r '.errors[0].detail // "unknown"' 2>/dev/null)"
             exit 1
           fi
           echo "upload_url=${UPLOAD_URL}" >> "$GITHUB_OUTPUT"
           echo "Created version ${VERSION}, upload URL obtained"
 
       - name: Upload module to TFC
+        env:
+          UPLOAD_URL: ${{ steps.create-version.outputs.upload_url }}
         run: |
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
             -X PUT -H "Content-Type: application/octet-stream" \
             --data-binary @/tmp/module.tar.gz \
-            "${{ steps.create-version.outputs.upload_url }}")
+            "$UPLOAD_URL")
           if [ "$HTTP_CODE" != "200" ]; then
             echo "ERROR: Upload failed with HTTP ${HTTP_CODE}"
             exit 1
