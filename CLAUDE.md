@@ -56,7 +56,7 @@ Every completion claim needs artifacts: `tmp/terraform-aws/coordination-logs/`, 
 
 ## Architecture
 
-- **3 Domains**: identity-center, ecs-platform, fullstack-web
+- **3 Domains**: identity-center, ecs, fullstack-web
 - **Wrapper Pattern**: Consume upstream modules via `source`, not copy-paste
 - **State**: S3 native locking (`use_lockfile = true`), NO DynamoDB (ADR-006)
 - **Region**: ap-southeast-2 (primary), us-east-1 (Identity Center)

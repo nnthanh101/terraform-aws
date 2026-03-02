@@ -7,7 +7,7 @@
 | Module | Status | Description |
 |--------|--------|-------------|
 | [iam-identity-center](modules/iam-identity-center/) | stable | AWS IAM Identity Center (SSO) permission sets and assignments |
-| [ecs-platform](modules/ecs-platform/) | stub | ECS Fargate platform with ALB and service mesh |
+| [ecs](modules/ecs/) | active | ECS Fargate platform with ALB and service mesh |
 | [fullstack-web](modules/fullstack-web/) | stub | Full-stack web application infrastructure |
 
 ## Quick Start

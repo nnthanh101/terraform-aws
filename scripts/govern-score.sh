@@ -24,7 +24,7 @@ fi
 [ -f VERSION ] && SCORE=$((SCORE+1)) && echo "CP-6: VERSION file ... PASS" || echo "CP-6: VERSION file ... FAIL"
 [ -f CLAUDE.md ] && SCORE=$((SCORE+1)) && echo "CP-7: CLAUDE.md ... PASS" || echo "CP-7: CLAUDE.md ... FAIL"
 [ -f Taskfile.yml ] && SCORE=$((SCORE+1)) && echo "CP-8: Taskfile.yml ... PASS" || echo "CP-8: Taskfile.yml ... FAIL"
-[ -d modules/iam-identity-center ] && [ -d modules/ecs-platform ] && [ -d modules/fullstack-web ] && SCORE=$((SCORE+1)) && echo "CP-9: Module dirs ... PASS" || echo "CP-9: Module dirs ... FAIL"
+[ -d modules/iam-identity-center ] && [ -d modules/ecs ] && [ -d modules/fullstack-web ] && SCORE=$((SCORE+1)) && echo "CP-9: Module dirs ... PASS" || echo "CP-9: Module dirs ... FAIL"
 [ -d tests/snapshot ] && [ -d tests/localstack ] && [ -d tests/integration ] && SCORE=$((SCORE+1)) && echo "CP-10: Test dirs ... PASS" || echo "CP-10: Test dirs ... FAIL"
 
 # CP-11: terraform fmt check (recursive)
@@ -36,21 +36,21 @@ fi
 
 # CP-12: versions.tf exists per active module
 VERSIONS_OK=true
-for mod in modules/iam-identity-center; do
+for mod in modules/iam-identity-center modules/ecs; do
   [ -f "$mod/versions.tf" ] || VERSIONS_OK=false
 done
 $VERSIONS_OK && SCORE=$((SCORE+1)) && echo "CP-12: versions.tf per module ... PASS" || echo "CP-12: versions.tf per module ... FAIL"
 
 # CP-13: outputs.tf exists per active module
 OUTPUTS_OK=true
-for mod in modules/iam-identity-center; do
+for mod in modules/iam-identity-center modules/ecs; do
   [ -f "$mod/outputs.tf" ] || OUTPUTS_OK=false
 done
 $OUTPUTS_OK && SCORE=$((SCORE+1)) && echo "CP-13: outputs.tf per module ... PASS" || echo "CP-13: outputs.tf per module ... FAIL"
 
 # CP-14: Copyright headers on module .tf files
 HEADERS_OK=true
-for tf in modules/iam-identity-center/*.tf; do
+for tf in modules/iam-identity-center/*.tf modules/ecs/*.tf; do
   head -1 "$tf" | grep -q "^# Copyright" || HEADERS_OK=false
 done
 $HEADERS_OK && SCORE=$((SCORE+1)) && echo "CP-14: Copyright headers ... PASS" || echo "CP-14: Copyright headers ... FAIL"

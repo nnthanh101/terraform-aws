@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
 #
-# deploy-init.sh — Initialize a project for deployment.
+# deploy-init.sh v2.0.0 — Initialize a project for deployment.
 #
 # Steps:
 #   1. Resolve AWS account ID from current credentials
@@ -72,12 +72,34 @@ fi
 echo ""
 echo "--- Step 4: Write .auto.tfvars.json ---"
 TFVARS_FILE="${PROJECT_DIR}/.auto.tfvars.json"
-cat > "$TFVARS_FILE" <<EJSON
+if [ "$MODULE" = "iam-identity-center" ]; then
+  cat > "$TFVARS_FILE" <<EJSON
 {
   "account_id": "${ACCOUNT_ID}",
   "sso_region": "${SSO_REGION}"
 }
 EJSON
+elif [ "$MODULE" = "ecs" ]; then
+  VPC_ID="${VPC_ID:-}"
+  SUBNET_IDS="${SUBNET_IDS:-}"
+  if [ -z "$VPC_ID" ] || [ -z "$SUBNET_IDS" ]; then
+    echo "WARN: VPC_ID and SUBNET_IDS not set. Set via environment variables for deploy."
+    echo "HINT: export VPC_ID=vpc-xxx SUBNET_IDS='[\"subnet-a\",\"subnet-b\"]'"
+  fi
+  cat > "$TFVARS_FILE" <<EJSON
+{
+  "account_id": "${ACCOUNT_ID}",
+  "vpc_id": "${VPC_ID}",
+  "subnet_ids": ${SUBNET_IDS:-[]}
+}
+EJSON
+else
+  cat > "$TFVARS_FILE" <<EJSON
+{
+  "account_id": "${ACCOUNT_ID}"
+}
+EJSON
+fi
 echo "Written: ${TFVARS_FILE}"
 
 # --- Step 5: terraform init with partial backend config ---
@@ -91,7 +113,8 @@ terraform -chdir="$PROJECT_DIR" init \
 
 # --- Step 6: Write evidence ---
 mkdir -p "${EVIDENCE_DIR}/deployment-logs"
-cat > "${EVIDENCE_DIR}/deployment-logs/init-${MODULE}-${DATE}.json" <<EJSON
+if [ "$MODULE" = "iam-identity-center" ]; then
+  cat > "${EVIDENCE_DIR}/deployment-logs/init-${MODULE}-${DATE}.json" <<EJSON
 {
   "timestamp": "${TIMESTAMP}",
   "module": "${MODULE}",
@@ -100,9 +123,36 @@ cat > "${EVIDENCE_DIR}/deployment-logs/init-${MODULE}-${DATE}.json" <<EJSON
   "sso_region": "${SSO_REGION}",
   "bucket": "${BUCKET}",
   "tfvars_file": "${TFVARS_FILE}",
-  "script": "scripts/deploy-init.sh v1.0.0"
+  "script": "scripts/deploy-init.sh v2.0.0"
 }
 EJSON
+elif [ "$MODULE" = "ecs" ]; then
+  cat > "${EVIDENCE_DIR}/deployment-logs/init-${MODULE}-${DATE}.json" <<EJSON
+{
+  "timestamp": "${TIMESTAMP}",
+  "module": "${MODULE}",
+  "account_id": "${ACCOUNT_ID}",
+  "region": "${REGION}",
+  "vpc_id": "${VPC_ID:-}",
+  "subnet_ids": "${SUBNET_IDS:-[]}",
+  "bucket": "${BUCKET}",
+  "tfvars_file": "${TFVARS_FILE}",
+  "script": "scripts/deploy-init.sh v2.0.0"
+}
+EJSON
+else
+  cat > "${EVIDENCE_DIR}/deployment-logs/init-${MODULE}-${DATE}.json" <<EJSON
+{
+  "timestamp": "${TIMESTAMP}",
+  "module": "${MODULE}",
+  "account_id": "${ACCOUNT_ID}",
+  "region": "${REGION}",
+  "bucket": "${BUCKET}",
+  "tfvars_file": "${TFVARS_FILE}",
+  "script": "scripts/deploy-init.sh v2.0.0"
+}
+EJSON
+fi
 echo ""
 echo "Evidence: ${EVIDENCE_DIR}/deployment-logs/init-${MODULE}-${DATE}.json"
 

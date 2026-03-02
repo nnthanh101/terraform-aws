@@ -21,9 +21,9 @@ version: '3'
 #   task sprint:validate     # Sprint milestone: 7-gate validation
 #
 # MODULE variable (default: iam-identity-center):
-#   task build:validate MODULE=ecs-platform     # Validate one module
+#   task build:validate MODULE=ecs               # Validate one module
 #   task test:tier1 MODULE=fullstack-web         # Test one module
-#   task registry:preflight MODULE=ecs-platform  # Preflight one module
+#   task registry:preflight MODULE=ecs            # Preflight one module
 #   task modules:list                            # Show all available modules
 #
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -77,7 +77,7 @@ tasks:
         echo "  ─────────────────────────────────────────"
         echo ""
         echo "  MODULE variable (default: iam-identity-center)"
-        echo "    task <task> MODULE=ecs-platform   # target a specific module"
+        echo "    task <task> MODULE=ecs             # target a specific module"
         echo "    task modules:list                 # list all available modules"
         echo ""
         echo "  PLAN      Cost estimation & tool verification"

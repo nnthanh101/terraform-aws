@@ -61,7 +61,7 @@ Enterprise team pushes feat:/fix: commits to main
 Conventional commit examples:
 ```
 feat(iam-identity-center): add developer permission set
-fix(ecs-platform): correct task definition memory limit
+fix(ecs): correct task definition memory limit
 ```
 
 > **WARNING: RELEASE_PLEASE_DOUBLE_RELEASE**
@@ -99,5 +99,5 @@ gh pr list --label="autorelease: pending"               # Release PRs
 | Module | Version | Status | Registry |
 |--------|---------|--------|----------|
 | `iam-identity-center` | 1.1.3 | Active | `oceansoft/iam-identity-center/aws` |
-| `ecs-platform` | 1.0.0 | Stub | — |
+| `ecs` | 1.0.0 | Active | `oceansoft/ecs/aws` |
 | `fullstack-web` | 1.0.0 | Stub | — |
