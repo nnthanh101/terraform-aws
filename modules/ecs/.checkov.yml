@@ -7,6 +7,9 @@ skip-check:
 - CKV_AZURE*
 - CKV2_AZURE*
 - CKV2_AWS_5  # Security group attachment — ECS service attaches SG via network_configuration (dynamic, not traceable by static analysis)
+- CKV_AWS_356  # ECS task exec role requires broad resource scope — ECR GetAuthorizationToken has no per-repo ARN (AWS-mandated)
+- CKV_AWS_111  # ECS task exec role write access — logs:CreateLogStream + logs:PutLogEvents required for CloudWatch
+- CKV_AWS_97   # EFS encryption in transit — enforced at EFS file system policy layer by upstream module; Checkov false positive on task definition
 summary-position: bottom
 output: 'cli'
 compact: True

@@ -102,8 +102,10 @@ tasks:
         echo "    task test:ci              CI-safe: Tier 1 + 2 (no cost)"
         echo "    task test:all             All 3 tiers (Tier 3 needs HITL)"
         echo ""
-        echo "  SECURITY  IaC vulnerability scanning"
+        echo "  SECURITY  IaC scanning + supply chain"
         echo "    task security:trivy       Trivy misconfig scan per module [MODULE=]"
+        echo "    task security:sbom        CycloneDX SBOM generation [MODULE=]"
+        echo "    task security:full        Full pipeline: lint + trivy + SBOM [MODULE=]"
         echo ""
         echo "  GOVERN    Legal + constitutional compliance"
         echo "    task govern:legal         Apache 2.0 audit (5 checks)"
@@ -125,6 +127,7 @@ tasks:
         echo "    task deploy:verify        Cross-validate deployed resources via AWS CLI"
         echo "    task deploy:cross-validate  State vs CLI count cross-validation [MODULE=]"
         echo "    task deploy:full          Full cycle: init → preflight → plan → apply"
+        echo "    task deploy:e2e           E2E: test → deploy → verify → cross-validate"
         echo ""
         echo "  OPERATE   Environment lifecycle"
         echo "    task operate:down         Stop all containers"
@@ -338,6 +341,20 @@ tasks:
         vars:
           CMD: "MODULE={{.MODULE}} MODULE_DIR={{.MODULE_DIR}} bash scripts/security-trivy.sh"
 
+  security:sbom:
+    desc: "CycloneDX SBOM generation [MODULE={{.MODULE}}] -> {{.EVIDENCE_DIR}}/security-scans/"
+    cmds:
+      - task: _exec
+        vars:
+          CMD: "MODULE={{.MODULE}} MODULE_DIR={{.MODULE_DIR}} bash scripts/security-sbom.sh"
+
+  security:full:
+    desc: "Full security pipeline: lint + trivy + SBOM [MODULE={{.MODULE}}]"
+    cmds:
+      - task: build:lint
+      - task: security:trivy
+      - task: security:sbom
+
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # GOVERN — legal, constitutional checkpoints
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -448,6 +465,15 @@ tasks:
     cmds:
       - MODULE={{.MODULE}} REGION=ap-southeast-2 bash scripts/cross-validate-deploy.sh
 
+  deploy:e2e:
+    desc: "E2E deploy lifecycle: test → deploy → verify → cross-validate [MODULE={{.MODULE}}]"
+    prompt: "E2E will run tests, create real AWS resources ($$), and verify. Continue?"
+    cmds:
+      - task: test:tier1
+      - task: deploy:full
+      - task: deploy:verify
+      - task: deploy:cross-validate
+
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # OPERATE — environment lifecycle
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -496,6 +522,7 @@ tasks:
       - task: test:ci
       - task: govern:all
       - task: security:trivy
+      - task: security:sbom
       - task: monitor:verify
 
   ci:act:

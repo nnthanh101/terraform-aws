@@ -181,8 +181,11 @@ jobs:
             echo "API error: $(echo "$RESPONSE" | jq -r '.errors[0].detail // "unknown"' 2>/dev/null)"
             exit 1
           fi
+          echo "::add-mask::${UPLOAD_URL}"
           echo "upload_url=${UPLOAD_URL}" >> "$GITHUB_OUTPUT"
           echo "Created version ${VERSION}, upload URL obtained"
+          mkdir -p /tmp/publish-evidence
+          echo "$RESPONSE" > /tmp/publish-evidence/create-version-response.json
 
       - name: Upload module to TFC
         env:
@@ -214,8 +217,19 @@ jobs:
             echo "Attempt ${i}: version ${VERSION} status = ${STATUS}"
             if [ "$STATUS" = "ok" ]; then
               echo "TFC Registry publish verified: ${MODULE_NAME} v${VERSION} ✓"
+              curl -s \
+                -H "Authorization: Bearer ${TFE_TOKEN}" \
+                "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${MODULE_NAME}/aws" \
+                > /tmp/publish-evidence/verify-status.json
               exit 0
             fi
           done
           echo "ERROR: Version ${VERSION} did not reach 'ok' status after 25s"
           exit 1
+
+      - name: Upload publish evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish-evidence-${{ needs.resolve.outputs.module }}-${{ needs.resolve.outputs.version }}
+          path: /tmp/publish-evidence/
