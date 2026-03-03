@@ -13,8 +13,8 @@
 
 | Module | Version | Registry | Status | Description |
 |--------|---------|----------|--------|-------------|
-| [iam-identity-center](modules/iam-identity-center/) | `1.2.0` | [oceansoft/iam-identity-center/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/iam-identity-center/aws) | stable | AWS IAM Identity Center (SSO) — groups, permission sets, account assignments |
-| [ecs](modules/ecs/) | `0.0.0` | [oceansoft/ecs/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/ecs/aws) | active | ECS Fargate platform with ALB, service mesh, and auto-scaling |
+| [iam-identity-center](modules/iam-identity-center/) | `1.2.1` | [oceansoft/iam-identity-center/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/iam-identity-center/aws) | stable | AWS IAM Identity Center (SSO) — groups, permission sets, account assignments |
+| [ecs](modules/ecs/) | `1.0.0` | [oceansoft/ecs/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/ecs/aws) | active | ECS Fargate platform with ALB, service mesh, and auto-scaling |
 | [fullstack-web](modules/fullstack-web/) | `1.0.1` | [oceansoft/fullstack-web/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/fullstack-web/aws) | stub | Full-stack web application infrastructure |
 
 ## 5W1H — Why This Exists
