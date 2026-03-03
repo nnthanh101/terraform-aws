@@ -102,8 +102,10 @@ tasks:
         echo "    task test:ci              CI-safe: Tier 1 + 2 (no cost)"
         echo "    task test:all             All 3 tiers (Tier 3 needs HITL)"
         echo ""
-        echo "  SECURITY  IaC vulnerability scanning"
+        echo "  SECURITY  IaC scanning + supply chain"
         echo "    task security:trivy       Trivy misconfig scan per module [MODULE=]"
+        echo "    task security:sbom        CycloneDX SBOM generation [MODULE=]"
+        echo "    task security:full        Full pipeline: lint + trivy + SBOM [MODULE=]"
         echo ""
         echo "  GOVERN    Legal + constitutional compliance"
         echo "    task govern:legal         Apache 2.0 audit (5 checks)"
@@ -339,6 +341,20 @@ tasks:
         vars:
           CMD: "MODULE={{.MODULE}} MODULE_DIR={{.MODULE_DIR}} bash scripts/security-trivy.sh"
 
+  security:sbom:
+    desc: "CycloneDX SBOM generation [MODULE={{.MODULE}}] -> {{.EVIDENCE_DIR}}/security-scans/"
+    cmds:
+      - task: _exec
+        vars:
+          CMD: "MODULE={{.MODULE}} MODULE_DIR={{.MODULE_DIR}} bash scripts/security-sbom.sh"
+
+  security:full:
+    desc: "Full security pipeline: lint + trivy + SBOM [MODULE={{.MODULE}}]"
+    cmds:
+      - task: build:lint
+      - task: security:trivy
+      - task: security:sbom
+
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # GOVERN — legal, constitutional checkpoints
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -506,6 +522,7 @@ tasks:
       - task: test:ci
       - task: govern:all
       - task: security:trivy
+      - task: security:sbom
       - task: monitor:verify
 
   ci:act:

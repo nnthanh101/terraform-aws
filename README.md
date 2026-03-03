@@ -13,7 +13,7 @@
 
 | Module | Version | Registry | Status | Description |
 |--------|---------|----------|--------|-------------|
-| [iam-identity-center](modules/iam-identity-center/) | `1.2.1` | [oceansoft/iam-identity-center/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/iam-identity-center/aws) | stable | AWS IAM Identity Center (SSO) — groups, permission sets, account assignments |
+| [iam-identity-center](modules/iam-identity-center/) | `1.2.0` | [oceansoft/iam-identity-center/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/iam-identity-center/aws) | stable | AWS IAM Identity Center (SSO) — groups, permission sets, account assignments |
 | [ecs](modules/ecs/) | `0.0.0` | [oceansoft/ecs/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/ecs/aws) | active | ECS Fargate platform with ALB, service mesh, and auto-scaling |
 | [fullstack-web](modules/fullstack-web/) | `1.0.1` | [oceansoft/fullstack-web/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/fullstack-web/aws) | stub | Full-stack web application infrastructure |
 
@@ -96,6 +96,28 @@ See **[QUICKSTART.md](QUICKSTART.md)** for the full 5-command manager workflow.
 | Govern | `task sprint:validate` | 7-gate sprint milestone check |
 | Cost | `task plan:cost` | Infracost estimate per module |
 | Security | `task security:trivy` | Trivy misconfiguration scan |
+| Security | `task security:sbom` | CycloneDX SBOM generation |
+| Security | `task security:full` | Full pipeline: lint + trivy + SBOM |
+
+</details>
+
+<details>
+<summary>Security Pipeline</summary>
+
+Three-stage security scanning — all container-first via devcontainer:
+
+| Stage | Task | Tool | What it checks |
+|-------|------|------|----------------|
+| Static Analysis | `task build:lint` | Checkov + tflint | IaC misconfigurations, CIS benchmarks, per-module `.checkov.yml` skip policy |
+| Vulnerability Scan | `task security:trivy` | Trivy | Known CVEs, misconfigs, secret leaks |
+| Supply Chain | `task security:sbom` | Trivy (CycloneDX) | Software Bill of Materials for dependency transparency |
+| Full Pipeline | `task security:full` | All above | Orchestrates lint → trivy → SBOM in sequence |
+
+**Agent-driven security** (on-demand via Claude Code):
+- `/security:sast` — SAST scanning with shift-left integration
+- `security-compliance-engineer` agent — STRIDE threat modeling, red team exercises (non-production), compliance audits
+
+Evidence output: `tmp/terraform-aws/security-scans/`
 
 </details>
 
@@ -117,5 +139,16 @@ conventional commit → release-please PR → HITL merge → auto-tag → regist
 ```
 
 HITL effort: **merge one PR**. Everything else is automated — version bumps, changelogs, Git tags, and TFC registry publication.
+
+## End-to-End Verification
+
+<details>
+<summary>IAM Identity Center — Registry Publication Pipeline</summary>
+
+![IAM Identity Center E2E Verification](README/iam-identity-center-e2e-verification.gif)
+
+Full pipeline: conventional commit → CI (11 jobs) → Release Please → HITL merge → registry-publish (5 stages) → TFC Registry.
+
+</details>
 
 <!-- Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE. -->
