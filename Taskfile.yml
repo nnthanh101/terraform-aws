@@ -125,6 +125,7 @@ tasks:
         echo "    task deploy:verify        Cross-validate deployed resources via AWS CLI"
         echo "    task deploy:cross-validate  State vs CLI count cross-validation [MODULE=]"
         echo "    task deploy:full          Full cycle: init → preflight → plan → apply"
+        echo "    task deploy:e2e           E2E: test → deploy → verify → cross-validate"
         echo ""
         echo "  OPERATE   Environment lifecycle"
         echo "    task operate:down         Stop all containers"
@@ -447,6 +448,15 @@ tasks:
     desc: "Post-apply cross-validation: terraform state vs AWS CLI counts [MODULE={{.MODULE}}]"
     cmds:
       - MODULE={{.MODULE}} REGION=ap-southeast-2 bash scripts/cross-validate-deploy.sh
+
+  deploy:e2e:
+    desc: "E2E deploy lifecycle: test → deploy → verify → cross-validate [MODULE={{.MODULE}}]"
+    prompt: "E2E will run tests, create real AWS resources ($$), and verify. Continue?"
+    cmds:
+      - task: test:tier1
+      - task: deploy:full
+      - task: deploy:verify
+      - task: deploy:cross-validate
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # OPERATE — environment lifecycle
