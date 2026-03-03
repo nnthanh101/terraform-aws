@@ -10,6 +10,10 @@ skip-check:
 - CKV_AWS_356  # ECS task exec role requires broad resource scope — ECR GetAuthorizationToken has no per-repo ARN (AWS-mandated)
 - CKV_AWS_111  # ECS task exec role write access — logs:CreateLogStream + logs:PutLogEvents required for CloudWatch
 - CKV_AWS_97   # EFS encryption in transit — enforced at EFS file system policy layer by upstream module; Checkov false positive on task definition
+- CKV_AWS_65   # Container insights — enabled in our wrapper via cluster_configuration setting; upstream example modules don't set it
+- CKV_AWS_224  # ECS cluster logging CMK — requires KMS key; enterprise decision deferred to consumer project layer
+- CKV_AWS_338  # CloudWatch log retention >= 1 year — upstream module defaults; consumer sets retention via variable
+- CKV_TF_1     # Module source pinning — upstream submodules use relative paths (./modules/*); not applicable to internal refs
 summary-position: bottom
 output: 'cli'
 compact: True
