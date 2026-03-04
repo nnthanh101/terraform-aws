@@ -28,6 +28,7 @@ locals {
     Example            = local.name
     Repository         = "https://github.com/terraform-aws-modules/terraform-aws-ecs"
     CostCenter         = "platform"
+    Project            = "ecs"
     DataClassification = "internal"
     Environment        = "development"
   }
