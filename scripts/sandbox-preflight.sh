@@ -23,24 +23,7 @@ EVIDENCE_DIR="${EVIDENCE_DIR:-tmp/terraform-aws}"
 DATE=$(date +%Y-%m-%d)
 TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-PASS=0; FAIL=0; TOTAL=0
-
-# ─── helper: pass / fail ──────────────────────────────────────────────────────
-check_pass() {
-  local label="$1"
-  TOTAL=$((TOTAL + 1))
-  PASS=$((PASS + 1))
-  echo "PASS [$TOTAL]: ${label}"
-}
-
-check_fail() {
-  local label="$1"
-  local reason="$2"
-  TOTAL=$((TOTAL + 1))
-  FAIL=$((FAIL + 1))
-  echo "FAIL [$TOTAL]: ${label}"
-  echo "  REASON: ${reason}"
-}
+source "$(dirname "${BASH_SOURCE[0]}")/lib/verify-helpers.sh"
 
 echo "=== sandbox-preflight [MODULE=${MODULE}, ENV=${ENVIRONMENT}] ==="
 echo ""
