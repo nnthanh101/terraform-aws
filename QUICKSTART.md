@@ -101,3 +101,10 @@ gh pr list --label="autorelease: pending"               # Release PRs
 | `iam-identity-center` | 1.2.1 | Active | `oceansoft/iam-identity-center/aws` |
 | `ecs` | 1.0.0 | Active | `oceansoft/ecs/aws` |
 | `fullstack-web` | 1.0.1 | Stub | — |
+
+> How release-please Auto-Version Works
+
+* `feat: add yaml-config-path example`     → bumps MINOR (1.2.1 → 1.3.0)
+* `fix: add FOCUS tags to permission sets` → bumps PATCH (1.2.1 → 1.2.2)
+* `chore: update tests`                    → NO bump (hidden section)
+* `"Terraform AWS"`                        → IGNORED (not conventional)

@@ -36,8 +36,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-          git-user-name: "Thanh Nguyen"
-          git-user-email: "nnthanh101@gmail.com"
 
       - name: Log release outputs
         if: always()
