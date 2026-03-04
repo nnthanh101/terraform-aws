@@ -177,8 +177,17 @@ jobs:
             "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${MODULE_NAME}/aws/versions")
           UPLOAD_URL=$(echo "$RESPONSE" | jq -r '.data.links.upload')
           if [ "$UPLOAD_URL" = "null" ] || [ -z "$UPLOAD_URL" ]; then
+            API_ERROR=$(echo "$RESPONSE" | jq -r '.errors[0].detail // "unknown"' 2>/dev/null)
+            # VCS-connected modules are published by TFC auto-detect — skip API upload gracefully
+            if echo "$API_ERROR" | grep -qi "connected to a VCS repository"; then
+              echo "INFO: Module ${MODULE_NAME} is VCS-connected — TFC auto-publishes on tag push. Skipping API upload."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              mkdir -p /tmp/publish-evidence
+              echo "{\"mode\":\"vcs\",\"module\":\"${MODULE_NAME}\",\"version\":\"${VERSION}\",\"skipped\":true}" > /tmp/publish-evidence/create-version-response.json
+              exit 0
+            fi
             echo "ERROR: Failed to create version — check TFE_TOKEN and module exists"
-            echo "API error: $(echo "$RESPONSE" | jq -r '.errors[0].detail // "unknown"' 2>/dev/null)"
+            echo "API error: ${API_ERROR}"
             exit 1
           fi
           echo "::add-mask::${UPLOAD_URL}"
@@ -188,6 +197,7 @@ jobs:
           echo "$RESPONSE" > /tmp/publish-evidence/create-version-response.json
 
       - name: Upload module to TFC
+        if: steps.create-version.outputs.skip != 'true'
         env:
           UPLOAD_URL: ${{ steps.create-version.outputs.upload_url }}
         run: |
@@ -202,6 +212,7 @@ jobs:
           echo "Upload successful (HTTP ${HTTP_CODE})"
 
       - name: Verify TFC ingestion
+        if: steps.create-version.outputs.skip != 'true'
         env:
           TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
           MODULE_NAME: ${{ needs.resolve.outputs.module }}
