@@ -1,5 +1,10 @@
 # Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
 # Derived from aws-ia/terraform-aws-iam-identity-center v1.0.4 (Apache-2.0). See NOTICE.
+#
+# Alternative: When using config_path YAML, reference a policy file by basename:
+#   inline_policy: "ReadOnly"  -> reads ./policies/ReadOnly.json
+# Or use file() in HCL:
+#   inline_policy = file("${path.module}/policies/ReadOnly.json")
 
 data "aws_organizations_organization" "org" {}
 

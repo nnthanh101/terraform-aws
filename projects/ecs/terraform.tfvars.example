@@ -1,0 +1,31 @@
+# terraform.tfvars.example — ECS Fargate project
+# Copy to terraform.tfvars and customize for your environment.
+#
+# Dual-Mode Source Pattern:
+#   Development:  source = "../../modules/ecs" (local, fast iteration)
+#   Production:   source = "app.terraform.io/oceansoft/ecs/aws" version = "~> 1.0"
+#
+# Init: terraform init -backend-config="bucket=${ACCOUNT_ID}-tfstate-${REGION}" -backend-config="region=ap-southeast-2"
+# Or:   MODULE=ecs VPC_ID=vpc-xxx SUBNET_IDS='["subnet-a","subnet-b"]' bash scripts/deploy-init.sh
+#
+# Required env vars:
+#   AWS_PROFILE=aws-sandbox  (or export AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY)
+
+# Region
+region = "ap-southeast-2"
+
+# Network — REQUIRED, no defaults (auto-discover: aws ec2 describe-vpcs --filters Name=isDefault,Values=true)
+vpc_id     = "vpc-05f58a0991d5440eb"
+subnet_ids = ["subnet-0a1b2c3d4e5f6a7b8", "subnet-1b2c3d4e5f6a7b8c9", "subnet-2c3d4e5f6a7b8c9d0"]
+
+# FOCUS 1.2+ FinOps tags — override per environment
+default_tags = {
+  CostCenter         = "platform"
+  Project            = "ecs"
+  Environment        = "production"   # Change per environment: sandbox|staging|production
+  ServiceName        = "ecs"
+  DataClassification = "internal"     # Change per environment: internal|confidential|restricted
+  ManagedBy          = "terraform"
+  Owner              = "platform-team"
+  Team               = "cloudops"
+}

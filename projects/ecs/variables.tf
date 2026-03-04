@@ -32,5 +32,7 @@ variable "default_tags" {
     ServiceName        = "ecs"
     DataClassification = "internal"
     ManagedBy          = "terraform"
+    Owner              = "platform-team"
+    Team               = "cloudops"
   }
 }

@@ -34,5 +34,7 @@ variable "default_tags" {
     ServiceName        = "sso"
     DataClassification = "internal"
     ManagedBy          = "terraform"
+    Owner              = "platform-team"
+    Team               = "cloudops"
   }
 }

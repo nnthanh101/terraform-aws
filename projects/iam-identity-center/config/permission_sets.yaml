@@ -1,0 +1,64 @@
+# Permission Sets — APRA CPS 234 audit trail (YAML-managed)
+# Schema matches var.permission_sets. Merged with HCL (YAML wins on key collision).
+# 4-tier Landing Zone: Admin(PT1H) > PowerUser(PT4H) > ReadOnly(PT8H) = SecurityAudit(PT8H)
+#
+# FOCUS 1.2+ FinOps tags (per-permission-set):
+#   Required: CostCenter, Project, Environment, DataClassification
+#   Extended: Owner, Team, ManagedBy
+# Provider-level default_tags (variables.tf) also apply — per-pset tags override on collision.
+
+Admin:
+  description: "Break-glass administrator - APRA CPS 234 time-limited"
+  session_duration: "PT1H"
+  aws_managed_policies:
+    - "arn:aws:iam::aws:policy/AdministratorAccess"
+  tags:
+    CostCenter:         "platform"
+    Project:            "iam-identity-center"
+    Environment:        "sandbox"
+    DataClassification: "confidential"
+    Owner:              "platform-team"
+    Team:               "cloudops"
+    ManagedBy:          "Terraform"
+
+PowerUser:
+  description: "Day-to-day workload operations - no IAM/Org changes"
+  session_duration: "PT4H"
+  aws_managed_policies:
+    - "arn:aws:iam::aws:policy/PowerUserAccess"
+  tags:
+    CostCenter:         "platform"
+    Project:            "iam-identity-center"
+    Environment:        "sandbox"
+    DataClassification: "internal"
+    Owner:              "platform-team"
+    Team:               "cloudops"
+    ManagedBy:          "Terraform"
+
+ReadOnly:
+  description: "Read-only access across all services"
+  session_duration: "PT8H"
+  aws_managed_policies:
+    - "arn:aws:iam::aws:policy/ReadOnlyAccess"
+  tags:
+    CostCenter:         "platform"
+    Project:            "iam-identity-center"
+    Environment:        "sandbox"
+    DataClassification: "internal"
+    Owner:              "platform-team"
+    Team:               "cloudops"
+    ManagedBy:          "Terraform"
+
+SecurityAudit:
+  description: "Security incident response and compliance review"
+  session_duration: "PT8H"
+  aws_managed_policies:
+    - "arn:aws:iam::aws:policy/SecurityAudit"
+  tags:
+    CostCenter:         "security"
+    Project:            "iam-identity-center"
+    Environment:        "sandbox"
+    DataClassification: "confidential"
+    Owner:              "security-team"
+    Team:               "secops"
+    ManagedBy:          "Terraform"

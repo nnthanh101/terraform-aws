@@ -1,0 +1,41 @@
+# Account Assignments — APRA CPS 234 audit trail (YAML-managed)
+# Schema matches var.account_assignments. principal_idp: INTERNAL for module-created groups.
+# account_ids use local.management_account_id — passed via HCL, not hardcoded here.
+# NOTE: Account IDs cannot reference HCL locals in YAML. Use 12-digit IDs or
+# enable_organizations_lookup=true with account names.
+
+PlatformAdmin:
+  principal_name: "PlatformTeam"
+  principal_type: "GROUP"
+  principal_idp: "INTERNAL"
+  permission_sets:
+    - "Admin"
+  account_ids:
+    - "728863344838"
+
+PowerUserAccess:
+  principal_name: "PowerUsers"
+  principal_type: "GROUP"
+  principal_idp: "INTERNAL"
+  permission_sets:
+    - "PowerUser"
+  account_ids:
+    - "728863344838"
+
+AuditReadOnly:
+  principal_name: "AuditTeam"
+  principal_type: "GROUP"
+  principal_idp: "INTERNAL"
+  permission_sets:
+    - "ReadOnly"
+  account_ids:
+    - "728863344838"
+
+SecurityOps:
+  principal_name: "SecurityTeam"
+  principal_type: "GROUP"
+  principal_idp: "INTERNAL"
+  permission_sets:
+    - "SecurityAudit"
+  account_ids:
+    - "728863344838"

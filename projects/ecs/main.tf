@@ -2,17 +2,16 @@
 # Minimal Fargate cluster + 1 service — sandbox consumer project
 # Registry: oceansoft/ecs/aws
 
-# Source options (select ONE):
-# 1. Local path (monorepo dev):
-#    source = "../../modules/ecs"
-# 2. GitHub release:
-#    source = "github.com/nnthanh101/terraform-aws//modules/ecs?ref=ecs/v1.0.0"
-# 3. Terraform Registry (after registry-publish):
-#    source  = "oceansoft/ecs/aws"
-#    version = "~> 1.0"
+# Dual-Mode Source Pattern:
+#   Production:  Registry source (immutable, version-pinned) — DEFAULT for projects/
+#   Development: Local source for module iteration only:
+#     source = "../../modules/ecs"
+# GitHub release alternative:
+#   source = "github.com/nnthanh101/terraform-aws//modules/ecs?ref=ecs/v1.0.0"
 
 module "ecs" {
-  source = "../../modules/ecs"
+  source  = "app.terraform.io/oceansoft/ecs/aws"
+  version = "~> 1.0"
 
   cluster_name               = "sandbox-ecs"
   cluster_capacity_providers = ["FARGATE"]
