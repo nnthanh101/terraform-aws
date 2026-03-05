@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/nnthanh101/terraform-aws/compare/ecs/v1.0.1...ecs/v1.1.0) (2026-03-05)
+
+
+### Features
+
+* workflows/registry-publish.yml ([4abaa43](https://github.com/nnthanh101/terraform-aws/commit/4abaa43aff12f5f97a679eabed1ccd458f8f4752))
+
 ## [1.0.1](https://github.com/nnthanh101/terraform-aws/compare/ecs/v1.0.0...ecs/v1.0.1) (2026-03-04)
 
 
