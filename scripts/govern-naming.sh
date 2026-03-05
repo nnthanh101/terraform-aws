@@ -157,7 +157,7 @@ while IFS= read -r -d '' tf_file; do
     _check_hcl_name "$out_name" "$rel_path" "output"
   done < <(grep -nE '^[[:space:]]*output[[:space:]]+"[^"]+"' "$tf_file" 2>/dev/null || true)
 
-done < <(find "$REPO_ROOT/modules" "$REPO_ROOT/projects" "$REPO_ROOT/global" -name "*.tf" -print0 2>/dev/null)
+done < <(find "$REPO_ROOT/modules" "$REPO_ROOT/projects" "$REPO_ROOT/global" -name "*.tf" -not -path '*/.terraform/*' -not -path '*/.infracost/*' -print0 2>/dev/null)
 
 if [ -z "$L2_VIOLATIONS" ]; then
   pass "$CHECK_NUM" "$CHECK_NAME"
@@ -198,7 +198,7 @@ while IFS= read -r -d '' backend_file; do
       L3_VIOLATIONS="${L3_VIOLATIONS}  LZ-PREFIX in state key: ${key_val} (${rel_path})\n"
     fi
   done < <(grep -E '^[[:space:]]*key[[:space:]]*=' "$backend_file" 2>/dev/null || true)
-done < <(find "$REPO_ROOT/modules" -name "backend.tf" -print0 2>/dev/null)
+done < <(find "$REPO_ROOT/modules" -name "backend.tf" -not -path '*/.terraform/*' -not -path '*/.infracost/*' -print0 2>/dev/null)
 
 if [ -z "$L3_VIOLATIONS" ]; then
   pass "$CHECK_NUM" "$CHECK_NAME"
@@ -273,7 +273,7 @@ while IFS= read -r -d '' tf_file; do
       L4_VIOLATIONS="${L4_VIOLATIONS}  NOT PascalCase LZ name: ${val} in ${rel_path}\n"
     fi
   done < <(grep -E '"[^"]*[Ll][Zz][^"]*"' "$tf_file" 2>/dev/null || true)
-done < <(find "$REPO_ROOT/modules" "$REPO_ROOT/projects" -name "*.tf" -print0 2>/dev/null)
+done < <(find "$REPO_ROOT/modules" "$REPO_ROOT/projects" -name "*.tf" -not -path '*/.terraform/*' -not -path '*/.infracost/*' -print0 2>/dev/null)
 
 if [ -z "$L4_VIOLATIONS" ]; then
   pass "$CHECK_NUM" "$CHECK_NAME"

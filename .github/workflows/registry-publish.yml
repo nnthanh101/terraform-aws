@@ -28,11 +28,13 @@ jobs:
       version: ${{ steps.module-info.outputs.version }}
       module_dir: ${{ steps.module-info.outputs.module_dir }}
       tag_ref: ${{ steps.module-info.outputs.tag_ref }}
+      checkout_ref: ${{ steps.module-info.outputs.checkout_ref }}
     steps:
       - name: Extract module info from tag
         id: module-info
         env:
           INPUT_TAG: ${{ inputs.tag }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           if [ -n "$INPUT_TAG" ]; then
             TAG="$INPUT_TAG"
@@ -51,7 +53,14 @@ jobs:
           echo "module_dir=modules/${MODULE_NAME}" >> "$GITHUB_OUTPUT"
           # Normalize to refs/tags/ prefix for actions/checkout compatibility
           echo "tag_ref=refs/tags/${TAG}" >> "$GITHUB_OUTPUT"
-          echo "Resolved: module=${MODULE_NAME}, version=${MODULE_VERSION}, dir=modules/${MODULE_NAME}, tag_ref=refs/tags/${TAG}"
+          # checkout_ref: tag push → tag ref (immutable); workflow_dispatch → HEAD (latest fixes)
+          if [ "$EVENT_NAME" = "push" ]; then
+            echo "checkout_ref=refs/tags/${TAG}" >> "$GITHUB_OUTPUT"
+            echo "Resolved: module=${MODULE_NAME}, version=${MODULE_VERSION}, checkout=refs/tags/${TAG} (tag push — immutable)"
+          else
+            echo "checkout_ref=" >> "$GITHUB_OUTPUT"
+            echo "Resolved: module=${MODULE_NAME}, version=${MODULE_VERSION}, checkout=HEAD (workflow_dispatch — latest main)"
+          fi
 
   validate:
     name: Validate & Lint (${{ needs.resolve.outputs.module }})
@@ -63,7 +72,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.resolve.outputs.tag_ref }}
+          ref: ${{ needs.resolve.outputs.checkout_ref || github.sha }}
 
       - name: Quick CI (fmt + validate + lint + legal)
         env:
@@ -81,7 +90,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.resolve.outputs.tag_ref }}
+          ref: ${{ needs.resolve.outputs.checkout_ref || github.sha }}
 
       - name: Run Tier 1 tests (snapshot tests, $0 cost)
         env:
@@ -138,7 +147,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.resolve.outputs.tag_ref }}
+          ref: ${{ needs.resolve.outputs.checkout_ref || github.sha }}
 
       - name: Create clean module tarball
         env:
