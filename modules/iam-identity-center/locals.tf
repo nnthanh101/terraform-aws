@@ -24,8 +24,6 @@ locals {
 }
 
 locals {
-  _yaml_config_enabled = var.config_path != ""
-
   # Read YAML files — try() returns {} when config_path is empty (file() error caught).
   # No conditional needed: avoids Terraform's type-unification requirement where
   # yamldecode() returns a typed object that cannot unify with empty {} in a ternary.
