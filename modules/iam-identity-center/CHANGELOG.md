@@ -5,6 +5,13 @@ All notable changes to the `iam-identity-center` module will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.2.1...iam-identity-center/v1.3.0) (2026-03-05)
+
+
+### Features
+
+* workflows/registry-publish.yml ([4abaa43](https://github.com/nnthanh101/terraform-aws/commit/4abaa43aff12f5f97a679eabed1ccd458f8f4752))
+
 ## [1.2.1](https://github.com/nnthanh101/terraform-aws/compare/iam-identity-center/v1.2.0...iam-identity-center/v1.2.1) (2026-03-03)
 
 
