@@ -26,14 +26,12 @@ locals {
 locals {
   _yaml_config_enabled = var.config_path != ""
 
-  # Read YAML files if config_path is set; empty maps otherwise
-  _yaml_permission_sets = local._yaml_config_enabled ? try(
-    yamldecode(file("${var.config_path}/permission_sets.yaml")), {}
-  ) : {}
+  # Read YAML files — try() returns {} when config_path is empty (file() error caught).
+  # No conditional needed: avoids Terraform's type-unification requirement where
+  # yamldecode() returns a typed object that cannot unify with empty {} in a ternary.
+  _yaml_permission_sets = try(yamldecode(file("${var.config_path}/permission_sets.yaml")), {})
 
-  _yaml_account_assignments = local._yaml_config_enabled ? try(
-    yamldecode(file("${var.config_path}/account_assignments.yaml")), {}
-  ) : {}
+  _yaml_account_assignments = try(yamldecode(file("${var.config_path}/account_assignments.yaml")), {})
 
   # Effective values: YAML overrides HCL (merge = right wins on key collision)
   effective_permission_sets     = merge(var.permission_sets, local._yaml_permission_sets)

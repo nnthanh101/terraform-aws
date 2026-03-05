@@ -135,6 +135,7 @@ tasks:
         echo ""
         echo "  DOCS      Documentation (DevOps-TechDocs is canonical source)"
         echo "    task docs:dev             Docusaurus dev server (port 5001)"
+        echo "    task docs:sync            Sync module READMEs → TechDocs MDX (local)"
         echo ""
         echo "  CI        Composite pipelines"
         echo "    task ci:quick             Fast: validate + lint + legal (<60s)"
@@ -142,8 +143,9 @@ tasks:
         echo "    task ci:local             Local mirror of CI jobs (6 jobs, no extras)"
         echo "    task ci:act               Local CI YAML test via act (workflow structure)"
         echo ""
-        echo "  SPRINT    Milestone validation"
+        echo "  SPRINT    Milestone validation + registry"
         echo "    task sprint:validate        7-gate sprint validation"
+        echo "    task registry:create        Create API-only module in TFC [MODULE= or all]"
         echo "    task registry:preflight     Registry publish pre-flight [MODULE=]"
         echo "    task release:tag-check      Verify git tag does not already exist in remote"
         echo "    task registry:bootstrap-tag Bootstrap per-module TFC tag (HITL push) [MODULE=]"
@@ -637,6 +639,18 @@ tasks:
         echo "  1. Verify TFC tag prefix is: {{.MODULE}}/"
         echo "  2. Push tag: git push origin ${TAG}"
         echo "  3. Verify: gh run list --workflow=registry-publish.yml --limit=3"
+
+  registry:create:
+    desc: "Create API-only module in TFC Registry (no VCS) [MODULE={{.MODULE}} or MODULE=all]"
+    cmds:
+      - task: _exec
+        vars:
+          CMD: "MODULE={{.MODULE}} bash scripts/registry-create.sh"
+
+  docs:sync:
+    desc: "Sync module READMEs to DevOps-TechDocs as MDX (local symlink)"
+    cmds:
+      - bash scripts/sync-techdocs.sh
 
   registry:preflight:
     desc: "Registry publish pre-flight: per-module VERSION + tag-check + ci:quick + test:tier1 + legal + CHANGELOG check [MODULE={{.MODULE}}]"

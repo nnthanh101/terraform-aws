@@ -5,10 +5,11 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: 'Action: cleanup (delete old versions) or list (show versions)'
+        description: 'Action: create (API-only module), list (show versions), cleanup (delete old versions)'
         required: true
         type: choice
         options:
+          - create
           - list
           - cleanup
       module:
@@ -50,6 +51,13 @@ jobs:
               exit 1
             fi
           fi
+
+      - name: Create API-only module
+        if: inputs.action == 'create'
+        env:
+          TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
+          MODULE: ${{ inputs.module }}
+        run: bash scripts/registry-create.sh
 
       - name: List module versions
         if: inputs.action == 'list'

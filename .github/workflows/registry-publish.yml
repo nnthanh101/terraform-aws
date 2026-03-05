@@ -162,6 +162,40 @@ jobs:
             --exclude='.checkov.yml' \
             -C "${MODULE_DIR}" .
 
+      - name: Pre-flight module check
+        id: preflight
+        env:
+          TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
+          MODULE_NAME: ${{ needs.resolve.outputs.module }}
+        run: |
+          mkdir -p /tmp/publish-evidence
+          # Check module exists and detect VCS vs API-only mode
+          MODULE_RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -H "Authorization: Bearer ${TFE_TOKEN}" \
+            "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${MODULE_NAME}/aws")
+          HTTP_CODE=$(echo "$MODULE_RESPONSE" | tail -1)
+          BODY=$(echo "$MODULE_RESPONSE" | sed '$d')
+          if [ "$HTTP_CODE" = "404" ]; then
+            echo "ERROR: Module '${MODULE_NAME}' not found in TFC registry."
+            echo "HITL action required: Create the module in TFC console:"
+            echo "  Registry → Publish Module → No VCS connection → org: oceansoft, name: ${MODULE_NAME}, provider: aws"
+            exit 1
+          fi
+          echo "$BODY" > /tmp/publish-evidence/preflight-module.json
+          # Detect VCS connection via vcs-repo attribute (reliable, not error-string matching)
+          VCS_REPO=$(echo "$BODY" | jq -r '.data.attributes."vcs-repo" // empty')
+          if [ -n "$VCS_REPO" ] && [ "$VCS_REPO" != "null" ]; then
+            echo "ERROR: Module '${MODULE_NAME}' is VCS-connected — API upload is blocked by TFC."
+            echo "HITL action required: Delete and re-create as API-only module:"
+            echo "  1. TFC Console → Registry → ${MODULE_NAME}/aws → Settings → Delete Module"
+            echo "  2. Registry → Publish Module → No VCS connection → org: oceansoft, name: ${MODULE_NAME}, provider: aws"
+            echo "  3. Re-run this workflow after re-creation"
+            echo "vcs_connected=true" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          echo "Pre-flight OK: module '${MODULE_NAME}' exists, API-only mode confirmed"
+          echo "vcs_connected=false" >> "$GITHUB_OUTPUT"
+
       - name: Create TFC module version
         id: create-version
         env:
@@ -178,16 +212,7 @@ jobs:
           UPLOAD_URL=$(echo "$RESPONSE" | jq -r '.data.links.upload')
           if [ "$UPLOAD_URL" = "null" ] || [ -z "$UPLOAD_URL" ]; then
             API_ERROR=$(echo "$RESPONSE" | jq -r '.errors[0].detail // "unknown"' 2>/dev/null)
-            # VCS-connected modules are published by TFC auto-detect — skip API upload gracefully
-            if echo "$API_ERROR" | grep -qi "connected to a VCS repository"; then
-              echo "INFO: Module ${MODULE_NAME} is VCS-connected — TFC auto-publishes on tag push. Skipping API upload."
-              echo "skip=true" >> "$GITHUB_OUTPUT"
-              mkdir -p /tmp/publish-evidence
-              echo "{\"mode\":\"vcs\",\"module\":\"${MODULE_NAME}\",\"version\":\"${VERSION}\",\"skipped\":true}" > /tmp/publish-evidence/create-version-response.json
-              exit 0
-            fi
-            echo "ERROR: Failed to create version — check TFE_TOKEN and module exists"
-            echo "API error: ${API_ERROR}"
+            echo "ERROR: Failed to create version — API error: ${API_ERROR}"
             exit 1
           fi
           echo "::add-mask::${UPLOAD_URL}"
@@ -197,7 +222,6 @@ jobs:
           echo "$RESPONSE" > /tmp/publish-evidence/create-version-response.json
 
       - name: Upload module to TFC
-        if: steps.create-version.outputs.skip != 'true'
         env:
           UPLOAD_URL: ${{ steps.create-version.outputs.upload_url }}
         run: |
@@ -212,30 +236,38 @@ jobs:
           echo "Upload successful (HTTP ${HTTP_CODE})"
 
       - name: Verify TFC ingestion
-        if: steps.create-version.outputs.skip != 'true'
         env:
           TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
           MODULE_NAME: ${{ needs.resolve.outputs.module }}
           MODULE_VERSION: ${{ needs.resolve.outputs.version }}
         run: |
           VERSION="${MODULE_VERSION#v}"
-          for i in 1 2 3 4 5; do
-            sleep 5
+          # 8x10s=80s polling — multi-submodule modules (e.g. ECS with 4 submodules) need longer ingestion
+          for i in 1 2 3 4 5 6 7 8; do
+            sleep 10
             STATUS=$(curl -s \
               -H "Authorization: Bearer ${TFE_TOKEN}" \
               "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${MODULE_NAME}/aws" \
               | jq -r ".data.attributes.\"version-statuses\"[] | select(.version==\"${VERSION}\") | .status")
-            echo "Attempt ${i}: version ${VERSION} status = ${STATUS}"
+            echo "Attempt ${i}/8: version ${VERSION} status = ${STATUS}"
             if [ "$STATUS" = "ok" ]; then
-              echo "TFC Registry publish verified: ${MODULE_NAME} v${VERSION} ✓"
+              echo "TFC Registry publish verified: ${MODULE_NAME} v${VERSION}"
               curl -s \
                 -H "Authorization: Bearer ${TFE_TOKEN}" \
                 "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${MODULE_NAME}/aws" \
                 > /tmp/publish-evidence/verify-status.json
               exit 0
             fi
+            if [ "$STATUS" = "error" ]; then
+              echo "ERROR: Version ${VERSION} ingestion failed with status 'error'"
+              curl -s \
+                -H "Authorization: Bearer ${TFE_TOKEN}" \
+                "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${MODULE_NAME}/aws" \
+                > /tmp/publish-evidence/verify-status.json
+              exit 1
+            fi
           done
-          echo "ERROR: Version ${VERSION} did not reach 'ok' status after 25s"
+          echo "ERROR: Version ${VERSION} did not reach 'ok' status after 80s (8 attempts)"
           exit 1
 
       - name: Upload publish evidence

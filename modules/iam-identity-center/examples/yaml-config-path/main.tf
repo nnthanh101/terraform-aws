@@ -15,6 +15,18 @@ module "aws-iam-identity-center" {
   # Point to the YAML config directory
   config_path = "${path.module}/config"
 
+  # Groups referenced by account_assignments.yaml must be created here
+  sso_groups = {
+    AuditTeam : {
+      group_name        = "AuditTeam"
+      group_description = "Security audit team for compliance reviews"
+    },
+    PlatformTeam : {
+      group_name        = "PlatformTeam"
+      group_description = "Platform engineering team"
+    },
+  }
+
   # FOCUS 1.2+ compliant tags (APRA CPS 234)
   default_tags = {
     CostCenter         = "platform"

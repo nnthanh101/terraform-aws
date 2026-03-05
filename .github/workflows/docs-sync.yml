@@ -35,3 +35,6 @@ jobs:
           output-method: replace
           git-push: true
           git-commit-message: "docs: auto-generate ecs module README [skip ci]"
+
+  # TechDocs sync is local-only: task docs:sync (scripts/sync-techdocs.sh)
+  # Auto-detects /Volumes/Working/projects/DevOps-TechDocs via symlink

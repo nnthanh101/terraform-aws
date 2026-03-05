@@ -115,7 +115,9 @@ jobs:
       - name: terraform fmt -check
         run: terraform fmt -check projects/${{ matrix.project }}
 
-      - name: terraform init + validate (no backend, no credentials)
+      - name: terraform init + validate (no backend, registry credentials only)
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TFE_TOKEN }}
         run: |
           terraform -chdir=projects/${{ matrix.project }} init -backend=false -input=false
           terraform -chdir=projects/${{ matrix.project }} validate

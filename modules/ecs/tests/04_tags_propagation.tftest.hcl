@@ -7,7 +7,7 @@ run "tags_on_cluster" {
   command = plan
 
   variables {
-    cluster_name              = "test-tags"
+    cluster_name               = "test-tags"
     cluster_capacity_providers = ["FARGATE"]
     tags = {
       CostCenter         = "platform"

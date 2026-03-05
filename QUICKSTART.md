@@ -1,7 +1,7 @@
 <!-- Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE. -->
 # terraform-aws — Quickstart
 
-> Registry: `oceansoft/iam-identity-center/aws` | Tag format: `MODULE/vX.Y.Z`
+> Registry: `oceansoft/{module}/aws` (API-only) | Tag format: `MODULE/vX.Y.Z`
 
 ## 1. Start
 
@@ -10,7 +10,17 @@ task build:env          # Start devcontainer (18 tools, 30s)
 task plan:tools         # Verify tools available
 ```
 
-## 2. Validate
+## 2. Registry Setup (one-time per module)
+
+```bash
+# Create API-only modules in TFC (no VCS — monorepo-safe)
+TFE_TOKEN=xxx task registry:create MODULE=all     # all modules with .tf files
+TFE_TOKEN=xxx task registry:create MODULE=ecs     # single module
+```
+
+> **ADR-007**: All modules use API-only mode. VCS-connected mode cannot handle `{module}/v{semver}` tag format in monorepos. `registry-publish.yml` uploads tarballs via TFC API.
+
+## 3. Validate
 
 ```bash
 task ci:quick           # Fast gate: fmt + validate + lint + legal (<60s)
@@ -18,7 +28,7 @@ task sprint:validate    # 7-gate sprint validation
 task ci:full            # Full: build + test + govern + security
 ```
 
-## 3. Release
+## 4. Release
 
 Fully automated. HITL action = merge one PR.
 
@@ -69,14 +79,14 @@ fix(ecs): correct task definition memory limit
 > release-please owns version state. Manual tags create duplicate releases.
 > The only HITL action is: **merge the Release PR**.
 
-## 4. Pre-flight
+## 5. Pre-flight
 
 ```bash
 task registry:preflight MODULE=iam-identity-center
 # Runs: tag-check + ci:quick + test:tier1 + legal + changelog
 ```
 
-## 5. Status
+## 6. Status
 
 ```bash
 task modules:list                                       # List modules
@@ -85,22 +95,33 @@ gh run list --workflow=registry-publish.yml --limit=5   # Publish runs
 gh pr list --label="autorelease: pending"               # Release PRs
 ```
 
-## 6. Troubleshooting
+## 7. Docs Sync (local)
+
+```bash
+task docs:sync          # Sync module READMEs → DevOps-TechDocs MDX
+```
+
+Local-only. Auto-detects `/Volumes/Working/projects/DevOps-TechDocs` — generates `auto/{module}.mdx` with Docusaurus frontmatter + `_category_.json` sidebar grouping.
+
+## 8. Troubleshooting
 
 | Symptom | Fix |
 |---------|-----|
-| TFC "no tags" / SIC-001 | API-driven publish bypasses SIC — `registry-publish.yml` uploads via TFC API automatically |
+| TFC "no tags" / SIC-001 | Module must be API-only (not VCS). Run `task registry:create MODULE=x` to fix |
+| TFC "module not found" | Run `TFE_TOKEN=xxx task registry:create MODULE=x` first |
+| TFC "VCS-connected" | Delete module in TFC console, re-create with `task registry:create` |
 | release-please PR not created | Verify conventional commit format (`feat:`, `fix:`) |
 | `registry-publish.yml` skips | Tag must be per-module format: `MODULE/vX.Y.Z` |
 | VERSION mismatch | release-please `extra-files` bumps atomically — don't edit VERSION manually |
+| TechDocs not syncing | Verify `/Volumes/Working/projects/DevOps-TechDocs` exists locally |
 
 ## Module Reference
 
-| Module | Version | Status | Registry |
-|--------|---------|--------|----------|
-| `iam-identity-center` | 1.2.1 | Active | `oceansoft/iam-identity-center/aws` |
-| `ecs` | 1.0.0 | Active | `oceansoft/ecs/aws` |
-| `fullstack-web` | 1.0.1 | Stub | — |
+| Module | Version | Mode | Registry |
+|--------|---------|------|----------|
+| `iam-identity-center` | 1.2.1 | API-only | `oceansoft/iam-identity-center/aws` |
+| `ecs` | 1.0.1 | API-only | `oceansoft/ecs/aws` |
+| `fullstack-web` | — | Stub | — (no .tf files yet) |
 
 > How release-please Auto-Version Works
 

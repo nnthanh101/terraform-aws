@@ -7,7 +7,7 @@ run "cluster_defaults_plan" {
   command = plan
 
   variables {
-    cluster_name              = "test-cluster"
+    cluster_name               = "test-cluster"
     cluster_capacity_providers = ["FARGATE"]
     tags = {
       Environment = "test"
