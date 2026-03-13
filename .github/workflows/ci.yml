@@ -115,8 +115,11 @@ jobs:
       - name: terraform fmt -check
         run: terraform fmt -check projects/${{ matrix.project }}
 
-      - name: terraform init + validate (no backend, GitHub source)
+      - name: terraform init + validate (local source override for CI)
         run: |
+          # Override GitHub source to local path (tag may not exist yet pre-release)
+          sed -i 's|source = "github.com/nnthanh101/terraform-aws//modules/\([^?]*\)?ref=[^"]*"|source = "../../modules/\1"|g' \
+            projects/${{ matrix.project }}/main.tf
           terraform -chdir=projects/${{ matrix.project }} init -backend=false -input=false
           terraform -chdir=projects/${{ matrix.project }} validate
 

@@ -43,7 +43,7 @@ run "connector_file_send_plan" {
   }
   variables {
     sftp_server_endpoint = run.mandatory_apply_basic.server_endpoint
-    existing_secret_arn = run.mandatory_apply_basic.test_user_secret.private_key_secret.arn
+    existing_secret_arn  = run.mandatory_apply_basic.test_user_secret.private_key_secret.arn
   }
 }
 
@@ -54,7 +54,7 @@ run "connector_file_send_apply" {
   }
   variables {
     sftp_server_endpoint = run.mandatory_apply_basic.server_endpoint
-    existing_secret_arn = run.mandatory_apply_basic.test_user_secret.private_key_secret.arn
+    existing_secret_arn  = run.mandatory_apply_basic.test_user_secret.private_key_secret.arn
   }
 }
 
@@ -64,8 +64,8 @@ run "connector_retrieve_static_plan" {
     source = "./examples/sftp-connector-automated-file-retrieve-static"
   }
   variables {
-    sftp_server_endpoint = run.mandatory_apply_basic.server_endpoint
-    existing_secret_arn = run.mandatory_apply_basic.test_user_secret.private_key_secret.arn
+    sftp_server_endpoint     = run.mandatory_apply_basic.server_endpoint
+    existing_secret_arn      = run.mandatory_apply_basic.test_user_secret.private_key_secret.arn
     enable_dynamodb_tracking = false
   }
 }
@@ -76,8 +76,8 @@ run "connector_retrieve_static_apply" {
     source = "./examples/sftp-connector-automated-file-retrieve-static"
   }
   variables {
-    sftp_server_endpoint = run.mandatory_apply_basic.server_endpoint
-    existing_secret_arn = run.mandatory_apply_basic.test_user_secret.private_key_secret.arn
+    sftp_server_endpoint     = run.mandatory_apply_basic.server_endpoint
+    existing_secret_arn      = run.mandatory_apply_basic.test_user_secret.private_key_secret.arn
     enable_dynamodb_tracking = false
   }
 }
@@ -89,7 +89,7 @@ run "connector_retrieve_dynamic_plan" {
   }
   variables {
     sftp_server_endpoint = run.mandatory_apply_basic.server_endpoint
-    existing_secret_arn = run.mandatory_apply_basic.test_user_secret.private_key_secret.arn
+    existing_secret_arn  = run.mandatory_apply_basic.test_user_secret.private_key_secret.arn
   }
 }
 
@@ -100,7 +100,7 @@ run "connector_retrieve_dynamic_apply" {
   }
   variables {
     sftp_server_endpoint = run.mandatory_apply_basic.server_endpoint
-    existing_secret_arn = run.mandatory_apply_basic.test_user_secret.private_key_secret.arn
+    existing_secret_arn  = run.mandatory_apply_basic.test_user_secret.private_key_secret.arn
   }
 }
 
@@ -125,9 +125,9 @@ run "web_app_plan" {
   }
   variables {
     create_identity_center_instance = true
-    create_test_users_and_groups = true
-    logo_file = "./examples/sample-web-app/anycompany-logo-small.png"
-    favicon_file = "./examples/sample-web-app/favicon.png"
+    create_test_users_and_groups    = true
+    logo_file                       = "./examples/sample-web-app/anycompany-logo-small.png"
+    favicon_file                    = "./examples/sample-web-app/favicon.png"
   }
 }
 
@@ -138,8 +138,8 @@ run "web_app_apply" {
   }
   variables {
     create_identity_center_instance = true
-    create_test_users_and_groups = true
-    logo_file = "./examples/sample-web-app/anycompany-logo-small.png"
-    favicon_file = "./examples/sample-web-app/favicon.png"
+    create_test_users_and_groups    = true
+    logo_file                       = "./examples/sample-web-app/anycompany-logo-small.png"
+    favicon_file                    = "./examples/sample-web-app/favicon.png"
   }
 }
