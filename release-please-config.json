@@ -5,11 +5,11 @@
     {"type": "feat",     "section": "Features"},
     {"type": "fix",      "section": "Bug Fixes"},
     {"type": "perf",     "section": "Performance Improvements"},
-    {"type": "refactor", "section": "Code Refactoring"},
+    {"type": "refactor", "section": "Code Refactoring", "hidden": true},
     {"type": "security", "section": "Security"},
-    {"type": "test",     "section": "Tests"},
+    {"type": "test",     "section": "Tests", "hidden": true},
     {"type": "docs",     "section": "Documentation", "hidden": true},
-    {"type": "ci",       "section": "CI/CD"},
+    {"type": "ci",       "section": "CI/CD", "hidden": true},
     {"type": "chore",    "section": "Miscellaneous", "hidden": true}
   ],
   "packages": {
