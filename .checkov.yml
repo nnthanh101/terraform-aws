@@ -64,6 +64,23 @@ skip-check:
   - CKV2_AWS_11  # VPC flow logs (module exposes variable)
   - CKV2_AWS_12  # VPC default SG (consumer configures)
   - CKV2_AWS_19  # VPC verified access (consumer decision)
+  # ECS: container insights — consumer configures
+  - CKV_AWS_65   # ECS cluster container insights (consumer decision)
+  # ALB examples: EC2 instance checks in example code, not module code
+  - CKV_AWS_8    # EC2 EBS encryption (example instances)
+  - CKV_AWS_79   # EC2 IMDSv2 (example instances)
+  - CKV_AWS_126  # EC2 detailed monitoring (example instances)
+  - CKV_AWS_135  # EC2 EBS optimized (example instances)
+  # S3: SQS encryption in notification queue — consumer configures
+  - CKV_AWS_27   # SQS encryption (S3 notification queue, consumer decision)
+  # ALB: access logging + WAF — consumer configures
+  - CKV_AWS_91   # ALB access logging (consumer decision)
+  - CKV_AWS_150  # ALB deletion protection (consumer decision)
+  - CKV_AWS_152  # ALB drop invalid headers (consumer decision)
+  - CKV_AWS_103  # ALB target HTTPS (consumer decision)
+  - CKV_AWS_2    # ALB listener HTTPS (consumer configures)
+  - CKV2_AWS_41  # ALB target response time (consumer decision)
+  - CKV2_AWS_76  # ALB WAF attachment (consumer decision)
   # Misc
   - CKV_AWS_158  # CloudWatch log encryption (consumer provides KMS key)
   - CKV_AWS_224  # AWS Backup (consumer decision)

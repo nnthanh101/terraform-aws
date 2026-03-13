@@ -59,7 +59,7 @@ done
 $HEADERS_OK && SCORE=$((SCORE+1)) && echo "CP-14: Copyright headers ... PASS" || echo "CP-14: Copyright headers ... FAIL"
 
 # CP-15: FOCUS 1.2+ tags in examples
-if grep -rq "CostCenter" modules/*/examples/ examples/ 2>/dev/null; then
+if grep -rq --include='*.tf' "CostCenter" modules/*/examples/ examples/ 2>/dev/null; then
   SCORE=$((SCORE+1)) && echo "CP-15: FOCUS tags in examples ... PASS"
 else
   echo "CP-15: FOCUS tags in examples ... FAIL"
