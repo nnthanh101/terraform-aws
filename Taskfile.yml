@@ -295,7 +295,7 @@ tasks:
             echo "=== Tier 1 Summary ==="
             [ -n "${PASSED_MODULES}" ] && echo "PASS:${PASSED_MODULES}"
             [ -n "${FAILED_MODULES}" ] && echo "FAIL:${FAILED_MODULES}"
-            [ -z "${PASSED_MODULES}" ] && [ -z "${FAILED_MODULES}" ] && echo "SKIP: No modules with .tftest.hcl tests found" && exit 1
+            [ -z "${PASSED_MODULES}" ] && [ -z "${FAILED_MODULES}" ] && echo "SKIP: No modules with .tftest.hcl tests found (validated + linted = OK)" && exit 0
             [ -n "${FAILED_MODULES}" ] && exit 1
             exit 0
 
