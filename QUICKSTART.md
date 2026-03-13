@@ -48,14 +48,14 @@ Enterprise team pushes feat:/fix: commits to main
            ▼
 ┌─────────────────────────┐
 │  release-please.yml     │  AUTO (on merge to main)
-│  - Create git tag       │  iam-identity-center/v1.1.2
+│  - Create git tag       │  sso/v1.1.2
 │  - Create GitHub Release│  With auto-generated notes
 └──────────┬──────────────┘
            │
            ▼
 ┌─────────────────────────┐
 │  registry-publish.yml   │  AUTO (triggered by tag */v*)
-│  1. Resolve module name │  → iam-identity-center
+│  1. Resolve module name │  → sso
 │  2. Validate + lint     │  → ci:quick in container
 │  3. Tier 1 tests        │  → snapshot tests
 │  4. GitHub Release      │  → idempotent (skip if exists)
@@ -70,7 +70,7 @@ Enterprise team pushes feat:/fix: commits to main
 
 Conventional commit examples:
 ```
-feat(iam-identity-center): add developer permission set
+feat(sso): add developer permission set
 fix(ecs): correct task definition memory limit
 ```
 
@@ -82,7 +82,7 @@ fix(ecs): correct task definition memory limit
 ## 5. Pre-flight
 
 ```bash
-task registry:preflight MODULE=iam-identity-center
+task registry:preflight MODULE=sso
 # Runs: tag-check + ci:quick + test:tier1 + legal + changelog
 ```
 
@@ -119,9 +119,12 @@ Local-only. Auto-detects `/Volumes/Working/projects/DevOps-TechDocs` — generat
 
 | Module | Version | Mode | Registry |
 |--------|---------|------|----------|
-| `iam-identity-center` | 1.2.1 | API-only | `oceansoft/iam-identity-center/aws` |
-| `ecs` | 1.0.1 | API-only | `oceansoft/ecs/aws` |
-| `fullstack-web` | — | Stub | — (no .tf files yet) |
+| `sso` | 1.3.0 | API-only | `oceansoft/sso/aws` |
+| `ecs` | 1.3.0 | API-only | `oceansoft/ecs/aws` |
+| `web` | 1.0.2 | API-only | `oceansoft/web/aws` |
+| `acm` | 1.0.0 | API-only | `oceansoft/acm/aws` |
+| `alb` | 1.0.0 | API-only | `oceansoft/alb/aws` |
+| `cloudfront` | 1.0.0 | API-only | `oceansoft/cloudfront/aws` |
 
 > How release-please Auto-Version Works
 

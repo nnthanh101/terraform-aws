@@ -84,7 +84,8 @@ for MODULE_DIR in modules/*/; do
     echo "<!-- Auto-generated from terraform-aws/modules/${MODULE_NAME}/README.md -->"
     echo "<!-- Do not edit manually — changes will be overwritten by sync-techdocs.sh -->"
     echo ""
-    cat "$README"
+    # Escape { and } inside <pre> tags — MDX v3 parses them as JSX expressions
+    sed '/<pre>/s/{/\\{/g; /<pre>/s/}/\\}/g' "$README"
   } > "${TARGET_DIR}/${MODULE_NAME}.mdx"
 
   echo "OK:   ${MODULE_NAME}.mdx"

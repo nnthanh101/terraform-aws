@@ -25,6 +25,9 @@ API_BASE="https://app.terraform.io/api/v2/organizations/${ORG}/registry-modules"
 
 create_module() {
   local mod_name="$1"
+  # Strip terraform-aws- prefix for TFC registry name (directory convention vs registry convention)
+  # e.g., terraform-aws-acm -> acm, terraform-aws-alb -> alb
+  mod_name="${mod_name#terraform-aws-}"
   [[ "$mod_name" =~ ^[a-z][a-z0-9-]+$ ]] || { echo "ERROR: module name must be kebab-case (got: '$mod_name')"; return 1; }
 
   # Pre-flight: check if module already exists

@@ -1,0 +1,189 @@
+# Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
+# Derived from aws-samples/aws-transfer-family-terraform. See NOTICE.txt.
+
+######################################
+# Defaults and Locals
+######################################
+
+resource "random_pet" "name" {
+  prefix = "aws-ia"
+  length = 1
+}
+
+locals {
+  test_user = {
+    username   = "test_user"
+    home_dir   = "/test_user"
+    public_key = var.create_test_user ? tls_private_key.test_user_key[0].public_key_openssh : ""
+    role_arn   = aws_iam_role.sftp_user_role.arn
+  }
+
+  # Create flattened map for SSH key resources - only non-test users
+  user_key_combinations = {
+    for combo in flatten([
+      for user in var.users : [
+        for idx, key in(user.public_key != "" ? [for k in split(",", user.public_key) : trimspace(k)] : []) : {
+          key_id   = "${user.username}-${idx}"
+          username = user.username
+          key_body = key
+        }
+      ]
+    ]) : combo.key_id => combo
+  }
+}
+
+######################################
+# IAM Role for SFTP users
+######################################
+resource "aws_iam_role" "sftp_user_role" {
+  name = "${random_pet.name.id}-basic-transfer-user"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "transfer.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "sftp_user_policies" {
+  name = "${random_pet.name.id}-sftp-user-policy"
+  role = aws_iam_role.sftp_user_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowListingOfUserFolder"
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket",
+          "s3:GetBucketLocation"
+        ]
+        Resource = [var.s3_bucket_arn]
+      },
+      {
+        Sid    = "HomeDirObjectAccess"
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:DeleteObjectVersion",
+          "s3:GetObjectVersion",
+          "s3:GetObjectACL",
+          "s3:PutObjectACL"
+        ]
+        Resource = ["${var.s3_bucket_arn}/*"]
+      },
+      {
+        Sid    = "AllowKMSAccess"
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:GenerateDataKey",
+          "kms:GetPublicKey",
+          "kms:ListKeyPolicies"
+        ]
+        Resource = [var.kms_key_id]
+      }
+    ]
+  })
+}
+
+########################################
+# SSH Key Creation (for test user only)
+########################################
+
+resource "tls_private_key" "test_user_key" {
+  count = var.create_test_user ? 1 : 0
+
+  algorithm = "RSA"
+  rsa_bits  = 2048
+}
+
+resource "aws_secretsmanager_secret" "sftp_private_key" {
+  #checkov:skip=CKV2_AWS_57: "Rotation not required for SFTP user keys
+  count = var.create_test_user ? 1 : 0
+
+  name        = "sftp-user-credentials-${local.test_user.username}-${random_pet.name.id}"
+  description = "SFTP credentials for the test user"
+  kms_key_id  = var.kms_key_id
+}
+
+resource "aws_secretsmanager_secret_version" "sftp_private_key_version" {
+  count = var.create_test_user ? 1 : 0
+
+  secret_id = aws_secretsmanager_secret.sftp_private_key[0].id
+  secret_string = jsonencode({
+    Username   = local.test_user.username
+    PrivateKey = tls_private_key.test_user_key[0].private_key_pem
+  })
+}
+
+# Create SFTP test_user
+resource "aws_transfer_user" "test_user" {
+  count = var.create_test_user ? 1 : 0
+
+  server_id = var.server_id
+  user_name = local.test_user.username
+  role      = local.test_user.role_arn
+
+  home_directory_type = "LOGICAL"
+  home_directory_mappings {
+    entry  = "/"
+    target = "/${var.s3_bucket_name}${local.test_user.home_dir}"
+  }
+}
+
+# Create SSH key for test user (dynamic)
+resource "aws_transfer_ssh_key" "test_user_ssh_key" {
+  count = var.create_test_user ? 1 : 0
+
+  depends_on = [
+    aws_transfer_user.test_user
+  ]
+
+  server_id = var.server_id
+  user_name = local.test_user.username
+  body      = local.test_user.public_key
+}
+
+######################################
+# SFTP User Creation
+######################################
+
+# Create SFTP users
+resource "aws_transfer_user" "transfer_users" {
+  for_each = { for user in var.users : user.username => user }
+
+  server_id = var.server_id
+  user_name = each.value.username
+  role      = each.value.role_arn == null || each.value.role_arn == "" ? aws_iam_role.sftp_user_role.arn : each.value.role_arn
+
+  home_directory_type = "LOGICAL"
+  home_directory_mappings {
+    entry  = "/"
+    target = "/${var.s3_bucket_name}${each.value.home_dir}"
+  }
+}
+
+# Create SSH keys for users
+resource "aws_transfer_ssh_key" "user_ssh_keys" {
+  for_each = local.user_key_combinations
+
+  depends_on = [
+    aws_transfer_user.transfer_users
+  ]
+
+  server_id = var.server_id
+  user_name = each.value.username
+  body      = each.value.key_body
+}

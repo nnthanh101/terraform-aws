@@ -13,7 +13,7 @@ on:
           - list
           - cleanup
       module:
-        description: 'Module name (e.g., iam-identity-center, ecs)'
+        description: 'Module name (e.g., sso, ecs)'
         required: true
         type: string
       keep_version:

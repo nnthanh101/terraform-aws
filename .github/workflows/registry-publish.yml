@@ -4,11 +4,11 @@ name: Registry Publish
 on:
   push:
     tags:
-      - '*/v*'    # module-prefixed: iam-identity-center/v1.2.0, ecs/v0.1.0
+      - '*/v*'    # module-prefixed: sso/v1.2.0, ecs/v0.1.0
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to publish (e.g., iam-identity-center/v1.1.3)'
+        description: 'Tag to publish (e.g., sso/v1.1.3)'
         required: true
         type: string
 
@@ -29,6 +29,7 @@ jobs:
       module_dir: ${{ steps.module-info.outputs.module_dir }}
       tag_ref: ${{ steps.module-info.outputs.tag_ref }}
       checkout_ref: ${{ steps.module-info.outputs.checkout_ref }}
+      tfc_module: ${{ steps.module-info.outputs.tfc_module }}
     steps:
       - name: Extract module info from tag
         id: module-info
@@ -49,6 +50,10 @@ jobs:
             echo "FAIL: Tag '$TAG' does not match MODULE/vX.Y.Z format (e.g., ecs/v0.1.0)" && exit 1
           fi
           echo "module=${MODULE_NAME}" >> "$GITHUB_OUTPUT"
+          # Derive TFC registry module name — strip terraform-aws- prefix if present
+          # Directory: modules/terraform-aws-acm/ -> TFC name: acm (provider already = aws)
+          TFC_MODULE_NAME="${MODULE_NAME#terraform-aws-}"
+          echo "tfc_module=${TFC_MODULE_NAME}" >> "$GITHUB_OUTPUT"
           echo "version=${MODULE_VERSION}" >> "$GITHUB_OUTPUT"
           echo "module_dir=modules/${MODULE_NAME}" >> "$GITHUB_OUTPUT"
           # Normalize to refs/tags/ prefix for actions/checkout compatibility
@@ -176,33 +181,34 @@ jobs:
         env:
           TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
           MODULE_NAME: ${{ needs.resolve.outputs.module }}
+          TFC_MODULE_NAME: ${{ needs.resolve.outputs.tfc_module }}
         run: |
           mkdir -p /tmp/publish-evidence
           # Check module exists and detect VCS vs API-only mode
           MODULE_RESPONSE=$(curl -s -w "\n%{http_code}" \
             -H "Authorization: Bearer ${TFE_TOKEN}" \
-            "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${MODULE_NAME}/aws")
+            "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${TFC_MODULE_NAME}/aws")
           HTTP_CODE=$(echo "$MODULE_RESPONSE" | tail -1)
           BODY=$(echo "$MODULE_RESPONSE" | sed '$d')
           if [ "$HTTP_CODE" = "404" ]; then
-            echo "ERROR: Module '${MODULE_NAME}' not found in TFC registry."
+            echo "ERROR: Module '${TFC_MODULE_NAME}' not found in TFC registry."
             echo "HITL action required: Create the module in TFC console:"
-            echo "  Registry → Publish Module → No VCS connection → org: oceansoft, name: ${MODULE_NAME}, provider: aws"
+            echo "  Registry → Publish Module → No VCS connection → org: oceansoft, name: ${TFC_MODULE_NAME}, provider: aws"
             exit 1
           fi
           echo "$BODY" > /tmp/publish-evidence/preflight-module.json
           # Detect VCS connection via vcs-repo attribute (reliable, not error-string matching)
           VCS_REPO=$(echo "$BODY" | jq -r '.data.attributes."vcs-repo" // empty')
           if [ -n "$VCS_REPO" ] && [ "$VCS_REPO" != "null" ]; then
-            echo "ERROR: Module '${MODULE_NAME}' is VCS-connected — API upload is blocked by TFC."
+            echo "ERROR: Module '${TFC_MODULE_NAME}' is VCS-connected — API upload is blocked by TFC."
             echo "HITL action required: Delete and re-create as API-only module:"
-            echo "  1. TFC Console → Registry → ${MODULE_NAME}/aws → Settings → Delete Module"
-            echo "  2. Registry → Publish Module → No VCS connection → org: oceansoft, name: ${MODULE_NAME}, provider: aws"
+            echo "  1. TFC Console → Registry → ${TFC_MODULE_NAME}/aws → Settings → Delete Module"
+            echo "  2. Registry → Publish Module → No VCS connection → org: oceansoft, name: ${TFC_MODULE_NAME}, provider: aws"
             echo "  3. Re-run this workflow after re-creation"
             echo "vcs_connected=true" >> "$GITHUB_OUTPUT"
             exit 1
           fi
-          echo "Pre-flight OK: module '${MODULE_NAME}' exists, API-only mode confirmed"
+          echo "Pre-flight OK: module '${TFC_MODULE_NAME}' exists, API-only mode confirmed"
           echo "vcs_connected=false" >> "$GITHUB_OUTPUT"
 
       - name: Create TFC module version
@@ -211,13 +217,14 @@ jobs:
           TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
           MODULE_NAME: ${{ needs.resolve.outputs.module }}
           MODULE_VERSION: ${{ needs.resolve.outputs.version }}
+          TFC_MODULE_NAME: ${{ needs.resolve.outputs.tfc_module }}
         run: |
           VERSION="${MODULE_VERSION#v}"
           RESPONSE=$(curl -s -X POST \
             -H "Authorization: Bearer ${TFE_TOKEN}" \
             -H "Content-Type: application/vnd.api+json" \
             -d "{\"data\":{\"type\":\"registry-module-versions\",\"attributes\":{\"version\":\"${VERSION}\"}}}" \
-            "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${MODULE_NAME}/aws/versions")
+            "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${TFC_MODULE_NAME}/aws/versions")
           UPLOAD_URL=$(echo "$RESPONSE" | jq -r '.data.links.upload')
           if [ "$UPLOAD_URL" = "null" ] || [ -z "$UPLOAD_URL" ]; then
             API_ERROR=$(echo "$RESPONSE" | jq -r '.errors[0].detail // "unknown"' 2>/dev/null)
@@ -249,6 +256,7 @@ jobs:
           TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
           MODULE_NAME: ${{ needs.resolve.outputs.module }}
           MODULE_VERSION: ${{ needs.resolve.outputs.version }}
+          TFC_MODULE_NAME: ${{ needs.resolve.outputs.tfc_module }}
         run: |
           VERSION="${MODULE_VERSION#v}"
           # 8x10s=80s polling — multi-submodule modules (e.g. ECS with 4 submodules) need longer ingestion
@@ -256,14 +264,14 @@ jobs:
             sleep 10
             STATUS=$(curl -s \
               -H "Authorization: Bearer ${TFE_TOKEN}" \
-              "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${MODULE_NAME}/aws" \
+              "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${TFC_MODULE_NAME}/aws" \
               | jq -r ".data.attributes.\"version-statuses\"[] | select(.version==\"${VERSION}\") | .status")
             echo "Attempt ${i}/8: version ${VERSION} status = ${STATUS}"
             if [ "$STATUS" = "ok" ]; then
-              echo "TFC Registry publish verified: ${MODULE_NAME} v${VERSION}"
+              echo "TFC Registry publish verified: ${TFC_MODULE_NAME} v${VERSION}"
               curl -s \
                 -H "Authorization: Bearer ${TFE_TOKEN}" \
-                "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${MODULE_NAME}/aws" \
+                "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${TFC_MODULE_NAME}/aws" \
                 > /tmp/publish-evidence/verify-status.json
               exit 0
             fi
@@ -271,7 +279,7 @@ jobs:
               echo "ERROR: Version ${VERSION} ingestion failed with status 'error'"
               curl -s \
                 -H "Authorization: Bearer ${TFE_TOKEN}" \
-                "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${MODULE_NAME}/aws" \
+                "https://app.terraform.io/api/v2/organizations/oceansoft/registry-modules/private/oceansoft/${TFC_MODULE_NAME}/aws" \
                 > /tmp/publish-evidence/verify-status.json
               exit 1
             fi

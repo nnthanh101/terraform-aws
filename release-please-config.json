@@ -1,8 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "release-type": "simple",
-  "tag-separator": "/",
-  "include-component-in-tag": true,
   "changelog-sections": [
     {"type": "feat",     "section": "Features"},
     {"type": "fix",      "section": "Bug Fixes"},
@@ -15,23 +13,9 @@
     {"type": "chore",    "section": "Miscellaneous", "hidden": true}
   ],
   "packages": {
-    "modules/iam-identity-center": {
+    ".": {
       "release-type": "simple",
-      "component": "iam-identity-center",
-      "changelog-path": "CHANGELOG.md",
-      "extra-files": ["VERSION"],
-      "bump-minor-pre-major": true
-    },
-    "modules/ecs": {
-      "release-type": "simple",
-      "component": "ecs",
-      "changelog-path": "CHANGELOG.md",
-      "extra-files": ["VERSION"],
-      "bump-minor-pre-major": true
-    },
-    "modules/fullstack-web": {
-      "release-type": "simple",
-      "component": "fullstack-web",
+      "component": "terraform-aws",
       "changelog-path": "CHANGELOG.md",
       "extra-files": ["VERSION"],
       "bump-minor-pre-major": true

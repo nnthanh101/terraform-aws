@@ -1,0 +1,9 @@
+This module is derived from terraform-aws-modules/terraform-aws-vpc (Apache-2.0).
+Original source: https://github.com/terraform-aws-modules/terraform-aws-vpc
+Original authors: Anton Babenko and contributors.
+
+Modifications by nnthanh101@gmail.com (oceansoft.io):
+- Updated provider constraints (>= 6.28, < 7.0; terraform >= 1.11.0)
+- Added copyright headers and NOTICE.txt
+- Added Tier 1 snapshot tests
+- Updated provider_meta user_agent to oceansoft registry

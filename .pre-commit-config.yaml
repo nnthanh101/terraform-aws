@@ -1,0 +1,97 @@
+---
+# Pre-Commit Configuration for terraform-aws (PUBLIC REPO)
+# Security scanning is critical - this repo is publicly accessible
+#
+# Container-first: All Terraform tools available in nnthanh101/terraform:latest
+# (terraform, tflint, tfsec, checkov, infracost, terraform-docs v0.19.0)
+#
+# Bare-metal: terraform-docs runs via Docker wrapper (scripts/terraform-docs-wrapper.sh)
+# DevContainer/CI: terraform-docs available natively in PATH
+#
+# Installation:
+#   pip install pre-commit
+#   pre-commit install
+#   # Bare-metal only: symlink wrapper into PATH
+#   ln -sf $(pwd)/scripts/terraform-docs-wrapper.sh /usr/local/bin/terraform-docs
+#
+# Usage:
+#   pre-commit run --all-files
+
+fail_fast: false
+minimum_pre_commit_version: "3.0.0"
+
+repos:
+  # ============================================================
+  # General File Checks
+  # ============================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-merge-conflict
+        name: Merge Conflict Check
+      - id: end-of-file-fixer
+        name: End of File Fixer
+        exclude: ^(\.terraform/|node_modules/)
+      - id: trailing-whitespace
+        name: Trailing Whitespace
+        exclude: ^(\.terraform/|node_modules/)
+      - id: check-added-large-files
+        name: Large File Check
+        args: [--maxkb=1000]
+      - id: detect-private-key
+        name: Private Key Detection
+      - id: detect-aws-credentials
+        name: AWS Credentials Detection
+        args: [--allow-missing-credentials]
+      - id: check-json
+        name: JSON Syntax Check
+        types: [json]
+      - id: check-yaml
+        name: YAML Syntax Check
+        types: [yaml]
+      # Uncomment for PR workflow enforcement (blocks direct commits to main):
+      # - id: no-commit-to-branch
+      #   name: Protect Main Branch
+      #   args: [--branch, main, --branch, master]
+
+  # ============================================================
+  # Secret Scanning (CRITICAL for PUBLIC repo)
+  # ============================================================
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+        name: Gitleaks Secret Scanner
+
+  # ============================================================
+  # Terraform Validation (container-first: nnthanh101/terraform:latest)
+  # ============================================================
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.3
+    hooks:
+      - id: terraform_fmt
+        name: Terraform Format
+      - id: terraform_validate
+        name: Terraform Validate
+        # Exclude paths that require `terraform init` with external modules/providers:
+        # - examples/: reference parent module via ../../
+        # - wrappers/: generated wrapper code
+        # - projects/: reference remote GitHub source
+        # - modules/web: uses configuration_aliases (aws.us_east_1 for CloudFront WAF)
+        #   which breaks standalone terraform validate — validated via .tftest.hcl instead
+        exclude: (examples/|wrappers/|projects/|modules/web/)
+      # Uncomment when terraform-docs is in PATH (DevContainer/CI has it natively):
+      #   sudo ln -sf $(pwd)/scripts/terraform-docs-wrapper.sh /usr/local/bin/terraform-docs
+      # - id: terraform_docs
+      #   name: Terraform Docs
+      #   args:
+      #     - --hook-config=--path-to-file=README.md
+      #     - --hook-config=--add-to-existing-file=true
+      #     - --hook-config=--create-file-if-not-exist=true
+      #     - --args=--lockfile=false
+
+ci:
+  autofix_prs: true
+  autoupdate_schedule: weekly
+  skip: [terraform_validate, terraform_docs]
+  submodules: false

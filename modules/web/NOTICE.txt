@@ -1,0 +1,9 @@
+Terraform AWS Web Module
+Copyright 2026 nnthanh101@gmail.com (oceansoft.io)
+
+This module consumes the following oceansoft Terraform modules:
+- oceansoft/alb/aws (derived from terraform-aws-modules/terraform-aws-alb, Apache-2.0)
+- oceansoft/cloudfront/aws (derived from terraform-aws-modules/terraform-aws-cloudfront, Apache-2.0) [planned]
+- oceansoft/acm/aws (derived from terraform-aws-modules/terraform-aws-acm, Apache-2.0) [planned]
+
+See individual module NOTICE.txt files for upstream attribution details.

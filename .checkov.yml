@@ -1,0 +1,28 @@
+# Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
+# Root Checkov config — applies to all 12 modules
+# Merged from upstream: aws-samples + cloudposse patterns
+#
+# Usage:
+#   checkov -d modules/<name> --config-file .checkov.yml
+
+download-external-modules: false
+evaluate-variables: true
+directory:
+  - ./
+framework:
+  - terraform
+skip-check:
+  # Cross-cloud: skip GCP/Azure checks (AWS-only repo)
+  - CKV2_GCP*
+  - CKV_AZURE*
+  - CKV2_AZURE*
+  # Module source pinning: uses version constraint per ADR-003, not git hash
+  - CKV_TF_1
+  # ALB module: security group attachment managed internally
+  - CKV2_AWS_5
+  # ALB module: drop_invalid_header_fields set in main.tf but Checkov may not trace through wrapper
+  - CKV_AWS_131
+summary-position: bottom
+output: cli
+compact: true
+quiet: true

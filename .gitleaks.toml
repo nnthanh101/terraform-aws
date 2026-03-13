@@ -1,0 +1,32 @@
+# Gitleaks configuration for terraform-aws monorepo
+# Allowlists for false positives from upstream-derived modules (ADR-023)
+
+title = "terraform-aws gitleaks config"
+
+[allowlist]
+  description = "False positives from upstream terraform-aws-modules examples"
+
+  paths = [
+    # Upstream KMS module example uses dummy key_material_base64 for external key demos
+    # Value "Wblj06fduthWggmsT0cLVoIMOkeLbc2kVfMud77i/JY=" is not a real key
+    '''modules/kms/examples/complete/main\.tf''',
+    '''modules/kms/README\.md''',
+  ]
+
+  [[allowlist.rules]]
+    # ACM test: "EC_prime256v1" is a key algorithm name, not a secret
+    id = "generic-api-key"
+    description = "ACM key_algorithm test value is an algorithm name"
+    path = '''modules/acm/tests/05_certificate_key_algorithm\.tftest\.hcl'''
+
+  [[allowlist.rules]]
+    # CloudFront example: "E345SXM82MIOSU" is a commented-out example OAC ID
+    id = "generic-api-key"
+    description = "CloudFront example OAC ID in comment"
+    path = '''modules/cloudfront/examples/complete/main\.tf'''
+
+  [[allowlist.rules]]
+    # S3 main.tf: "s3_bucket_policy" in a resource chain comment
+    id = "generic-api-key"
+    description = "S3 resource name in code comment"
+    path = '''modules/s3/main\.tf'''

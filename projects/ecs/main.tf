@@ -1,17 +1,14 @@
 # Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
 # Minimal Fargate cluster + 1 service — sandbox consumer project
-# Registry: oceansoft/ecs/aws
 
-# Dual-Mode Source Pattern:
-#   Production:  Registry source (immutable, version-pinned) — DEFAULT for projects/
+# Source Strategy (ADR-026):
+#   Production:  GitHub monorepo source (unified version tag)
 #   Development: Local source for module iteration only:
 #     source = "../../modules/ecs"
-# GitHub release alternative:
-#   source = "github.com/nnthanh101/terraform-aws//modules/ecs?ref=ecs/v1.0.0"
+#   Backup:      Private registry (app.terraform.io/oceansoft/ecs/aws)
 
 module "ecs" {
-  source  = "app.terraform.io/oceansoft/ecs/aws"
-  version = "~> 1.0"
+  source = "github.com/nnthanh101/terraform-aws//modules/ecs?ref=v2.0.0"
 
   cluster_name               = "sandbox-ecs"
   cluster_capacity_providers = ["FARGATE"]

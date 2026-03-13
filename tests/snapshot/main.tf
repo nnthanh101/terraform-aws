@@ -3,11 +3,11 @@
 # Uses HCL variables (not YAML) for deterministic test assertions
 
 module "identity_center" {
-  source = "../../modules/iam-identity-center"
+  source = "../../modules/sso"
 
   default_tags = {
     CostCenter         = "platform"
-    Project            = "iam-identity-center"
+    Project            = "sso"
     Environment        = "test"
     ServiceName        = "sso"
     DataClassification = "internal"

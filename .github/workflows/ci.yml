@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [iam-identity-center, ecs, fullstack-web]
+        module: [sso, ecs, web, acm, alb, cloudfront, s3, vpc, efs, kms, waf, sftp]
     container:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
       options: --user 0
@@ -105,7 +105,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [iam-identity-center, ecs]
+        project: [sso, ecs]
     container:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
       options: --user 0
@@ -115,9 +115,7 @@ jobs:
       - name: terraform fmt -check
         run: terraform fmt -check projects/${{ matrix.project }}
 
-      - name: terraform init + validate (no backend, registry credentials only)
-        env:
-          TF_TOKEN_app_terraform_io: ${{ secrets.TFE_TOKEN }}
+      - name: terraform init + validate (no backend, GitHub source)
         run: |
           terraform -chdir=projects/${{ matrix.project }} init -backend=false -input=false
           terraform -chdir=projects/${{ matrix.project }} validate

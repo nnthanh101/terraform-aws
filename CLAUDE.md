@@ -56,8 +56,9 @@ Every completion claim needs artifacts: `tmp/terraform-aws/coordination-logs/`, 
 
 ## Architecture
 
-- **Domains**: identity-center (active), ecs (active), fullstack-web (reserved — stub, no .tf files)
-- **Wrapper Pattern**: Consume upstream modules via `source`, not copy-paste
+- **Domains**: identity-center (active), ecs (active), web (active), alb (active), acm (active), cloudfront (active), s3 (active), vpc (new)
+- **Derived Module Pattern** (ADR-023): Clone upstream terraform-aws-modules/*, add oceansoft value-adds (copyright, NOTICE, CPS 234, FOCUS 1.2+ tags, TLS 1.3 defaults), publish to private TFC registry
+- **Composition Layer** (ADR-024): modules/web wires alb + cloudfront + waf + dns — no upstream equivalent, security defaults enforced at composition boundary
 - **State**: S3 native locking (`use_lockfile = true`), NO DynamoDB (ADR-006)
 - **Region**: ap-southeast-2 (primary), us-east-1 (Identity Center)
 - **Registry**: `oceansoft/terraform-aws/aws`
@@ -72,6 +73,9 @@ Every completion claim needs artifacts: `tmp/terraform-aws/coordination-logs/`, 
 | ADR-004 | 3-tier testing: snapshot/localstack/integration |
 | ADR-005 | Example naming: {tier}-{descriptor} (mvp-/poc-/production-) |
 | ADR-006 | S3 native state locking (no DynamoDB) |
+| ADR-023 | Derived module pattern: clone upstream terraform-aws-modules/* + oceansoft value-adds |
+| ADR-024 | Composition layer: modules/web wires alb + cloudfront + waf + dns with opinionated security defaults |
+| ADR-025 | Per-component semver: each module has independent version via release-please per-package config |
 
 ## Quick Commands (Taskfile.yml)
 

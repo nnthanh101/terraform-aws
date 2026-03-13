@@ -13,9 +13,12 @@
 
 | Module | Version | Registry | Status | Description |
 |--------|---------|----------|--------|-------------|
-| [iam-identity-center](modules/iam-identity-center/) | `1.2.1` | [oceansoft/iam-identity-center/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/iam-identity-center/aws) | stable | AWS IAM Identity Center (SSO) — groups, permission sets, account assignments |
+| [sso](modules/sso/) | `1.2.1` | [oceansoft/sso/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/sso/aws) | stable | AWS IAM Identity Center (SSO) — groups, permission sets, account assignments |
 | [ecs](modules/ecs/) | `1.0.0` | [oceansoft/ecs/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/ecs/aws) | active | ECS Fargate platform with ALB, service mesh, and auto-scaling |
-| [fullstack-web](modules/fullstack-web/) | `1.0.1` | [oceansoft/fullstack-web/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/fullstack-web/aws) | stub | Full-stack web application infrastructure |
+| [web](modules/web/) | `1.0.2` | [oceansoft/web/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/web/aws) | active | Full-stack web infrastructure (ALB + CloudFront + WAF + DNS) |
+| [acm](modules/acm/) | `1.0.0` | [oceansoft/acm/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/acm/aws) | active | AWS Certificate Manager — DNS/email validation |
+| [alb](modules/alb/) | `1.0.0` | [oceansoft/alb/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/alb/aws) | active | Application/Network Load Balancer |
+| [cloudfront](modules/cloudfront/) | `1.0.0` | [oceansoft/cloudfront/aws](https://app.terraform.io/app/oceansoft/registry/modules/private/oceansoft/cloudfront/aws) | active | CloudFront CDN distribution |
 
 ## 5W1H — Why This Exists
 
@@ -63,14 +66,14 @@ task test:tier1     # Snapshot tests (free, 2-3s)
 aws sso login --profile aws-sandbox
 
 # 2. Initialize and plan
-cd projects/iam-identity-center
+cd projects/sso
 terraform init && terraform plan
 
 # 3. Apply
 terraform apply
 
 # 4. Verify
-bash scripts/verify-deployment.sh iam-identity-center
+bash scripts/verify-deployment.sh sso
 ```
 
 See **[QUICKSTART.md](QUICKSTART.md)** for the full 5-command manager workflow.
@@ -123,7 +126,7 @@ Evidence output: `tmp/terraform-aws/security-scans/`
 
 ## Architecture
 
-- **ADR-001** Module naming: kebab-case (`iam-identity-center`, not `iam_identity_center`)
+- **ADR-001** Module naming: kebab-case (`sso`, not `iam_identity_center`)
 - **ADR-002** Registry structure: `oceansoft/terraform-aws/aws` namespace
 - **ADR-003** Provider constraints: `>= 6.28, < 7.0`; Terraform `>= 1.11.0`
 - **ADR-004** 3-tier testing: snapshot / LocalStack / integration
@@ -145,7 +148,7 @@ HITL effort: **merge one PR**. Everything else is automated — version bumps, c
 <details>
 <summary>IAM Identity Center — Registry Publication Pipeline</summary>
 
-![IAM Identity Center E2E Verification](README/iam-identity-center-e2e-verification.gif)
+![IAM Identity Center E2E Verification](README/sso-e2e-verification.gif)
 
 Full pipeline: conventional commit → CI (11 jobs) → Release Please → HITL merge → registry-publish (5 stages) → TFC Registry.
 

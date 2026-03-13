@@ -1,4 +1,6 @@
 # Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
+# Unified versioning: single root vX.Y.Z tag for all 12 modules (ADR-026)
+
 name: Release Please
 
 on:
@@ -23,12 +25,9 @@ jobs:
       pull-requests: write
     if: github.event_name == 'push'
     outputs:
-      releases_created: ${{ steps.release.outputs.releases_created }}
-      # release-please v4 monorepo: output keys use package PATH (not component)
-      # format: steps.release.outputs['<path>--<field>']
-      iam_tag: ${{ steps.release.outputs['modules/iam-identity-center--tag_name'] }}
-      ecs_tag: ${{ steps.release.outputs['modules/ecs--tag_name'] }}
-      web_tag: ${{ steps.release.outputs['modules/fullstack-web--tag_name'] }}
+      release_created: ${{ steps.release.outputs['release_created'] }}
+      tag_name: ${{ steps.release.outputs['tag_name'] }}
+      version: ${{ steps.release.outputs['version'] }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -40,14 +39,9 @@ jobs:
       - name: Log release outputs
         if: always()
         env:
-          RP_RELEASES_CREATED: ${{ steps.release.outputs.releases_created }}
-          RP_IAM_TAG: ${{ steps.release.outputs['modules/iam-identity-center--tag_name'] }}
-          RP_IAM_VERSION: ${{ steps.release.outputs['modules/iam-identity-center--version'] }}
-          RP_IAM_CREATED: ${{ steps.release.outputs['modules/iam-identity-center--release_created'] }}
-          RP_ECS_TAG: ${{ steps.release.outputs['modules/ecs--tag_name'] }}
-          RP_ECS_VERSION: ${{ steps.release.outputs['modules/ecs--version'] }}
-          RP_WEB_TAG: ${{ steps.release.outputs['modules/fullstack-web--tag_name'] }}
-          RP_WEB_VERSION: ${{ steps.release.outputs['modules/fullstack-web--version'] }}
+          RP_RELEASE_CREATED: ${{ steps.release.outputs.release_created }}
+          RP_TAG: ${{ steps.release.outputs.tag_name }}
+          RP_VERSION: ${{ steps.release.outputs.version }}
         run: |
           mkdir -p tmp/terraform-aws/release-logs
           TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -56,20 +50,10 @@ jobs:
             "timestamp": "${TIMESTAMP}",
             "run_id": "${{ github.run_id }}",
             "sha": "${{ github.sha }}",
-            "releases_created": "${{ steps.release.outputs.releases_created }}",
-            "iam_identity_center": {
-              "tag": "${{ steps.release.outputs['modules/iam-identity-center--tag_name'] }}",
-              "version": "${{ steps.release.outputs['modules/iam-identity-center--version'] }}",
-              "release_created": "${{ steps.release.outputs['modules/iam-identity-center--release_created'] }}"
-            },
-            "ecs": {
-              "tag": "${{ steps.release.outputs['modules/ecs--tag_name'] }}",
-              "version": "${{ steps.release.outputs['modules/ecs--version'] }}"
-            },
-            "fullstack_web": {
-              "tag": "${{ steps.release.outputs['modules/fullstack-web--tag_name'] }}",
-              "version": "${{ steps.release.outputs['modules/fullstack-web--version'] }}"
-            }
+            "release_created": "${RP_RELEASE_CREATED}",
+            "tag_name": "${RP_TAG}",
+            "version": "${RP_VERSION}",
+            "versioning": "unified (ADR-026)"
           }
           EOFLOG
 
@@ -79,41 +63,6 @@ jobs:
         with:
           name: release-please-${{ github.run_id }}
           path: tmp/terraform-aws/release-logs/
-
-  # Auto-trigger TFC publish for each module that got a release
-  trigger-publish:
-    name: Trigger TFC Publish
-    needs: [release-please]
-    if: needs.release-please.outputs.releases_created == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write
-    steps:
-      - name: Dispatch registry-publish for each released module
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          IAM_TAG: ${{ needs.release-please.outputs.iam_tag }}
-          ECS_TAG: ${{ needs.release-please.outputs.ecs_tag }}
-          WEB_TAG: ${{ needs.release-please.outputs.web_tag }}
-        run: |
-          DISPATCHED=0
-          for TAG in "$IAM_TAG" "$ECS_TAG" "$WEB_TAG"; do
-            if [ -n "$TAG" ]; then
-              echo "Dispatching registry-publish for: ${TAG}"
-              gh workflow run registry-publish.yml \
-                --repo "${{ github.repository }}" \
-                --ref main \
-                -f tag="${TAG}"
-              echo "Dispatched: ${TAG}"
-              DISPATCHED=$((DISPATCHED + 1))
-            fi
-          done
-          if [ "$DISPATCHED" -eq 0 ]; then
-            echo "ERROR: releases_created=true but no tags found. Output keys may be wrong."
-            echo "IAM_TAG='${IAM_TAG}' ECS_TAG='${ECS_TAG}' WEB_TAG='${WEB_TAG}'"
-            exit 1
-          fi
-          echo "Total dispatched: ${DISPATCHED}"
 
   validate-pr-title:
     name: Validate PR Title

@@ -1,0 +1,13 @@
+Terraform AWS SFTP Module
+Copyright 2026 nnthanh101@gmail.com (oceansoft.io)
+
+This module is derived from aws-samples/aws-transfer-family-terraform
+(https://github.com/aws-samples/aws-transfer-family-terraform)
+Original work Copyright 2016-2022 Amazon.com, Inc. or its affiliates, licensed under Apache License 2.0.
+
+Modifications by oceansoft.io:
+
+- Updated provider constraints to >= 6.28, < 7.0 (ADR-003)
+- Updated required_version to >= 1.11.0 (ADR-003)
+- Added ADLC governance files (CHANGELOG.md)
+- Added copyright headers to all .tf files

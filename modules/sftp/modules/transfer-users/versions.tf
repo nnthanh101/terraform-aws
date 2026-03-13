@@ -1,0 +1,24 @@
+# Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
+# Derived from aws-samples/aws-transfer-family-terraform. See NOTICE.txt.
+
+terraform {
+  required_version = ">= 1.11.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 6.28, < 7.0"
+    }
+    awscc = {
+      source  = "hashicorp/awscc"
+      version = ">= 1.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.0"
+    }
+    tls = {
+      source  = "hashicorp/tls"
+      version = ">= 4.0"
+    }
+  }
+}

@@ -19,10 +19,10 @@ on:
       module:
         description: "Project module to deploy"
         required: true
-        default: iam-identity-center
+        default: sso
         type: choice
         options:
-          - iam-identity-center
+          - sso
       environment:
         description: "Target environment (protection rules enforced)"
         required: true
@@ -77,7 +77,7 @@ jobs:
 
       - name: Detect SSO region
         id: sso
-        if: inputs.module == 'iam-identity-center'
+        if: inputs.module == 'sso'
         run: |
           SSO_REGION=$(bash scripts/resolve-sso-region.sh)
           echo "region=${SSO_REGION}" >> "$GITHUB_OUTPUT"
@@ -115,7 +115,7 @@ jobs:
           aws-region: ap-southeast-2
 
       - name: Write auto.tfvars.json
-        if: inputs.module == 'iam-identity-center'
+        if: inputs.module == 'sso'
         run: |
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           SSO_REGION="${{ needs.pre-flight.outputs.sso_region }}"
@@ -231,7 +231,7 @@ jobs:
             2>&1 | tee tmp/terraform-aws/deployment-logs/destroy-${{ inputs.module }}-$(date +%Y-%m-%d-%H%M%S).log
 
       - name: Post-destroy orphan check
-        if: inputs.module == 'iam-identity-center'
+        if: inputs.module == 'sso'
         run: |
           SSO_REGION="${{ needs.pre-flight.outputs.sso_region }}"
           if [ -n "$SSO_REGION" ]; then

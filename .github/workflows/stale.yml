@@ -1,0 +1,49 @@
+# Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
+# Merged from upstream: terraform-aws-modules stale-actions.yaml pattern
+# Auto-mark and close stale issues/PRs to keep repo clean
+
+name: Stale Issues and PRs
+
+on:
+  schedule:
+    - cron: "0 0 * * *"  # Daily midnight UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    name: Mark and close stale items
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          # Issues
+          stale-issue-message: >
+            This issue has been automatically marked as **stale** because it has
+            been open for 30 days without activity. Remove the "stale" label or
+            comment to prevent closure in 10 days.
+          close-issue-message: >
+            Closed due to inactivity. Re-open if still relevant.
+          stale-issue-label: stale
+          exempt-issue-labels: "bug,enhancement,on-hold,critical"
+          days-before-issue-stale: 30
+          days-before-issue-close: 10
+          # Pull Requests
+          stale-pr-message: >
+            This PR has been automatically marked as **stale** because it has
+            been open for 30 days without activity. Push new commits or comment
+            to prevent closure in 10 days.
+          close-pr-message: >
+            Closed due to inactivity. Re-open and push commits to revive.
+          stale-pr-label: stale
+          exempt-pr-labels: "wip,on-hold,blocked"
+          days-before-pr-stale: 30
+          days-before-pr-close: 10
+          # Cleanup
+          delete-branch: true
+          operations-per-run: 30
+          remove-stale-when-updated: true

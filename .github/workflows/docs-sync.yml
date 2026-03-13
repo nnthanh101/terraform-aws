@@ -1,40 +1,42 @@
 # Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
-name: Generate Module README
+# Merged from upstream: terraform-aws-modules release workflow terraform-docs pattern
+# Scaled to all 12 modules via matrix strategy (KISS/DRY)
+
+name: Generate Module READMEs
 
 on:
   push:
     branches: [main]
     paths:
-      - 'modules/**/*.tf'
-      - 'docs/**'
+      - "modules/**/*.tf"
+      - ".terraform-docs.yml"
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   terraform-docs:
-    name: Generate Module README
+    name: README (${{ matrix.module }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [acm, alb, cloudfront, ecs, efs, kms, s3, sftp, sso, vpc, waf, web]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
 
-      - name: terraform-docs (iam-identity-center)
+      - name: Generate ${{ matrix.module }} README
         uses: terraform-docs/gh-actions@v1.4.0
         with:
-          working-dir: modules/iam-identity-center
+          working-dir: modules/${{ matrix.module }}
+          config-file: ../../.terraform-docs.yml
           output-file: README.md
           output-method: replace
           git-push: true
-          git-commit-message: "docs: auto-generate iam-identity-center module README [skip ci]"
-
-      - name: terraform-docs (ecs)
-        uses: terraform-docs/gh-actions@v1.4.0
-        with:
-          working-dir: modules/ecs
-          output-file: README.md
-          output-method: replace
-          git-push: true
-          git-commit-message: "docs: auto-generate ecs module README [skip ci]"
+          git-commit-message: "docs: auto-generate ${{ matrix.module }} module README [skip ci]"
 
   # TechDocs sync is local-only: task docs:sync (scripts/sync-techdocs.sh)
   # Auto-detects /Volumes/Working/projects/DevOps-TechDocs via symlink

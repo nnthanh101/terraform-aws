@@ -20,9 +20,9 @@ version: '3'
 #   task ci:full             # Full pipeline: build + test + govern + security
 #   task sprint:validate     # Sprint milestone: 7-gate validation
 #
-# MODULE variable (default: iam-identity-center):
+# MODULE variable (default: sso):
 #   task build:validate MODULE=ecs               # Validate one module
-#   task test:tier1 MODULE=fullstack-web         # Test one module
+#   task test:tier1 MODULE=web                   # Test one module
 #   task registry:preflight MODULE=ecs            # Preflight one module
 #   task modules:list                            # Show all available modules
 #
@@ -36,8 +36,8 @@ vars:
   IMAGE: "nnthanh101/terraform:2.6.0"
   SCORING_MODEL: "50biz-30tech-20infra"
   REGISTRY_NAMESPACE: oceansoft
-  MODULE: '{{.MODULE | default "iam-identity-center"}}'
-  MODULE_DIR: 'modules/{{.MODULE | default "iam-identity-center"}}'
+  MODULE: '{{.MODULE | default "sso"}}'
+  MODULE_DIR: 'modules/{{.MODULE | default "sso"}}'
 
 tasks:
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -76,7 +76,7 @@ tasks:
         echo "  terraform-aws — ADLC Enterprise Taskfile"
         echo "  ─────────────────────────────────────────"
         echo ""
-        echo "  MODULE variable (default: iam-identity-center)"
+        echo "  MODULE variable (default: sso)"
         echo "    task <task> MODULE=ecs             # target a specific module"
         echo "    task modules:list                 # list all available modules"
         echo ""
