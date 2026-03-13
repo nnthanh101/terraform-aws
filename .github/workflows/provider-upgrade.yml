@@ -36,6 +36,7 @@ jobs:
         run: bash scripts/build-lock-upgrade.sh
 
       - name: Detect provider drift
+        if: always() && !cancelled()
         id: drift
         run: |
           DRIFT=0
@@ -52,7 +53,7 @@ jobs:
           fi
 
       - name: Upload upgraded lock files
-        if: steps.drift.outputs.drift_detected == 'true'
+        if: always() && steps.drift.outputs.drift_detected == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: upgraded-lock-files

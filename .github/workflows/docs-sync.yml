@@ -1,6 +1,5 @@
 # Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
-# Merged from upstream: terraform-aws-modules release workflow terraform-docs pattern
-# Scaled to all 12 modules via matrix strategy (KISS/DRY)
+# Single-job README generation for all 12 modules (KISS: 1 commit, 1 push, no race condition)
 
 name: Generate Module READMEs
 
@@ -15,29 +14,54 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: docs-sync-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   terraform-docs:
-    name: README (${{ matrix.module }})
+    name: Generate All READMEs
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      max-parallel: 1
-      matrix:
-        module: [acm, alb, cloudfront, ecs, efs, kms, s3, sftp, sso, vpc, waf, web]
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: main
+          fetch-depth: 0
 
-      - name: Generate ${{ matrix.module }} README
-        uses: terraform-docs/gh-actions@v1.4.0
-        with:
-          working-dir: modules/${{ matrix.module }}
-          config-file: ../../.terraform-docs.yml
-          output-file: README.md
-          output-method: replace
-          git-push: true
-          git-commit-message: "docs: auto-generate ${{ matrix.module }} module README [skip ci]"
+      - name: Generate READMEs for all modules
+        run: |
+          # Install terraform-docs if not in container
+          if ! command -v terraform-docs &>/dev/null; then
+            TFDOCS_VERSION="0.19.0"
+            curl -sSLo /tmp/terraform-docs.tar.gz \
+              "https://github.com/terraform-docs/terraform-docs/releases/download/v${TFDOCS_VERSION}/terraform-docs-v${TFDOCS_VERSION}-linux-amd64.tar.gz"
+            tar -xzf /tmp/terraform-docs.tar.gz -C /usr/local/bin terraform-docs
+            chmod +x /usr/local/bin/terraform-docs
+          fi
 
-  # TechDocs sync is local-only: task docs:sync (scripts/sync-techdocs.sh)
-  # Auto-detects /Volumes/Working/projects/DevOps-TechDocs via symlink
+          CHANGED=0
+          for MODULE_DIR in modules/*/; do
+            MODULE_NAME=$(basename "$MODULE_DIR")
+            # Skip modules without .tf files
+            ls "${MODULE_DIR}"*.tf >/dev/null 2>&1 || continue
+            echo "=== Generating README: ${MODULE_NAME} ==="
+            terraform-docs markdown table \
+              --config .terraform-docs.yml \
+              --output-mode replace \
+              --output-file README.md \
+              "$MODULE_DIR"
+          done
+
+          # Check if any READMEs changed
+          git diff --quiet modules/*/README.md && echo "No README changes detected" && exit 0
+
+          # Configure git and commit all changes at once
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add modules/*/README.md
+          git commit -m "docs: auto-generate module READMEs [skip ci]"
+          git pull --rebase origin main
+          git push origin main

@@ -70,6 +70,9 @@ jobs:
     needs: [release-please]
     if: needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
     container:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
       options: --user 0
