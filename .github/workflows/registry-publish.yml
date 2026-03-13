@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: registry-publish-${{ github.ref }}
+  group: registry-publish-${{ inputs.tag || github.ref }}
   cancel-in-progress: false
 
 jobs:
