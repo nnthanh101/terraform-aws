@@ -8,7 +8,7 @@
     {"type": "refactor", "section": "Code Refactoring"},
     {"type": "security", "section": "Security"},
     {"type": "test",     "section": "Tests"},
-    {"type": "docs",     "section": "Documentation"},
+    {"type": "docs",     "section": "Documentation", "hidden": true},
     {"type": "ci",       "section": "CI/CD"},
     {"type": "chore",    "section": "Miscellaneous", "hidden": true}
   ],

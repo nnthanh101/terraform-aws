@@ -64,6 +64,53 @@ jobs:
           name: release-please-${{ github.run_id }}
           path: tmp/terraform-aws/release-logs/
 
+  # Auto-publish all modules to TFC Private Registry after a release
+  registry-sync:
+    name: Registry Sync (all modules)
+    needs: [release-please]
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Register missing modules (idempotent)
+        env:
+          TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
+          MODULE: all
+        run: bash scripts/registry-create.sh
+
+      - name: Publish all modules at ${{ needs.release-please.outputs.version }}
+        env:
+          TFE_TOKEN: ${{ secrets.TFE_TOKEN }}
+          VERSION: ${{ needs.release-please.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Publishing all modules at v${VERSION} to TFC Private Registry..."
+          PASS=0
+          FAIL=0
+          for MODULE_DIR in modules/*/; do
+            MOD_NAME=$(basename "$MODULE_DIR")
+            # Skip modules without .tf files
+            ls "${MODULE_DIR}"*.tf >/dev/null 2>&1 || continue
+            echo ""
+            echo "=== Publishing ${MOD_NAME} v${VERSION} ==="
+            # Dispatch registry-publish workflow for each module
+            gh workflow run registry-publish.yml \
+              -f tag="${MOD_NAME}/v${VERSION}" \
+              && { echo "  Dispatched: ${MOD_NAME}/v${VERSION}"; PASS=$((PASS + 1)); } \
+              || { echo "  FAIL: ${MOD_NAME}"; FAIL=$((FAIL + 1)); }
+            # Rate limit: avoid GitHub API throttling
+            sleep 5
+          done
+          echo ""
+          echo "Registry sync: dispatched=${PASS} failed=${FAIL}"
+          if [ "$FAIL" -gt 0 ]; then
+            echo "WARN: ${FAIL} modules failed to dispatch — check Actions tab"
+          fi
+
   validate-pr-title:
     name: Validate PR Title
     runs-on: ubuntu-latest

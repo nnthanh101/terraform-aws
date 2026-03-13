@@ -164,8 +164,6 @@ All notable changes to this project will be documented in this file.
 
 ### Features
 
-* Made it clear that we stand with Ukraine ([57d7304](https://github.com/terraform-aws-modules/terraform-aws-acm/commit/57d730473bbe445cefde9e9642e4fa5d1276b74b))
-
 ## [3.3.0](https://github.com/terraform-aws-modules/terraform-aws-acm/compare/v3.2.1...v3.3.0) (2022-01-14)
 
 
