@@ -54,9 +54,11 @@ skip-check:
   - CKV2_AWS_38  # Route53 DNSSEC (infra-level decision)
   - CKV2_AWS_39  # Route53 query logging (infra-level decision)
   - CKV2_AWS_71  # ACM wildcard cert (legitimate use case)
-  # WAF: web ACL logging — consumer configures
+  # WAF: web ACL logging + protection — consumer configures
   - CKV_AWS_97   # WAF logging (consumer configures)
   - CKV_AWS_192  # WAF rules (consumer configures)
+  - CKV2_AWS_31  # WAF logging configuration (consumer configures)
+  - CKV2_AWS_28  # ALB WAF protection (web module attaches WAF separately)
   # EFS: encryption — module exposes variable
   - CKV_AWS_42   # EFS encryption (module exposes kms_key_id variable)
   - CKV_AWS_148  # EFS backup policy (consumer decision)
