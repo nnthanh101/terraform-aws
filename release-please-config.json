@@ -12,12 +12,14 @@
     {"type": "ci",       "section": "CI/CD", "hidden": true},
     {"type": "chore",    "section": "Miscellaneous", "hidden": true}
   ],
+  "bootstrap-sha": "7491a52324bac4d7901cec191bde7a40e42ae483",
   "packages": {
     ".": {
       "release-type": "simple",
       "component": "terraform-aws",
       "changelog-path": "CHANGELOG.md",
       "extra-files": ["VERSION"],
+      "release-as": "2.2.3",
       "bump-minor-pre-major": true
     }
   }
