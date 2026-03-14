@@ -7,6 +7,13 @@ Published to [HCP Terraform Registry](https://app.terraform.io/app/oceansoft/reg
 
 ---
 
+## [2.2.2](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.1...terraform-aws-v2.2.2) (2026-03-14)
+
+
+### Bug Fixes
+
+* sync CHANGELOG and VERSION with v2.2.1 release → triggers v2.2.2 ([87bf2dd](https://github.com/nnthanh101/terraform-aws/commit/87bf2dd6bf9164d67bcfeb6c8df121225f48d9dd))
+
 ## [2.2.1](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.0...terraform-aws-v2.2.1) (2026-03-14)
 
 ### Business Value
