@@ -30,7 +30,7 @@ jobs:
     outputs:
       drift_detected: ${{ steps.drift.outputs.drift_detected }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Upgrade providers (init -upgrade + lock 4 platforms)
         run: bash scripts/build-lock-upgrade.sh
@@ -54,14 +54,14 @@ jobs:
 
       - name: Upload upgraded lock files
         if: always() && steps.drift.outputs.drift_detected == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: upgraded-lock-files
           path: modules/*/.terraform.lock.hcl
 
       - name: Upload upgrade evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: lock-upgrade-evidence
           path: tmp/terraform-aws/lock-upgrade/
@@ -72,10 +72,10 @@ jobs:
     if: needs.upgrade-locks.outputs.drift_detected == 'true' && github.event.inputs.dry_run != 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Download upgraded lock files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: upgraded-lock-files
           path: modules/

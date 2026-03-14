@@ -9,13 +9,6 @@ Published to [HCP Terraform Registry](https://app.terraform.io/app/oceansoft/reg
 
 ## [2.2.1](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.0...terraform-aws-v2.2.1) (2026-03-14)
 
-
-### Bug Fixes
-
-* push a conventional commit to main and release-please will auto-create the tag + dispatch registry-sync for all 12 modules ([044bbb1](https://github.com/nnthanh101/terraform-aws/commit/044bbb10a4e1704268ebd0af900af9a9d92b78d7))
-
-## [Unreleased](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.0...HEAD)
-
 ### Business Value
 
 **$180/mo production web stack** — 5 new modules complete the xOps BC1 6-Layer Sovereign Stack. HITL runs `terraform apply` once and gets HTTPS + CDN + WAF + persistent storage + encryption. No manual console clicks.
@@ -33,6 +26,7 @@ Published to [HCP Terraform Registry](https://app.terraform.io/app/oceansoft/reg
 ### Developer Experience
 
 - **Local CI/CD with `act`** — validate + lint + test without pushing. Catches broken workflows before they waste CI minutes.
+- **Node.js 24 CI upgrade** — all 9 GitHub Actions workflows upgraded from `@v4` to `@v5` (`actions/checkout`, `upload-artifact`). 42 replacements across workflows.
 
 ---
 
@@ -150,9 +144,4 @@ Legacy per-module tags (frozen at v2.0.0 — no new releases on these tag lines)
 | ecs | v1.1.0 | `terraform-aws-v2.x.x` |
 | fullstack-web | v1.0.2 | `terraform-aws-v2.x.x` |
 
-[Unreleased]: https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.0...HEAD
-[2.2.0]: https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.1.0...terraform-aws-v2.2.0
-[2.1.0]: https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.0.0...terraform-aws-v2.1.0
-[2.0.0]: https://github.com/nnthanh101/terraform-aws/releases/tag/terraform-aws-v2.0.0
-[1.1.0]: https://github.com/nnthanh101/terraform-aws/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/nnthanh101/terraform-aws/releases/tag/v1.0.0
+[2.2.1]: https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.0...terraform-aws-v2.2.2

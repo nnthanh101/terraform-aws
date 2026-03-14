@@ -75,7 +75,7 @@ jobs:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
       options: --user 0
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ needs.resolve.outputs.checkout_ref || github.sha }}
 
@@ -93,7 +93,7 @@ jobs:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
       options: --user 0
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ needs.resolve.outputs.checkout_ref || github.sha }}
 
@@ -115,7 +115,7 @@ jobs:
 
       - name: Upload test evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-results-${{ needs.resolve.outputs.module }}
           path: tmp/terraform-aws/registry-publish/${{ needs.resolve.outputs.module }}/
@@ -128,7 +128,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Create release (idempotent — skip if exists)
         env:
@@ -150,7 +150,7 @@ jobs:
     if: always() && needs.test.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ needs.resolve.outputs.checkout_ref || github.sha }}
 
@@ -289,7 +289,7 @@ jobs:
 
       - name: Upload publish evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: publish-evidence-${{ needs.resolve.outputs.module }}-${{ needs.resolve.outputs.version }}
           path: /tmp/publish-evidence/
