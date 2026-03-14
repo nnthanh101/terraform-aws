@@ -7,6 +7,13 @@ Published to [HCP Terraform Registry](https://app.terraform.io/app/oceansoft/reg
 
 ---
 
+## [2.2.1](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.0...terraform-aws-v2.2.1) (2026-03-14)
+
+
+### Bug Fixes
+
+* push a conventional commit to main and release-please will auto-create the tag + dispatch registry-sync for all 12 modules ([044bbb1](https://github.com/nnthanh101/terraform-aws/commit/044bbb10a4e1704268ebd0af900af9a9d92b78d7))
+
 ## [Unreleased](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.0...HEAD)
 
 ### Business Value
