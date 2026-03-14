@@ -54,14 +54,14 @@ jobs:
 
       - name: Upload upgraded lock files
         if: always() && steps.drift.outputs.drift_detected == 'true'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: upgraded-lock-files
           path: modules/*/.terraform.lock.hcl
 
       - name: Upload upgrade evidence
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: lock-upgrade-evidence
           path: tmp/terraform-aws/lock-upgrade/
@@ -75,30 +75,48 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Download upgraded lock files
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: upgraded-lock-files
           path: modules/
 
       - name: Create or update PR
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: chore/provider-lock-upgrade
-          commit-message: 'chore: upgrade provider lock files (4 platforms)'
-          title: 'chore: Upgrade provider lock files'
-          body: |
-            ## Automated Provider Lock Upgrade
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="chore/provider-lock-upgrade"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-            Weekly drift detection found provider updates within version constraints (ADR-003: >= 6.28, < 7.0).
+          # Create or switch to PR branch
+          git checkout -B "$BRANCH"
+          git add modules/*/.terraform.lock.hcl
+          git commit -m "chore: upgrade provider lock files (4 platforms)" || exit 0
 
-            **Changes**: Updated `.terraform.lock.hcl` files across all modules for 4 platforms:
-            - `linux_amd64`, `linux_arm64`, `darwin_amd64`, `darwin_arm64`
+          git push --force-with-lease origin "$BRANCH"
 
-            **Safeguard**: Blog S8a — Automated provider upgrade
-            **Validation**: CI will run `build:lock-verify` + Tier 1 tests on this PR
+          # Create PR if none exists, otherwise update
+          EXISTING_PR=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number' 2>/dev/null || true)
+          if [ -n "$EXISTING_PR" ] && [ "$EXISTING_PR" != "null" ]; then
+            echo "PR #${EXISTING_PR} already exists — updated branch"
+          else
+            gh pr create \
+              --head "$BRANCH" \
+              --title "chore: Upgrade provider lock files" \
+              --body "$(cat <<'PREOF'
+          ## Automated Provider Lock Upgrade
 
-            ---
-            *Created by `provider-upgrade.yml` (Monday 02:00 UTC)*
-          labels: terraform,automation,provider-upgrade
-          delete-branch: true
+          Weekly drift detection found provider updates within version constraints (ADR-003: >= 6.28, < 7.0).
+
+          **Changes**: Updated `.terraform.lock.hcl` files across all modules for 4 platforms:
+          - `linux_amd64`, `linux_arm64`, `darwin_amd64`, `darwin_arm64`
+
+          **Safeguard**: Blog S8a — Automated provider upgrade
+          **Validation**: CI will run `build:lock-verify` + Tier 1 tests on this PR
+
+          ---
+          *Created by `provider-upgrade.yml` (Monday 02:00 UTC)*
+          PREOF
+          )" \
+              --label "terraform,automation,provider-upgrade"
+          fi

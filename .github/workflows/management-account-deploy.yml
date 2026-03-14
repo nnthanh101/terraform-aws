@@ -142,7 +142,7 @@ jobs:
             -out=tfplan 2>&1 | tee tmp/terraform-aws/deployment-logs/plan-${{ inputs.module }}-$(date +%Y-%m-%d-%H%M%S).log
 
       - name: Upload plan artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: tfplan-${{ inputs.module }}-${{ github.run_id }}
           path: |
@@ -170,7 +170,7 @@ jobs:
           aws-region: ap-southeast-2
 
       - name: Download plan artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: tfplan-${{ inputs.module }}-${{ github.run_id }}
 
@@ -191,7 +191,7 @@ jobs:
 
       - name: Upload apply logs
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: apply-logs-${{ inputs.module }}-${{ github.run_id }}
           path: tmp/terraform-aws/deployment-logs/
@@ -248,7 +248,7 @@ jobs:
 
       - name: Upload destroy logs
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: destroy-logs-${{ inputs.module }}-${{ github.run_id }}
           path: tmp/terraform-aws/deployment-logs/

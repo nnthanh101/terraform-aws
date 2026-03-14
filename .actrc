@@ -1,0 +1,8 @@
+## act configuration for local CI validation
+## Usage: act push --dry-run (validates workflow structure)
+## Usage: act push (runs full workflow locally)
+--container-architecture linux/amd64
+--bind
+-P ubuntu-latest=nnthanh101/terraform:latest
+-P ubuntu-22.04=nnthanh101/terraform:latest
+--env GITHUB_TOKEN=

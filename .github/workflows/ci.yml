@@ -51,7 +51,7 @@ jobs:
 
       - name: Upload legal evidence
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: legal-audit
           path: tmp/terraform-aws/legal-audit/
@@ -73,7 +73,7 @@ jobs:
 
       - name: Upload governance evidence
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: governance-score
           path: |
@@ -94,7 +94,7 @@ jobs:
 
       - name: Upload naming evidence
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: naming-audit
           path: tmp/terraform-aws/governance/naming-audit-*.json
@@ -171,7 +171,7 @@ jobs:
 
       - name: Upload security evidence
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: security-scan
           path: tmp/terraform-aws/security-scans/

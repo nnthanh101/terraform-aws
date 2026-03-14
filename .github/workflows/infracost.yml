@@ -39,7 +39,7 @@ jobs:
 
       - name: Upload FOCUS evidence
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: focus-compliance
           path: tmp/terraform-aws/cost/
@@ -166,7 +166,7 @@ jobs:
 
       - name: Upload cost evidence
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: cost-estimate
           path: |
