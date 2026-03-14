@@ -2,6 +2,9 @@
 # Tier 1 snapshot test: WAFv2 Web ACL with AWS Managed Rules enabled and associated with ALB
 
 mock_provider "aws" {}
+mock_provider "aws" {
+  alias = "us_east_1"
+}
 
 run "waf_enabled_plan" {
   command = plan

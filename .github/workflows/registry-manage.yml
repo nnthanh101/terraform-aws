@@ -33,6 +33,9 @@ jobs:
   manage:
     name: Registry ${{ inputs.action }} (${{ inputs.module }})
     runs-on: ubuntu-latest
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
     steps:
       - uses: actions/checkout@v4
 

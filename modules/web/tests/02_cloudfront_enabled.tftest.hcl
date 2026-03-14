@@ -2,6 +2,9 @@
 # Tier 1 snapshot test: CloudFront distribution enabled in front of ALB
 
 mock_provider "aws" {}
+mock_provider "aws" {
+  alias = "us_east_1"
+}
 
 run "cloudfront_enabled_plan" {
   command = plan

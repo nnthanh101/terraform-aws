@@ -10,13 +10,17 @@ permissions:
   pull-requests: write
 
 jobs:
-  cost:
-    name: Infracost PR Cost Estimate
+  # Job 1: FOCUS compliance (docker-first)
+  focus-compliance:
+    name: FOCUS 1.2+ Tag Compliance
     runs-on: ubuntu-latest
+    container:
+      image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
+      options: --user 0
     steps:
       - uses: actions/checkout@v4
 
-      - name: FOCUS 1.2+ tag compliance check
+      - name: FOCUS 1.2+ tag compliance check (checkov)
         run: |
           pip install checkov --quiet 2>/dev/null
           mkdir -p tmp/terraform-aws/cost
@@ -26,13 +30,27 @@ jobs:
             --output json \
             --output-file-path tmp/terraform-aws/cost/ \
             --compact 2>/dev/null || true
-          # Assert zero FOCUS tag violations (AC-2-08)
           FAILED=$(jq -r '.results.failed_checks | length' tmp/terraform-aws/cost/results_json.json 2>/dev/null || echo "0")
           if [ "$FAILED" -gt "0" ]; then
             echo "FAIL: $FAILED FOCUS 1.2+ tag compliance violations found"
             exit 1
           fi
           echo "PASS: FOCUS 1.2+ tag compliance — 0 violations"
+
+      - name: Upload FOCUS evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: focus-compliance
+          path: tmp/terraform-aws/cost/
+
+  # Job 2: Infracost estimate (requires GitHub Actions — not containerizable)
+  cost-estimate:
+    name: Infracost PR Cost Estimate
+    needs: [focus-compliance]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Setup Infracost
         uses: infracost/actions/setup@v3
@@ -52,7 +70,6 @@ jobs:
             infracost breakdown --path "$dir" --format json \
               --out-file "/tmp/infracost-base-$(basename "$dir").json" 2>/dev/null || true
           done
-          # Merge all base estimates
           find /tmp -name 'infracost-base-*.json' -print0 | \
             xargs -0 infracost output --format json --out-file /tmp/infracost-base.json 2>/dev/null || \
             echo '{"version":"0.2","totalMonthlyCost":"0","totalHourlyCost":"0","currency":"USD","projects":[],"timeGenerated":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > /tmp/infracost-base.json
@@ -155,4 +172,3 @@ jobs:
           path: |
             /tmp/infracost-diff.json
             tmp/terraform-aws/cost-reports/
-            tmp/terraform-aws/cost/

@@ -2,6 +2,9 @@
 # Tier 1 snapshot test: ALB wrapper defaults with a single target group
 
 mock_provider "aws" {}
+mock_provider "aws" {
+  alias = "us_east_1"
+}
 
 run "alb_defaults_plan" {
   command = plan
