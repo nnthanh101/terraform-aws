@@ -55,6 +55,11 @@ tmp/
 .vscode/
 *.swp
 
+# Local symlinks (MacPro development only — NOT for CI/public users)
+.adlc
+.claude
+.specify
+
 # OS
 .DS_Store
 Thumbs.db

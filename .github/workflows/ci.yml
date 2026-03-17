@@ -111,6 +111,7 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v5
+        with:
 
       - name: terraform fmt -check
         run: terraform fmt -check projects/${{ matrix.project }}
@@ -132,6 +133,7 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v5
+        with:
 
       - name: Run CI test suite (no HITL gate)
         run: task test:ci
@@ -144,6 +146,7 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v5
+        with:
 
       - name: Generate lock files (gitignored — regenerate fresh in CI)
         run: |
@@ -165,6 +168,7 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v5
+        with:
 
       - name: Trivy misconfig scan
         run: task security:trivy
