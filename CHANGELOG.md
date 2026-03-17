@@ -7,6 +7,26 @@ Published to [HCP Terraform Registry](https://app.terraform.io/app/oceansoft/reg
 
 ---
 
+## [2.2.3](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.2...terraform-aws-v2.2.3) (2026-03-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove deprecated commands → MAJOR bump (1.1.1 → 2.0.0)
+
+### Features
+
+* add new agent template             → MINOR bump (1.1.1 → 1.2.0) ([41898a5](https://github.com/nnthanh101/terraform-aws/commit/41898a526d1d71bae1db474c2702540907116c8a))
+* remove deprecated commands → MAJOR bump (1.1.1 → 2.0.0) ([41898a5](https://github.com/nnthanh101/terraform-aws/commit/41898a526d1d71bae1db474c2702540907116c8a))
+
+
+### Bug Fixes
+
+* Allow GitHub Actions to create and approve pull requests ([7491a52](https://github.com/nnthanh101/terraform-aws/commit/7491a52324bac4d7901cec191bde7a40e42ae483))
+* release-please--branches--main ([d72fd0e](https://github.com/nnthanh101/terraform-aws/commit/d72fd0eb05b1dc522e81737be1da301aa32d7338))
+* resolve hook false positive            → PATCH bump (1.1.1 → 1.1.2) ([41898a5](https://github.com/nnthanh101/terraform-aws/commit/41898a526d1d71bae1db474c2702540907116c8a))
+* SSO & management-account ([1d10fc9](https://github.com/nnthanh101/terraform-aws/commit/1d10fc9e9bbfe78f30032dfca981269570f43c27))
+
 ## [2.2.2](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.1...terraform-aws-v2.2.2) (2026-03-14)
 
 
