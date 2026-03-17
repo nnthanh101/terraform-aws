@@ -133,7 +133,7 @@ tasks:
         echo "    task operate:down         Stop all containers"
         echo "    task starship:configure   Configure Starship prompt"
         echo ""
-        echo "  DOCS      Documentation (DevOps-TechDocs is canonical source)"
+        echo "  DOCS      Documentation (devops-docs is canonical source)"
         echo "    task docs:dev             Docusaurus dev server (port 5001)"
         echo "    task docs:sync            Sync module READMEs → TechDocs MDX (local)"
         echo ""
@@ -497,7 +497,7 @@ tasks:
       - bash scripts/starship-configure.sh
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  # DOCS — DevOps-TechDocs is the canonical documentation source
+  # DOCS — devops-docs is the canonical documentation source
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   docs:dev:
@@ -506,7 +506,7 @@ tasks:
       - |
         if [ ! -d docs/site ]; then
           echo "SKIP: docs/site submodule not found"
-          echo "  Run: git submodule add https://github.com/1xOps/DevOps-TechDocs.git docs/site"
+          echo "  Run: git submodule add https://github.com/1xOps/devops-docs.git docs/site"
           exit 0
         fi
         cd docs/site && npm install && npm run start -- --port 5001
@@ -654,7 +654,7 @@ tasks:
           CMD: "MODULE={{.MODULE}} bash scripts/registry-create.sh"
 
   docs:sync:
-    desc: "Sync module READMEs to DevOps-TechDocs as MDX (local symlink)"
+    desc: "Sync module READMEs to devops-docs as MDX (local symlink)"
     cmds:
       - bash scripts/sync-techdocs.sh
 

@@ -25,14 +25,14 @@ variable "sso_region" {
 }
 
 variable "default_tags" {
-  description = "Default tags applied to all resources via provider. Override per environment/account in tfvars."
+  description = "Default tags applied to all resources via provider. FOCUS 1.2+ compliant."
   type        = map(string)
   default = {
     CostCenter         = "platform"
-    Project            = "sso"
+    Project            = "iam-identity-center"
     Environment        = "sandbox"
     ServiceName        = "sso"
-    DataClassification = "internal"
+    DataClassification = "confidential"
     ManagedBy          = "terraform"
     Owner              = "platform-team"
     Team               = "cloudops"

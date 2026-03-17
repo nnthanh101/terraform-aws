@@ -79,7 +79,9 @@ repos:
         # - projects/: reference remote GitHub source
         # - modules/web: uses configuration_aliases (aws.us_east_1 for CloudFront WAF)
         #   which breaks standalone terraform validate — validated via .tftest.hcl instead
-        exclude: (examples/|wrappers/|projects/|modules/web/)
+        # - accounts/: real AWS backend (S3 state) + pinned providers require `terraform init`
+        #   with network/credentials — validated in CI (management-account-deploy.yml) not pre-commit
+        exclude: (examples/|wrappers/|projects/|modules/web/|accounts/)
       # Uncomment when terraform-docs is in PATH (DevContainer/CI has it natively):
       #   sudo ln -sf $(pwd)/scripts/terraform-docs-wrapper.sh /usr/local/bin/terraform-docs
       # - id: terraform_docs

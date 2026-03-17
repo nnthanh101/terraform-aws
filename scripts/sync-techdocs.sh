@@ -1,17 +1,17 @@
 #!/bin/bash
 # Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
 #
-# sync-techdocs.sh — Generate MDX from module READMEs for DevOps-TechDocs
+# sync-techdocs.sh — Generate MDX from module READMEs for devops-docs
 #
 # Usage (local — symlink):
 #   bash scripts/sync-techdocs.sh
-#   # Writes to /Volumes/Working/projects/DevOps-TechDocs/docs/docs/terraform-aws/modules/auto/
+#   # Writes to /Volumes/Working/projects/devops-docs/docs/docs/terraform-aws/modules/auto/
 #
 # Usage (CI — output to temp dir):
 #   bash scripts/sync-techdocs.sh --output /tmp/techdocs-auto
 #
 # Usage (custom target):
-#   TECHDOCS_DIR=/path/to/DevOps-TechDocs bash scripts/sync-techdocs.sh
+#   TECHDOCS_DIR=/path/to/devops-docs bash scripts/sync-techdocs.sh
 #
 set -euo pipefail
 
@@ -30,10 +30,10 @@ if [ -n "$OUTPUT_DIR" ]; then
   TARGET_DIR="$OUTPUT_DIR"
 elif [ -n "${TECHDOCS_DIR:-}" ]; then
   TARGET_DIR="${TECHDOCS_DIR}/docs/docs/terraform-aws/modules/auto"
-elif [ -d "/Volumes/Working/projects/DevOps-TechDocs" ]; then
-  TARGET_DIR="/Volumes/Working/projects/DevOps-TechDocs/docs/docs/terraform-aws/modules/auto"
+elif [ -d "/Volumes/Working/projects/devops-docs" ]; then
+  TARGET_DIR="/Volumes/Working/projects/devops-docs/docs/docs/terraform-aws/modules/auto"
 else
-  echo "ERROR: DevOps-TechDocs not found. Set TECHDOCS_DIR or use --output for CI."
+  echo "ERROR: devops-docs not found. Set TECHDOCS_DIR or use --output for CI."
   exit 1
 fi
 

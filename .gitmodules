@@ -3,4 +3,4 @@
 	url = https://github.com/1xOps/adlc-framework.git
 [submodule "docs"]
 	path = docs
-	url = https://github.com/1xOps/DevOps-TechDocs
+	url = https://github.com/1xOps/devops-docs

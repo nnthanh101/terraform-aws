@@ -1,0 +1,22 @@
+# accounts/management-account/terraform.tfvars.example
+# IAM Identity Center — copy to terraform.tfvars and customize
+#
+# Init: terraform init -backend-config="bucket=${ACCOUNT_ID}-tfstate-${REGION}" -backend-config="region=ap-southeast-2"
+
+sso_region = "ap-southeast-2"
+
+# Multi-account IDs (uncomment when expanding beyond sandbox)
+# security_account_id = "222222222222"
+# workload_account_id = "333333333333"
+
+# FOCUS 1.2+ FinOps tags
+default_tags = {
+  CostCenter         = "platform"
+  Project            = "iam-identity-center"
+  Environment        = "production"
+  ServiceName        = "sso"
+  DataClassification = "confidential"
+  ManagedBy          = "terraform"
+  Owner              = "platform-team"
+  Team               = "cloudops"
+}
