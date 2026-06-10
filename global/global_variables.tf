@@ -1,7 +1,15 @@
 # Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
-# Global conventions for terraform-aws module library (KISS/LEAN)
-# NOTE: Modules cannot import variables — this file documents shared conventions
-# and is used by root-level compositions (examples/, tests/).
+# SSOT: Tag Taxonomy + Shared Variable Conventions for terraform-aws module library (KISS/LEAN)
+#
+# This file is the SINGLE SOURCE OF TRUTH for:
+#   - Tag taxonomy (4-tier: Mandatory / FinOps / Compliance / Ops)
+#   - Shared variable names, types, and validation rules
+#
+# USAGE RULES:
+#   - Modules CANNOT import variables from this file (Terraform has no cross-module variable import).
+#   - Root compositions (accounts/, projects/, examples/, tests/) copy the tag structure from here.
+#   - Any tag name change MUST be made here first, then propagated to all consumers.
+#   - Do NOT convert this file into a module — it is a convention document, not a resource factory.
 #
 # Tag Taxonomy (4-tier):
 #   Tier 1 — Mandatory:  Project, Environment, Owner, CostCenter, ManagedBy
@@ -38,7 +46,7 @@ variable "region" {
 variable "owner" {
   description = "Resource owner email for accountability and incident contact"
   type        = string
-  default     = "nnthanh101@gmail.com"
+  default     = "platform-team@example.com"
   validation {
     condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.owner))
     error_message = "Must be a valid email address."
@@ -74,7 +82,7 @@ variable "common_tags" {
     # Tier 1 — Mandatory (enforced by AWS Organizations Tag Policy)
     Project     = "terraform-aws"
     Environment = "dev"
-    Owner       = "nnthanh101@gmail.com"
+    Owner       = "platform-team@example.com"
     CostCenter  = "platform"
     ManagedBy   = "Terraform"
 

@@ -95,7 +95,7 @@ variable "desired_count" {
 ################################################################################
 
 variable "domain_name" {
-  description = "Fully qualified domain name (e.g., xops.oceansoft.io). Set null to skip DNS."
+  description = "Fully qualified domain name (e.g., app.example.com). Set null to skip DNS."
   type        = string
   default     = null
 }
@@ -163,7 +163,7 @@ variable "default_tags" {
     Environment        = "dev"
     DataClassification = "internal"
     ManagedBy          = "terraform"
-    Owner              = "platform-engineering@oceansoft.io"
+    Owner              = "platform-engineering@example.com"
     Compliance         = "APRA-CPS234"
   }
 }

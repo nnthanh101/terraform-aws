@@ -3,7 +3,7 @@
 #
 # Dual-Mode Source Pattern:
 #   Development:  source = "../../modules/ecs" (local, fast iteration)
-#   Production:   source = "app.terraform.io/oceansoft/ecs/aws" version = "~> 1.0"
+#   Production:   source = "app.terraform.io/<YOUR_ORG>/ecs/aws" version = "~> 1.0"
 #
 # Init: terraform init -backend-config="bucket=${ACCOUNT_ID}-tfstate-${REGION}" -backend-config="region=ap-southeast-2"
 # Or:   MODULE=ecs VPC_ID=vpc-xxx SUBNET_IDS='["subnet-a","subnet-b"]' bash scripts/deploy-init.sh

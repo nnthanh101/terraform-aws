@@ -5,10 +5,10 @@
 #   Production:  GitHub monorepo source (unified version tag)
 #   Development: Local source for module iteration only:
 #     source = "../../modules/ecs"
-#   Backup:      Private registry (app.terraform.io/oceansoft/ecs/aws)
+#   Backup:      Private registry (app.terraform.io/<YOUR_ORG>/ecs/aws)
 
 module "ecs" {
-  source = "github.com/nnthanh101/terraform-aws//modules/ecs?ref=v2.0.0"
+  source = "github.com/nnthanh101/terraform-aws//modules/ecs?ref=terraform-aws-v2.2.3"
 
   cluster_name               = "sandbox-ecs"
   cluster_capacity_providers = ["FARGATE"]

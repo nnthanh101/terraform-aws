@@ -201,7 +201,7 @@ graph TD
 |---------|-------------|
 | **Dev** (local iteration) | `source = "../../modules/{name}"` |
 | **Prod** (versioned) | `source = "github.com/nnthanh101/terraform-aws//modules/{name}?ref=v2.2.1"` |
-| **Registry** (backup) | `source = "app.terraform.io/oceansoft/{name}/aws"` |
+| **Registry** (backup) | `source = "app.terraform.io/<YOUR_ORG>/{name}/aws"` |
 
 ## Quick Start
 
