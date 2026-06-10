@@ -20,7 +20,7 @@ module "identity_center" {
     aws = aws.identity_center
   }
 
-  enable_organizations_lookup = false
+  enable_organizations_lookup = true
 
   # YAML config — permission sets + account assignments in auditor-friendly format
   config_path = "${path.module}/config"

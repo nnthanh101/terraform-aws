@@ -21,6 +21,12 @@
       "extra-files": ["VERSION"],
       "release-as": "2.2.3",
       "bump-minor-pre-major": true
+    },
+    "modules/github-oidc": {
+      "release-type": "simple",
+      "component": "github-oidc",
+      "changelog-path": "modules/github-oidc/CHANGELOG.md",
+      "bump-minor-pre-major": true
     }
   }
 }

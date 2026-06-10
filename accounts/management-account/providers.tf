@@ -1,5 +1,5 @@
 # Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
-# IAM Identity Center — dual provider: default (ap-southeast-2) + identity_center alias.
+# IAM Identity Center — dual provider: default (var.region, default ap-southeast-2) + identity_center alias.
 # Required by modules/sso: configuration_aliases = [aws.identity_center]
 
 terraform {
@@ -13,7 +13,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "ap-southeast-2"
+  region = var.region
   default_tags { tags = var.default_tags }
 }
 

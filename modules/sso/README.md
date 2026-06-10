@@ -318,3 +318,24 @@ See the `CONTRIBUTING.md` file for information on how to contribute.
 | <a name="output_sso_instance_arn"></a> [sso\_instance\_arn](#output\_sso\_instance\_arn) | The ARN of the SSO instance |
 | <a name="output_sso_users_ids"></a> [sso\_users\_ids](#output\_sso\_users\_ids) | A map of SSO user IDs created by this module |
 <!-- END_TF_DOCS -->
+
+## References
+
+### AWS Documentation
+- [IAM Identity Center User Guide](https://docs.aws.amazon.com/singlesignon/latest/userguide/)
+- [Entra ID with Identity Center Integration](https://docs.aws.amazon.com/singlesignon/latest/userguide/idp-microsoft-entra.html)
+
+### Microsoft Entra ID
+- [AWS SSO Integration Tutorial (Microsoft Learn)](https://learn.microsoft.com/en-us/entra/identity/saas-apps/amazon-web-service-tutorial)
+- [Just-In-Time Privileged Access via Entra + Identity Center](https://aws.amazon.com/blogs/security/implementing-just-in-time-privileged-access-to-aws-with-microsoft-entra-and-aws-iam-identity-center/)
+- [Identity Source Migration (Internal → External IdP)](https://aws.amazon.com/blogs/security/managing-identity-source-transition-for-aws-iam-identity-center/)
+
+### Marketplace
+- [AWS IAM Identity Center Related Tools](https://aws.amazon.com/marketplace/pp/prodview-vzucmhzdm4mqc)
+
+### Related Modules
+- [CloudPosse terraform-aws-sso](https://github.com/cloudposse/terraform-aws-sso) — Account-name mapping via locals; similar pattern to this module
+
+### Canonical Documentation
+- **Setup from scratch**: See [Identity Center Enablement Runbook](/docs/layers/identity/entra-federation) for full deployment guide (HITL console steps + Terraform)
+- **Architecture decisions**: ADR-021 Parallel 2-Account Topology, ADR-020 (profile-only semantics)

@@ -1,9 +1,10 @@
 # Account Assignments — APRA CPS 234 audit trail (YAML-managed)
 # Schema matches var.account_assignments. principal_idp: INTERNAL for module-created groups.
-# account_ids use local.management_account_id — passed via HCL, not hardcoded here.
-# NOTE: Account IDs cannot reference HCL locals in YAML. Use 12-digit IDs or
-# enable_organizations_lookup=true with account names.
+# account_ids use account NAMES resolved via enable_organizations_lookup=true.
+# The module (locals.tf:202) resolves names -> IDs at apply-time via AWS Organizations.
+# No 12-digit account IDs are committed here; IDs are resolved from the live Org.
 
+# Break-glass Admin: management-account ONLY. Workload-account Admin requires on-demand, alarm-wired exception (see security review 2026-06-10).
 PlatformAdmin:
   principal_name: "PlatformTeam"
   principal_type: "GROUP"
@@ -11,7 +12,7 @@ PlatformAdmin:
   permission_sets:
     - "Admin"
   account_ids:
-    - "728863344838"
+    - "example-management"
 
 PowerUserAccess:
   principal_name: "PowerUsers"
@@ -20,7 +21,8 @@ PowerUserAccess:
   permission_sets:
     - "PowerUser"
   account_ids:
-    - "728863344838"
+    - "example-management"
+    - "example-workload"
 
 AuditReadOnly:
   principal_name: "AuditTeam"
@@ -29,7 +31,8 @@ AuditReadOnly:
   permission_sets:
     - "ReadOnly"
   account_ids:
-    - "728863344838"
+    - "example-management"
+    - "example-workload"
 
 SecurityOps:
   principal_name: "SecurityTeam"
@@ -38,4 +41,5 @@ SecurityOps:
   permission_sets:
     - "SecurityAudit"
   account_ids:
-    - "728863344838"
+    - "example-management"
+    - "example-workload"

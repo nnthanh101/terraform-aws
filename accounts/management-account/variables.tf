@@ -18,6 +18,12 @@ variable "workload_account_id" {
   default     = null
 }
 
+variable "region" {
+  description = "AWS region for the default provider. Home region is configurable; Sydney default."
+  type        = string
+  default     = "ap-southeast-2"
+}
+
 variable "sso_region" {
   description = "AWS region where IAM Identity Center is enabled."
   type        = string
