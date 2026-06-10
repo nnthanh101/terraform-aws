@@ -89,17 +89,17 @@ task test:tier1     # Snapshot tests (free, 2-3s)
 
 ```bash
 # 1. Configure credentials
-aws sso login --profile aws-sandbox
+aws sso login --profile <YOUR_PROFILE>
 
-# 2. Initialize and plan
-cd projects/sso
-terraform init && terraform plan
+# 2. Copy an example consumer root (e.g., from infra/terraform/aws/examples/ecs)
+#    or scaffold one: MODULE=ecs bash scripts/project-init.sh
 
-# 3. Apply
+# 3. Initialize and plan from your consumer root
+terraform init -backend-config="bucket=${ACCOUNT_ID}-tfstate-${REGION}" -backend-config="region=${REGION}"
+terraform plan
+
+# 4. Apply
 terraform apply
-
-# 4. Verify
-bash scripts/verify-deployment.sh sso
 ```
 
 See **[QUICKSTART.md](QUICKSTART.md)** for the full 5-command manager workflow.

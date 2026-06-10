@@ -2,7 +2,7 @@
 # SSOT: Tag Taxonomy + Shared Variable Conventions for terraform-aws module library (KISS/LEAN)
 #
 # This file is the SINGLE SOURCE OF TRUTH for:
-#   - Tag taxonomy (4-tier: Mandatory / FinOps / Compliance / Ops)
+#   - Tag taxonomy (5-tier: Application-Anchor / Mandatory / FinOps / Compliance / Ops)
 #   - Shared variable names, types, and validation rules
 #
 # USAGE RULES:
@@ -11,11 +11,53 @@
 #   - Any tag name change MUST be made here first, then propagated to all consumers.
 #   - Do NOT convert this file into a module — it is a convention document, not a resource factory.
 #
-# Tag Taxonomy (4-tier):
-#   Tier 1 — Mandatory:  Project, Environment, Owner, CostCenter, ManagedBy
-#   Tier 2 — FinOps:     ServiceName, ServiceCategory (FOCUS 1.2+)
-#   Tier 3 — Compliance: DataClassification, Compliance (APRA CPS 234)
-#   Tier 4 — Ops:        Automation, BackupPolicy, GitRepo
+# Tag Taxonomy (TO-BE, 5-tier — F1-S6d):
+#
+#   Tier 0 — Application Anchor (AWS-managed, AppRegistry):
+#     awsApplication  = <app ARN>    AWS-managed key injected by AppRegistry into provider
+#                                    default_tags via the two-phase apply pattern.
+#                                    Source: infra/terraform/aws/modules/appregistry/outputs.tf
+#                                    Pattern: merge(module.tags.common_tags,
+#                                             try(module.appregistry.application_tag, {}))
+#                                    FOCUS 1.2 mapping: SubAccountId (application boundary)
+#                                    CSDM mapping: Application (Level 4 — bounded context)
+#                                    Do NOT hand-code this value; always obtain from AppRegistry output.
+#
+#   Tier 1 — Mandatory (enforced by AWS Organizations Tag Policy + SCP):
+#     Environment     = dev|staging|prod|sandbox|test|sit|uat|preprod|dr
+#                                    FOCUS 1.2: Environment dimension
+#                                    CSDM: Environment Classification
+#     Owner           = <email>      Incident contact; maps to FOCUS 1.2 Tag (OwnerEmail)
+#     CostCenter      = <string>     FinOps showback/chargeback unit; FOCUS 1.2: CostCenter
+#     ManagedBy       = Terraform    IaC provenance; CSDM: Provisioned By
+#
+#   Tier 2 — FinOps / CSDM (FOCUS 1.2+ dimension mapping):
+#     ServiceName     = <string>     Microservice or logical grouping within the application
+#                                    FOCUS 1.2: ServiceName dimension
+#                                    CSDM: Technical Service
+#     ServiceCategory = <string>     AWS service category (Compute, Storage, Database, Network…)
+#                                    FOCUS 1.2: ServiceCategory dimension (maps to aws:servicecategory)
+#                                    CSDM: Service Classification
+#     BusinessUnit    = <string>     Business unit or product line owning this resource
+#                                    FOCUS 1.2: SubAccountName (organisational boundary)
+#                                    CSDM: Business Unit
+#
+#   Tier 3 — Compliance (APRA CPS 234 Para 15):
+#     DataClassification = public|internal|confidential|restricted
+#                                    APRA CPS 234 Para 15 information asset classification
+#                                    CSDM: Data Classification
+#     Compliance      = none|apra-cps234|pci-dss|iso27001|soc2
+#                                    Applicable compliance frameworks; multiple values comma-separated
+#                                    CSDM: Compliance Framework
+#
+#   Tier 4 — Operational:
+#     Name            = <string>     Human-readable resource name for console / CLI display
+#                                    AWS convention: set on every named resource
+#     BackupPolicy    = none|default|daily-7d|daily-30d|daily-90d
+#                                    RPO bucket; maps to AWS Backup plan selection tag
+#                                    CSDM: Recovery Policy
+#     GitRepo         = <string>     Source repository for IaC traceability
+#                                    CSDM: Configuration Item — Source
 
 variable "project_name" {
   description = "Project identifier for resource tagging and state key paths"
@@ -76,25 +118,39 @@ variable "default_tags_enabled" {
 }
 
 variable "common_tags" {
-  description = "Tags applied to all resources — 4-tier taxonomy for FOCUS 1.2+ FinOps and APRA CPS 234 compliance"
+  description = "Tags applied to all resources — 5-tier taxonomy for FOCUS 1.2+ FinOps, APRA CPS 234 compliance, and AppRegistry application anchor (F1-S6d)"
   type        = map(string)
   default = {
-    # Tier 1 — Mandatory (enforced by AWS Organizations Tag Policy)
+    # Tier 0 — Application Anchor (awsApplication is AWS-managed / injected by AppRegistry)
+    # Do NOT set awsApplication here. It must be merged from module.appregistry.application_tag
+    # in the provider default_tags block (two-phase apply pattern). Setting it as a static string
+    # here would bypass AppRegistry association and break MyApplications console grouping.
+    # See: infra/terraform/aws/dev/providers.tf and infra/terraform/aws/modules/appregistry/
+
+    # Tier 1 — Mandatory (enforced by AWS Organizations Tag Policy + SCP)
+    # FOCUS 1.2 mapping: Environment, CostCenter, Owner(Email), ManagedBy(ProvisionedBy)
+    # CSDM mapping: Environment Classification, Cost Center, Owner, Provisioned By
     Project     = "terraform-aws"
     Environment = "dev"
     Owner       = "platform-team@example.com"
     CostCenter  = "platform"
     ManagedBy   = "Terraform"
 
-    # Tier 2 — FinOps (FOCUS 1.2+ dimension mapping)
-    # ServiceName and ServiceCategory set per-module in locals.tf
+    # Tier 2 — FinOps / CSDM (FOCUS 1.2+ dimension mapping)
+    # ServiceName and ServiceCategory set per-module in locals.tf (context-specific values).
+    # BusinessUnit set per-module or per-account (maps to FOCUS 1.2 SubAccountName / CSDM BU).
+    ServiceName     = "platform"
+    ServiceCategory = "Management"
+    BusinessUnit    = "platform"
 
-    # Tier 3 — Compliance (APRA CPS 234)
+    # Tier 3 — Compliance (APRA CPS 234 Para 15)
+    # CSDM: Data Classification, Compliance Framework
     DataClassification = "internal"
     Compliance         = "none"
 
     # Tier 4 — Operational
-    Automation   = "true"
+    # BackupPolicy RPO buckets: none | default | daily-7d | daily-30d | daily-90d
+    # CSDM: Recovery Policy, Configuration Item — Source
     BackupPolicy = "default"
     GitRepo      = "terraform-aws"
   }

@@ -433,9 +433,9 @@ tasks:
       - MODULE={{.MODULE}} REGION=ap-southeast-2 bash scripts/deploy-init.sh
 
   deploy:preflight:
-    desc: "Pre-flight checks before plan/apply [MODULE={{.MODULE}}]"
+    desc: "Pre-flight checks before plan/apply [MODULE={{.MODULE}}] — pass PROJECT_DIR=<path> for consumer root"
     cmds:
-      - MODULE={{.MODULE}} ENVIRONMENT=sandbox PROJECT_DIR=projects/{{.MODULE}} bash scripts/sandbox-preflight.sh
+      - MODULE={{.MODULE}} ENVIRONMENT=sandbox PROJECT_DIR=${PROJECT_DIR:-modules/{{.MODULE}}} bash scripts/sandbox-preflight.sh
 
   deploy:plan:
     desc: "terraform plan + save plan file [MODULE={{.MODULE}}]"
