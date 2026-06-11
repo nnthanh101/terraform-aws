@@ -1,10 +1,18 @@
 # Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
 name: Management Account Deploy
 
-# HITL gate: manual trigger only — no automated deploys.
+# HITL gate: manual trigger only for apply/destroy — no automated deploys.
 # IAM Identity Center requires management account (or delegated admin) permissions.
 # cloud-architect + product-owner approval must precede any apply/destroy.
+# Push trigger (plan-only preview): fires on config YAML changes so drift is detected early.
+# Apply and destroy remain workflow_dispatch-only (HITL decision gate).
 on:
+  push:
+    branches: [main]
+    paths:
+      - "accounts/management-account/config/**"
+      - "modules/sso/**"
+      - "modules/github-oidc/**"
   workflow_dispatch:
     inputs:
       action:

@@ -298,6 +298,9 @@ See the `CONTRIBUTING.md` file for information on how to contribute.
 | <a name="input_sso_applications"></a> [sso\_applications](#input\_sso\_applications) | List of applications to be created in IAM Identity Center | <pre>map(object({<br/>    name                     = string<br/>    application_provider_arn = string<br/>    description              = optional(string)<br/>    portal_options = optional(object({<br/>      sign_in_options = optional(object({<br/>        application_url = optional(string)<br/>        origin          = string<br/>      }))<br/>      visibility = optional(string)<br/>    }))<br/>    status              = string # acceptable values are "ENABLED" or "DISABLED"<br/>    client_token        = optional(string)<br/>    tags                = optional(map(string))<br/>    assignment_required = bool # Resource: aws_ssoadmin_application_assignment_configuration<br/>    assignments_access_scope = optional(<br/>      list(object({<br/>        authorized_targets = optional(list(string)) # List of application names<br/>        scope              = string<br/>      }))<br/>    )                                          # Resource: aws_ssoadmin_application_access_scope<br/>    group_assignments = optional(list(string)) # Resource aws_ssoadmin_application_assignment, keeping it separated for groups<br/>    user_assignments  = optional(list(string)) # Resource aws_ssoadmin_application_assignment, keeping it separated for users<br/>  }))</pre> | `{}` | no |
 | <a name="input_sso_groups"></a> [sso\_groups](#input\_sso\_groups) | Names of the groups you wish to create in IAM Identity Center. | <pre>map(object({<br/>    group_name        = string<br/>    group_description = optional(string, null)<br/>  }))</pre> | `{}` | no |
 | <a name="input_sso_instance_access_control_attributes"></a> [sso\_instance\_access\_control\_attributes](#input\_sso\_instance\_access\_control\_attributes) | List of attributes for access control. This is used to create the enable and use attributes for access control. | <pre>list(object({<br/>    attribute_name = string<br/>    source         = set(string)<br/>  }))</pre> | `[]` | no |
+| <a name="input_sso_region"></a> [sso\_region](#input\_sso\_region) | AWS region where IAM Identity Center is enabled. Used in the [sso-session] block and as the default region in each generated [profile] block. | `string` | `"us-east-1"` | no |
+| <a name="input_sso_session_name"></a> [sso\_session\_name](#input\_sso\_session\_name) | Name of the [sso-session] block written into ~/.aws/config. Use a short, URL-safe identifier (no spaces). Override for multi-org or multi-tenant environments. | `string` | `"sso"` | no |
+| <a name="input_sso_start_url"></a> [sso\_start\_url](#input\_sso\_start\_url) | IAM Identity Center access portal URL for the ~/.aws/config [sso-session] block (plan-time input; visible in the AWS Console under IAM Identity Center → Settings after enabling Identity Center). | `string` | `""` | no |
 | <a name="input_sso_users"></a> [sso\_users](#input\_sso\_users) | Names of the users you wish to create in IAM Identity Center. | <pre>map(object({<br/>    display_name = optional(string)<br/>    user_name    = string<br/>    # NOTE: Empty list [] is intentionally valid — represents a standalone user<br/>    # without group assignments (e.g. service accounts, direct permission set users).<br/>    # A validation requiring length > 0 would be a BREAKING CHANGE for existing consumers.<br/>    group_membership = list(string)<br/>    # Name<br/>    given_name       = string<br/>    middle_name      = optional(string, null)<br/>    family_name      = string<br/>    name_formatted   = optional(string)<br/>    honorific_prefix = optional(string, null)<br/>    honorific_suffix = optional(string, null)<br/>    # Email<br/>    email            = string<br/>    email_type       = optional(string, null)<br/>    is_primary_email = optional(bool, true)<br/>    # Phone Number<br/>    phone_number            = optional(string, null)<br/>    phone_number_type       = optional(string, null)<br/>    is_primary_phone_number = optional(bool, true)<br/>    # Address<br/>    country            = optional(string, null)<br/>    locality           = optional(string, null)<br/>    address_formatted  = optional(string)<br/>    postal_code        = optional(string, null)<br/>    is_primary_address = optional(bool, true)<br/>    region             = optional(string, null)<br/>    street_address     = optional(string, null)<br/>    address_type       = optional(string, null)<br/>    # Additional<br/>    user_type          = optional(string, null)<br/>    title              = optional(string, null)<br/>    locale             = optional(string, null)<br/>    nickname           = optional(string, null)<br/>    preferred_language = optional(string, null)<br/>    profile_url        = optional(string, null)<br/>    timezone           = optional(string, null)<br/>  }))</pre> | `{}` | no |
 
 ## Outputs
@@ -308,6 +311,7 @@ See the `CONTRIBUTING.md` file for information on how to contribute.
 |------|-------------|
 | <a name="output_account_assignment_data"></a> [account\_assignment\_data](#output\_account\_assignment\_data) | Tuple containing account assignment data |
 | <a name="output_config_path"></a> [config\_path](#output\_config\_path) | Path to YAML configuration directory for APRA CPS 234 audit trail |
+| <a name="output_sso_cli_config"></a> [sso\_cli\_config](#output\_sso\_cli\_config) | Ready-to-paste ~/.aws/config [sso-session]+[profile] blocks. One [profile] per unique (account\_id, permission\_set) pair. Pipe to a file or print via: terraform output -raw sso\_cli\_config |
 | <a name="output_identity_store_id"></a> [identity\_store\_id](#output\_identity\_store\_id) | The ID of the Identity Store |
 | <a name="output_permission_set_arns"></a> [permission\_set\_arns](#output\_permission\_set\_arns) | A map of permission set name to ARN |
 | <a name="output_principals_and_assignments"></a> [principals\_and\_assignments](#output\_principals\_and\_assignments) | Map containing account assignment data |
@@ -318,3 +322,24 @@ See the `CONTRIBUTING.md` file for information on how to contribute.
 | <a name="output_sso_instance_arn"></a> [sso\_instance\_arn](#output\_sso\_instance\_arn) | The ARN of the SSO instance |
 | <a name="output_sso_users_ids"></a> [sso\_users\_ids](#output\_sso\_users\_ids) | A map of SSO user IDs created by this module |
 <!-- END_TF_DOCS -->
+
+## References
+
+### AWS Documentation
+- [IAM Identity Center User Guide](https://docs.aws.amazon.com/singlesignon/latest/userguide/)
+- [Entra ID with Identity Center Integration](https://docs.aws.amazon.com/singlesignon/latest/userguide/idp-microsoft-entra.html)
+
+### Microsoft Entra ID
+- [AWS SSO Integration Tutorial (Microsoft Learn)](https://learn.microsoft.com/en-us/entra/identity/saas-apps/amazon-web-service-tutorial)
+- [Just-In-Time Privileged Access via Entra + Identity Center](https://aws.amazon.com/blogs/security/implementing-just-in-time-privileged-access-to-aws-with-microsoft-entra-and-aws-iam-identity-center/)
+- [Identity Source Migration (Internal → External IdP)](https://aws.amazon.com/blogs/security/managing-identity-source-transition-for-aws-iam-identity-center/)
+
+### Marketplace
+- [AWS IAM Identity Center Related Tools](https://aws.amazon.com/marketplace/pp/prodview-vzucmhzdm4mqc)
+
+### Related Modules
+- [CloudPosse terraform-aws-sso](https://github.com/cloudposse/terraform-aws-sso) — Account-name mapping via locals; similar pattern to this module
+
+### Canonical Documentation
+- **Setup from scratch**: See [Identity Center Enablement Runbook](/docs/layers/identity/entra-federation) for full deployment guide (HITL console steps + Terraform)
+- **Architecture decisions**: ADR-021 Parallel 2-Account Topology, ADR-020 (profile-only semantics)

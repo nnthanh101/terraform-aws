@@ -26,7 +26,9 @@ jobs:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
       options: --user 0
     steps:
-      - uses: actions/checkout@v5
+      # act-safe: skip checkout under act (ACT_CHECKOUT_HOST_WIPE guard)
+      - if: ${{ !env.ACT }}
+        uses: actions/checkout@v5
         with:
           ref: main
           fetch-depth: 0
@@ -42,7 +44,6 @@ jobs:
             chmod +x /usr/local/bin/terraform-docs
           fi
 
-          CHANGED=0
           for MODULE_DIR in modules/*/; do
             MODULE_NAME=$(basename "$MODULE_DIR")
             # Skip modules without .tf files
@@ -55,13 +56,43 @@ jobs:
               "$MODULE_DIR"
           done
 
-          # Check if any READMEs changed
-          git diff --quiet modules/*/README.md && echo "No README changes detected" && exit 0
+      # Sparse-checkout only the engine scripts directory from adlc-framework.
+      # Same PAT + branch as b2b-commerce exemplar (ADLC_FRAMEWORK_PAT, ref: command-center).
+      # cone-mode: false required — cone mode silently excludes dotfile dirs (.claude/).
+      # act-safe: skip checkout under act (ACT_CHECKOUT_HOST_WIPE guard)
+      - name: Checkout engine scripts from adlc-framework (sparse)
+        if: ${{ !env.ACT }}
+        uses: actions/checkout@v4
+        with:
+          repository: 1xOps/adlc-framework
+          token: ${{ secrets.ADLC_FRAMEWORK_PAT }}
+          ref: command-center
+          sparse-checkout: |
+            .claude/plugins/commerce/scripts/**
+            .claude/plugins/commerce/scripts/
+          sparse-checkout-cone-mode: false
+          path: _engine
+
+      - name: Regenerate llms.txt via gen-llms-txt.sh
+        run: |
+          # gen-llms-txt.sh interface: positional only — $1=CONTENT_DIR $2=OUTPUT_PATH
+          # No --output flag exists. Verified from script source: gen-llms-txt.sh v1.1.0
+          # Usage: bash gen-llms-txt.sh <CONTENT_DIR> [OUTPUT_PATH]
+          bash _engine/.claude/plugins/commerce/scripts/gen-llms-txt.sh \
+            "${GITHUB_WORKSPACE}/modules" \
+            "${GITHUB_WORKSPACE}/llms.txt"
+          echo "=== llms.txt regenerated ==="
+          head -5 "${GITHUB_WORKSPACE}/llms.txt"
+
+      - name: Commit READMEs and llms.txt
+        run: |
+          # Check if any files changed (READMEs or llms.txt)
+          git diff --quiet modules/*/README.md llms.txt && echo "No changes detected" && exit 0
 
           # Configure git and commit all changes at once
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add modules/*/README.md
-          git commit -m "docs: auto-generate module READMEs [skip ci]"
+          git add modules/*/README.md llms.txt
+          git commit -m "docs: auto-generate module READMEs and llms.txt [skip ci]"
           git pull --rebase origin main
           git push origin main

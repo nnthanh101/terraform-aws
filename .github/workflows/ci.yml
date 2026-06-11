@@ -4,8 +4,18 @@ name: CI
 on:
   push:
     branches: [main]
+    paths:
+      - "modules/**"
+      - "accounts/**"
+      - "projects/**"
+      - ".github/workflows/ci.yml"
   pull_request:
     branches: [main]
+    paths:
+      - "modules/**"
+      - "accounts/**"
+      - "projects/**"
+      - ".github/workflows/ci.yml"
 
 permissions:
   contents: read
@@ -18,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [sso, ecs, web, acm, alb, cloudfront, s3, vpc, efs, kms, waf, sftp]
+        module: [sso, ecs, web, acm, alb, cloudfront, s3, vpc, efs, kms, waf, sftp, github-oidc]
     container:
       image: nnthanh101/terraform:2.6.0@sha256:3e159226f661171fb26baa360af7ddc0809076376a3cd6c37b8614186770f16a
       options: --user 0
@@ -111,6 +121,7 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v5
+        with:
 
       - name: terraform fmt -check
         run: terraform fmt -check projects/${{ matrix.project }}
@@ -132,6 +143,7 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v5
+        with:
 
       - name: Run CI test suite (no HITL gate)
         run: task test:ci
@@ -144,6 +156,7 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v5
+        with:
 
       - name: Generate lock files (gitignored — regenerate fresh in CI)
         run: |
@@ -165,6 +178,7 @@ jobs:
       options: --user 0
     steps:
       - uses: actions/checkout@v5
+        with:
 
       - name: Trivy misconfig scan
         run: task security:trivy

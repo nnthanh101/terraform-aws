@@ -47,6 +47,32 @@
 
 </details>
 
+<details>
+<summary>Local Setup (MacPro Only)</summary>
+
+For development on the author's MacPro with local private frameworks:
+
+```bash
+git clone https://github.com/1xOps/terraform-aws.git
+cd terraform-aws
+bash scripts/setup-symlinks.sh  # Link to local /Volumes/Working/projects/adlc-framework + devops-docs
+task govern:score               # Validate setup (CP-1/2/3 PASS, >=85% score)
+```
+
+**What this does**:
+- `git clone` (non-recursive) — public repo, no private submodules
+- `setup-symlinks.sh` creates local symlinks (MacPro-only):
+  - `.adlc` → `/Volumes/Working/projects/adlc-framework` (ADLC governance framework)
+  - `.claude` → convenience shortcut to `.adlc/.claude/`
+  - `.specify` → convenience shortcut to `.adlc/.specify/`
+- `task govern:score` validates setup (CP-1/2/3 check for symlinks in local mode, SKIP in CI)
+
+**Why symlinks?** These frameworks are private and local-only (MacPro development). Public users can clone and use terraform-aws without symlinks — CI/CD runs without ADLC framework (only governance gate skips).
+
+**For public fork users**: Simply run `task ci:quick` — CI environment (CI=true) automatically skips ADLC checkpoint validations.
+
+</details>
+
 <details open>
 <summary>3-Command Start</summary>
 
@@ -63,17 +89,17 @@ task test:tier1     # Snapshot tests (free, 2-3s)
 
 ```bash
 # 1. Configure credentials
-aws sso login --profile aws-sandbox
+aws sso login --profile <YOUR_PROFILE>
 
-# 2. Initialize and plan
-cd projects/sso
-terraform init && terraform plan
+# 2. Copy an example consumer root (e.g., from infra/terraform/aws/examples/ecs)
+#    or scaffold one: MODULE=ecs bash scripts/project-init.sh
 
-# 3. Apply
+# 3. Initialize and plan from your consumer root
+terraform init -backend-config="bucket=${ACCOUNT_ID}-tfstate-${REGION}" -backend-config="region=${REGION}"
+terraform plan
+
+# 4. Apply
 terraform apply
-
-# 4. Verify
-bash scripts/verify-deployment.sh sso
 ```
 
 See **[QUICKSTART.md](QUICKSTART.md)** for the full 5-command manager workflow.

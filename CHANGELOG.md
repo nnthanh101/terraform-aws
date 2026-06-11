@@ -7,6 +7,40 @@ Published to [HCP Terraform Registry](https://app.terraform.io/app/oceansoft/reg
 
 ---
 
+## [2.2.3](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.3...terraform-aws-v2.2.3) (2026-06-11)
+
+
+### Features
+
+* data-platform ([#70](https://github.com/nnthanh101/terraform-aws/issues/70)) ([0fd4076](https://github.com/nnthanh101/terraform-aws/commit/0fd407699f5cf21e4ca261ebca41b4058a99e995))
+* foundation (S3+versioning+SSE+public-access-block, 4 Secrets, SQS+DLQ redrive, SNS→SQS) + tags (FOCUS 1.2 tag SSOT, validated, cited) ([d0b8c71](https://github.com/nnthanh101/terraform-aws/commit/d0b8c7120eeae684679d42a4b7994221c491d2d0))
+* github-oidc module ([3c21d6d](https://github.com/nnthanh101/terraform-aws/commit/3c21d6db8ffaa4f3a5f3f14dd72f2dc26f04f826))
+* minimum ClickOps + maximum Terraform IaC ([91ef372](https://github.com/nnthanh101/terraform-aws/commit/91ef372643656efa249ce0f196916f5a97183c65))
+* minimum ClickOps + maximum Terraform IaC ([a0f9a0d](https://github.com/nnthanh101/terraform-aws/commit/a0f9a0d99dbac54ec0ac5f1173fb0706e03f6a7f))
+* The deploy path (control flow, Enterprise [#1](https://github.com/nnthanh101/terraform-aws/issues/1) = OceanSoft) ([f221d2f](https://github.com/nnthanh101/terraform-aws/commit/f221d2ff51c8d4a12d149609ac62f33a8bb97475))
+
+## [2.2.3](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.3...terraform-aws-v2.2.3) (2026-06-11)
+
+
+### Features
+
+* foundation (S3+versioning+SSE+public-access-block, 4 Secrets, SQS+DLQ redrive, SNS→SQS) + tags (FOCUS 1.2 tag SSOT, validated, cited) ([d0b8c71](https://github.com/nnthanh101/terraform-aws/commit/d0b8c7120eeae684679d42a4b7994221c491d2d0))
+* github-oidc module ([3c21d6d](https://github.com/nnthanh101/terraform-aws/commit/3c21d6db8ffaa4f3a5f3f14dd72f2dc26f04f826))
+* minimum ClickOps + maximum Terraform IaC ([91ef372](https://github.com/nnthanh101/terraform-aws/commit/91ef372643656efa249ce0f196916f5a97183c65))
+* minimum ClickOps + maximum Terraform IaC ([a0f9a0d](https://github.com/nnthanh101/terraform-aws/commit/a0f9a0d99dbac54ec0ac5f1173fb0706e03f6a7f))
+* The deploy path (control flow, Enterprise [#1](https://github.com/nnthanh101/terraform-aws/issues/1) = OceanSoft) ([f221d2f](https://github.com/nnthanh101/terraform-aws/commit/f221d2ff51c8d4a12d149609ac62f33a8bb97475))
+
+## [2.2.3](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.3...terraform-aws-v2.2.3) (2026-06-11)
+
+
+### Features
+
+* foundation (S3+versioning+SSE+public-access-block, 4 Secrets, SQS+DLQ redrive, SNS→SQS) + tags (FOCUS 1.2 tag SSOT, validated, cited) ([d0b8c71](https://github.com/nnthanh101/terraform-aws/commit/d0b8c7120eeae684679d42a4b7994221c491d2d0))
+* github-oidc module ([3c21d6d](https://github.com/nnthanh101/terraform-aws/commit/3c21d6db8ffaa4f3a5f3f14dd72f2dc26f04f826))
+* minimum ClickOps + maximum Terraform IaC ([91ef372](https://github.com/nnthanh101/terraform-aws/commit/91ef372643656efa249ce0f196916f5a97183c65))
+* minimum ClickOps + maximum Terraform IaC ([a0f9a0d](https://github.com/nnthanh101/terraform-aws/commit/a0f9a0d99dbac54ec0ac5f1173fb0706e03f6a7f))
+* The deploy path (control flow, Enterprise [#1](https://github.com/nnthanh101/terraform-aws/issues/1) = OceanSoft) ([f221d2f](https://github.com/nnthanh101/terraform-aws/commit/f221d2ff51c8d4a12d149609ac62f33a8bb97475))
+
 ## [2.2.3](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.2...terraform-aws-v2.2.3) (2026-03-17)
 
 
