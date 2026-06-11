@@ -77,6 +77,8 @@ Every completion claim needs artifacts: `tmp/terraform-aws/coordination-logs/`, 
 | ADR-024 | Composition layer: modules/web wires alb + cloudfront + waf + dns with opinionated security defaults |
 | ADR-025 | Per-component semver: each module has independent version via release-please per-package config |
 
+> v0.3 roadmap: modules/{network(VPC),compute(ECS+ALB),data(RDS+ElastiCache),observability(AMP+AMG)} were empty null_resource stubs — removed 2026-06-11 to protect public-registry trust; their intent is already served by the real vpc/ecs/alb/efs modules and (for local observability) infra/observability/ Prometheus+Grafana.
+
 ## Quick Commands (Taskfile.yml)
 
 ```bash
