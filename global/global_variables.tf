@@ -14,11 +14,14 @@
 # Tag Taxonomy (TO-BE, 5-tier — F1-S6d):
 #
 #   Tier 0 — Application Anchor (AWS-managed, AppRegistry):
-#     awsApplication  = <app ARN>    AWS-managed key injected by AppRegistry into provider
-#                                    default_tags via the two-phase apply pattern.
-#                                    Source: infra/terraform/aws/modules/appregistry/outputs.tf
-#                                    Pattern: merge(module.tags.common_tags,
-#                                             try(module.appregistry.application_tag, {}))
+#     awsApplication  = <app ARN>    AWS-managed key injected by AppRegistry at RESOURCE level.
+#                                    Pattern: merge({ Service = "..." }, var.additional_tags)
+#                                    where additional_tags = try(module.appregistry.application_tag, {})
+#                                    in the consuming root (infra/terraform-aws/dev/main.tf).
+#                                    Source: terraform-aws/modules/appregistry/outputs.tf
+#                                    NEVER placed in provider.default_tags — Terraform evaluates
+#                                    provider config statically at plan time; injecting a module
+#                                    output there creates a cycle and breaks planning.
 #                                    FOCUS 1.2 mapping: SubAccountId (application boundary)
 #                                    CSDM mapping: Application (Level 4 — bounded context)
 #                                    Do NOT hand-code this value; always obtain from AppRegistry output.
@@ -58,6 +61,38 @@
 #                                    CSDM: Recovery Policy
 #     GitRepo         = <string>     Source repository for IaC traceability
 #                                    CSDM: Configuration Item — Source
+
+# ---------------------------------------------------------------------------
+# FOCUS 1.2 Column + CSDM Concept Mapping (Tag-SSOT reconciliation)
+# ---------------------------------------------------------------------------
+# This block maps every SSOT tag key to its FOCUS 1.2 column and CSDM concept.
+# Three categories: static provider.default_tags (8 keys) | resource-level only
+# (awsApplication via additional_tags) | per-resource context (non-module tags).
+#
+# Key                | FOCUS 1.2 Column       | CSDM Concept               | Where set
+# -------------------|------------------------|----------------------------|------------------
+# Application        | ServiceName            | Technical Service          | provider.default_tags (modules/tags)
+# Service            | ServiceCategory        | Service Classification     | provider.default_tags (modules/tags)
+# Environment        | Environment            | Environment Classification  | provider.default_tags (modules/tags)
+# Owner              | Tags[OwnerEmail]       | Owner                      | provider.default_tags (modules/tags)
+# CostCenter         | CostCenter             | Cost Center                | provider.default_tags (modules/tags)
+# ManagedBy          | Tags[ProvisionedBy]    | Provisioned By             | provider.default_tags (modules/tags)
+# Compliance         | Tags[Compliance]       | Compliance Framework       | provider.default_tags (modules/tags)
+# DataClassification | Tags[DataClass]        | Data Classification        | provider.default_tags (modules/tags)
+# awsApplication     | SubAccountId           | Application Service        | RESOURCE level only — var.additional_tags (NEVER provider.default_tags: cycle)
+# BusinessUnit       | SubAccountName         | Business Unit              | Per-module locals or per-account root
+# Name               | (display only)         | (AWS console name)         | Per-resource (AWS convention)
+# BackupPolicy       | Tags[BackupPolicy]     | Recovery Policy            | Per-resource context
+# GitRepo            | Tags[GitRepo]          | CI Source                  | Per-resource context
+#
+# Naming relationship: modules/tags input `application` (var.application = service name string)
+# maps to the SSOT "ServiceName" concept and is exposed as the "Application" tag key.
+# This is DISTINCT from SSOT Tier 0 "awsApplication" (AppRegistry ARN injected via additional_tags).
+# The "Application" tag key identifies the workload; "awsApplication" is the AppRegistry link.
+#
+# Mandatory FOCUS tags (must be non-empty at plan time — enforced by modules/tags precondition):
+#   Application, Service, Environment, Owner, CostCenter, ManagedBy, Compliance, DataClassification
+# ---------------------------------------------------------------------------
 
 variable "project_name" {
   description = "Project identifier for resource tagging and state key paths"
@@ -122,10 +157,9 @@ variable "common_tags" {
   type        = map(string)
   default = {
     # Tier 0 — Application Anchor (awsApplication is AWS-managed / injected by AppRegistry)
-    # Do NOT set awsApplication here. It must be merged from module.appregistry.application_tag
-    # in the provider default_tags block (two-phase apply pattern). Setting it as a static string
-    # here would bypass AppRegistry association and break MyApplications console grouping.
-    # See: infra/terraform/aws/dev/providers.tf and infra/terraform/aws/modules/appregistry/
+    # Do NOT set awsApplication here. It is propagated at RESOURCE level via additional_tags
+    # (merge into each resource tags{} block), NOT in provider.default_tags (cycle risk).
+    # See: infra/terraform-aws/dev/main.tf and terraform-aws/modules/appregistry/outputs.tf
 
     # Tier 1 — Mandatory (enforced by AWS Organizations Tag Policy + SCP)
     # FOCUS 1.2 mapping: Environment, CostCenter, Owner(Email), ManagedBy(ProvisionedBy)

@@ -57,3 +57,21 @@ output "config_path" {
   value       = var.config_path != "" ? var.config_path : null
   description = "Path to YAML configuration directory for APRA CPS 234 audit trail"
 }
+
+output "sso_cli_config" {
+  description = "Ready-to-paste ~/.aws/config [sso-session]+[profile] blocks. One [profile] per unique (account_id, permission_set) pair. Pipe to a file or print via: terraform output -raw sso_cli_config"
+  value = templatefile("${path.module}/templates/sso-config.tftpl", {
+    sso_session_name = var.sso_session_name
+    sso_start_url    = var.sso_start_url
+    sso_region       = var.sso_region
+    # Deduplicate on (account_id, permission_set) — multiple principals may share the
+    # same account+pset combination; the CLI profile is per role, not per principal.
+    distinct_assignments = values({
+      for a in local.flatten_account_assignment_data :
+      "${a.account_id}__${a.permission_set}" => {
+        account_id     = a.account_id
+        permission_set = a.permission_set
+      }
+    })
+  })
+}

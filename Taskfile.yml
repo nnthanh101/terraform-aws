@@ -482,6 +482,20 @@ tasks:
       - task: deploy:verify
       - task: deploy:cross-validate
 
+  sso:config:
+    desc: "Print ready-to-paste ~/.aws/config [sso-session]+[profile] blocks from deployed state"
+    cmds:
+      - |
+        OUTPUT=$(terraform -chdir=infra/terraform-aws/identity output -raw sso_cli_config 2>&1)
+        EXIT=$?
+        if [ $EXIT -ne 0 ]; then
+          echo "INFO: sso_cli_config not available (no Terraform state yet — run deploy:apply first)"
+          echo "      Set TF_VAR_sso_start_url=https://<portal>.awsapps.com/start before plan/apply"
+          echo "      Error: $OUTPUT"
+          exit 0
+        fi
+        echo "$OUTPUT"
+
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # OPERATE — environment lifecycle
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

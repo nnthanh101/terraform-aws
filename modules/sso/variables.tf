@@ -219,3 +219,44 @@ variable "config_path" {
     error_message = "config_path must contain only alphanumeric characters, dots, underscores, hyphens, and forward slashes."
   }
 }
+
+# ---------------------------------------------------------------------------
+# CLI config generation — sso_cli_config output
+#
+# These variables feed the templatefile() call in outputs.tf that renders a
+# ready-to-paste ~/.aws/config [sso-session]+[profile] block.
+# All three are plan-time inputs: no AWS API call is needed to resolve them.
+#
+# sso_start_url:    The "AWS access portal URL" shown in the AWS Console under
+#                   IAM Identity Center → Settings → Identity Center instance ARN.
+#                   Example: https://d-xxxxxxxxxx.awsapps.com/start
+# sso_session_name: Name for the [sso-session] block in ~/.aws/config.
+#                   Generic default "sso" works for single-tenant; override for
+#                   multi-tenant or multi-org environments.
+# sso_region:       AWS region where IAM Identity Center is enabled. Must match
+#                   the Identity Center region, which may differ from the default
+#                   provider region.
+# ---------------------------------------------------------------------------
+
+variable "sso_start_url" {
+  description = "IAM Identity Center access portal URL for the ~/.aws/config [sso-session] block (plan-time input; visible in the AWS Console under IAM Identity Center → Settings after enabling Identity Center)."
+  type        = string
+  default     = ""
+}
+
+variable "sso_session_name" {
+  description = "Name of the [sso-session] block written into ~/.aws/config. Use a short, URL-safe identifier (no spaces). Override for multi-org or multi-tenant environments."
+  type        = string
+  default     = "sso"
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9_-]+$", var.sso_session_name))
+    error_message = "sso_session_name must contain only alphanumeric characters, underscores, and hyphens."
+  }
+}
+
+variable "sso_region" {
+  description = "AWS region where IAM Identity Center is enabled. Used in the [sso-session] block and as the default region in each generated [profile] block. Typically us-east-1 or the region selected during Identity Center setup."
+  type        = string
+  default     = "us-east-1"
+}
