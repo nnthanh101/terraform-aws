@@ -35,6 +35,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+          git-user-name: "Thanh Nguyen"
+          git-user-email: "nnthanh101@gmail.com"
 
       - name: Log release outputs
         if: always()
@@ -127,6 +129,9 @@ jobs:
   validate-pr-title:
     name: Validate PR Title
     runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+      pull-requests: read
     if: github.event_name == 'pull_request_target'
     steps:
       - name: Check conventional commit format
