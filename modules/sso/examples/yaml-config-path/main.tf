@@ -28,6 +28,13 @@ module "aws-sso" {
   }
 
   # FOCUS 1.2+ compliant tags (APRA CPS 234)
+  # Shown with literals here for a self-contained example.
+  # For a parameterized root, declare variables for each key (see variables.tf pattern):
+  #   variable "cost_center"         { default = "platform" }
+  #   variable "environment"         { default = "sandbox"; validation { condition = contains([...]) } }
+  #   variable "data_classification" { default = "internal"; validation { condition = contains([...]) } }
+  #   variable "management_account_id" { validation { condition = can(regex("^[0-9]{12}$", ...)) } }
+  # Then reference via var.cost_center, var.environment, etc.
   default_tags = {
     CostCenter         = "platform"
     Project            = "sso"

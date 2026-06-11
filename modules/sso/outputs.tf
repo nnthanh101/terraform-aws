@@ -66,12 +66,17 @@ output "sso_cli_config" {
     sso_region       = var.sso_region
     # Deduplicate on (account_id, permission_set) — multiple principals may share the
     # same account+pset combination; the CLI profile is per role, not per principal.
+    # Fix DEF-SSO-001: use the `...` grouping operator so duplicate keys are merged
+    # into a list rather than erroring with "Duplicate object key". Then take [0]
+    # from each group to yield exactly one entry per unique (account_id, permission_set).
     distinct_assignments = values({
-      for a in local.flatten_account_assignment_data :
-      "${a.account_id}__${a.permission_set}" => {
-        account_id     = a.account_id
-        permission_set = a.permission_set
-      }
+      for k, v in {
+        for a in local.flatten_account_assignment_data :
+        "${a.account_id}__${a.permission_set}" => {
+          account_id     = a.account_id
+          permission_set = a.permission_set
+        }...
+      } : k => v[0]
     })
   })
 }
