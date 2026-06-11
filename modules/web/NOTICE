@@ -1,0 +1,9 @@
+This module wraps oceansoft/alb/aws (app.terraform.io/oceansoft/alb/aws).
+Derived from terraform-aws-modules/terraform-aws-alb (Apache-2.0).
+Original author: Anton Babenko
+
+Value-add by nnthanh101@gmail.com (oceansoft.io):
+- ADLC governance integration (FOCUS 1.2+ tags, CPS 234 compliance defaults)
+- TLS 1.3 enforcement via default listener configuration
+- Simplified interface for BC1/BC2/BC3 business cases
+- CloudFront, WAF, DNS optional integration

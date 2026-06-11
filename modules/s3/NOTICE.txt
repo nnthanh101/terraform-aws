@@ -1,0 +1,14 @@
+Copyright 2026 nnthanh101@gmail.com (oceansoft.io)
+
+This product includes software developed at
+terraform-aws-modules/terraform-aws-s3-bucket
+Original author: Anton Babenko and contributors
+Original license: Apache License 2.0
+
+Modifications by nnthanh101@gmail.com (oceansoft.io):
+
+- Updated provider version constraints to >= 6.28, < 7.0
+- Updated required_version to >= 1.11.0
+- Changed user_agent from github.com/terraform-aws-modules/terraform-aws-s3-bucket
+  to app.terraform.io/oceansoft/s3/aws
+- Added copyright headers to all versions.tf files

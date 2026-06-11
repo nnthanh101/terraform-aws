@@ -1,0 +1,12 @@
+Terraform AWS CloudFront Module
+Copyright 2026 nnthanh101@gmail.com (oceansoft.io)
+
+This module is derived from terraform-aws-modules/terraform-aws-cloudfront
+(https://github.com/terraform-aws-modules/terraform-aws-cloudfront)
+Original work Copyright (c) 2020 Anton Babenko, licensed under Apache License 2.0.
+
+Modifications by oceansoft.io:
+- Updated provider constraints to >= 6.28, < 7.0 (ADR-003)
+- Updated required_version to >= 1.11.0 (ADR-003)
+- Updated provider_meta user_agent to oceansoft namespace
+- Added ADLC governance files (NOTICE.txt, VERSION, .checkov.yml)

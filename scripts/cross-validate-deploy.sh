@@ -33,18 +33,7 @@ REGION="${REGION:-ap-southeast-2}"
 DATE=$(date +%Y-%m-%d)
 TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-PASS=0; FAIL=0; TOTAL=0
-
-check_pass() {
-  TOTAL=$((TOTAL + 1)); PASS=$((PASS + 1))
-  echo "PASS [$TOTAL]: $1"
-}
-
-check_fail() {
-  TOTAL=$((TOTAL + 1)); FAIL=$((FAIL + 1))
-  echo "FAIL [$TOTAL]: $1"
-  echo "  REASON: $2"
-}
+source "$(dirname "${BASH_SOURCE[0]}")/lib/verify-helpers.sh"
 
 echo "=== deploy:cross-validate [MODULE=${MODULE}] ==="
 echo ""

@@ -1,0 +1,33 @@
+# Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
+# Derived from aws-samples/aws-transfer-family-terraform. See NOTICE.txt.
+
+output "server_id" {
+  description = "The ID of the created Transfer Family server"
+  value       = module.transfer_server.server_id
+}
+
+output "server_endpoint" {
+  description = "The endpoint of the created Transfer Family server"
+  value       = module.transfer_server.server_endpoint
+}
+
+output "sftp_bucket_name" {
+  description = "The name of the S3 bucket used for SFTP storage"
+  value       = module.s3_bucket.s3_bucket_id
+}
+
+output "test_user_details" {
+  description = "Map of users with their details including secret names and ARNs"
+  value       = module.sftp_users.user_details
+}
+
+output "test_user_secret" {
+  description = "Map of users with their details including secret names and ARNs"
+  value       = module.sftp_users.test_user_secret
+  sensitive   = true
+}
+
+output "kms_key_arn" {
+  description = "The ARN of the KMS key used for encryption"
+  value       = aws_kms_key.transfer_family_key.arn
+}

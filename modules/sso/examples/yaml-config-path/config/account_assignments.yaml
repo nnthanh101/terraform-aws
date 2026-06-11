@@ -1,0 +1,27 @@
+# Account Assignments — YAML configuration for APRA CPS 234 audit trail.
+# Schema matches var.account_assignments in variables.tf.
+# Merged with HCL account_assignments (YAML values take precedence on key collision).
+#
+# principal_idp: "INTERNAL" for groups/users created by this module,
+#                "EXTERNAL" for groups/users synced from external IdP (e.g., Okta, Azure AD).
+# account_ids: Use 12-digit IDs, or account names when enable_organizations_lookup = true.
+
+ReadOnly_Audit:
+  principal_name: "AuditTeam"
+  principal_type: "GROUP"
+  principal_idp:  "INTERNAL"
+  permission_sets:
+    - "ReadOnly"
+    - "SecurityAudit"
+  account_ids:
+    - "111111111111"
+    - "222222222222"
+
+Admin_Platform:
+  principal_name: "PlatformTeam"
+  principal_type: "GROUP"
+  principal_idp:  "INTERNAL"
+  permission_sets:
+    - "AdministratorAccess"
+  account_ids:
+    - "111111111111"

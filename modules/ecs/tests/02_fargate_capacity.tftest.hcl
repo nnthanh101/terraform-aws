@@ -7,7 +7,7 @@ run "fargate_and_spot_capacity" {
   command = plan
 
   variables {
-    cluster_name              = "test-fargate-spot"
+    cluster_name               = "test-fargate-spot"
     cluster_capacity_providers = ["FARGATE", "FARGATE_SPOT"]
     default_capacity_provider_strategy = {
       fargate = {

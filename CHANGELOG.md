@@ -1,54 +1,185 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+Enterprise Terraform modules for multi-account AWS landing zones.
+Published to [HCP Terraform Registry](https://app.terraform.io/app/oceansoft/registry/private/modules) — pin one version, get all 12 modules.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+2-way sync: [github.com/nnthanh101/terraform-aws](https://github.com/nnthanh101/terraform-aws) ↔ local development via `git pull --rebase` / `git push`.
 
-## [1.1.0] - 2026-02-28
+---
 
-### Added
+## [2.2.3](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.3...terraform-aws-v2.2.3) (2026-06-11)
 
-- **Root wrapper module** for TFC Private Registry ingestion — 4 thin pass-through `.tf`
-  files (`versions.tf`, `variables.tf`, `main.tf`, `outputs.tf`) at repo root delegate to
-  `modules/iam-identity-center/` (ADR-007 wrapper pattern). Fixes SIC-001 "no healthy versions".
-- **Production multi-account landing zone example** (`modules/iam-identity-center/examples/production-multi-account-landing-zone/`) — 4-account structure (Management, Security-Audit, Shared-Services, Workloads) with ABAC, permission boundaries, and APRA CPS 234 tagging.
-- Code quality: decision-table comment in `main.tf` (`principal_idp` routing), `group_membership` documentation in `variables.tf`.
 
-### Changed
+### Features
 
-- VERSION alignment: root `VERSION` and `modules/iam-identity-center/VERSION` now track in sync (ADR-015).
-- 18 Tier-1 snapshot tests (all passing).
+* foundation (S3+versioning+SSE+public-access-block, 4 Secrets, SQS+DLQ redrive, SNS→SQS) + tags (FOCUS 1.2 tag SSOT, validated, cited) ([d0b8c71](https://github.com/nnthanh101/terraform-aws/commit/d0b8c7120eeae684679d42a4b7994221c491d2d0))
+* github-oidc module ([3c21d6d](https://github.com/nnthanh101/terraform-aws/commit/3c21d6db8ffaa4f3a5f3f14dd72f2dc26f04f826))
+* minimum ClickOps + maximum Terraform IaC ([91ef372](https://github.com/nnthanh101/terraform-aws/commit/91ef372643656efa249ce0f196916f5a97183c65))
+* minimum ClickOps + maximum Terraform IaC ([a0f9a0d](https://github.com/nnthanh101/terraform-aws/commit/a0f9a0d99dbac54ec0ac5f1173fb0706e03f6a7f))
+* The deploy path (control flow, Enterprise [#1](https://github.com/nnthanh101/terraform-aws/issues/1) = OceanSoft) ([f221d2f](https://github.com/nnthanh101/terraform-aws/commit/f221d2ff51c8d4a12d149609ac62f33a8bb97475))
 
-## [1.0.0] - 2026-02-26
+## [2.2.3](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.2...terraform-aws-v2.2.3) (2026-03-17)
 
-### Added
 
-- **IAM Identity Center module** (`modules/iam-identity-center/`) — clone + rebrand of
-  `aws-ia/terraform-aws-iam-identity-center` v1.0.4 (Apache-2.0), with AWSCC provider
-  stripped and YAML configuration layer added for APRA CPS 234 audit compliance.
-  - 14 resource types: `aws_identitystore_group`, `aws_identitystore_user`,
-    `aws_identitystore_group_membership`, `aws_ssoadmin_permission_set`,
-    `aws_ssoadmin_managed_policy_attachment`, `aws_ssoadmin_customer_managed_policy_attachment`,
-    `aws_ssoadmin_permission_set_inline_policy`, `aws_ssoadmin_permissions_boundary_attachment`,
-    `aws_ssoadmin_account_assignment`, `aws_ssoadmin_application`, and more.
-  - 10 outputs: ARNs, IDs, assignment maps for downstream composition.
-  - 30+ variable attributes for full SCIM user profiles, permission sets, ABAC.
-  - YAML config API via `yamldecode()` in `locals.tf` (ADR-008).
-- 8 examples in `modules/iam-identity-center/examples/` covering single-account,
-  multi-account, ABAC, and permission boundary patterns.
-- 8 Tier-1 snapshot tests in `modules/iam-identity-center/tests/`.
-- ADR-001 through ADR-007 documenting architectural decisions.
-- CI pipeline (`.github/workflows/ci.yml`) with validate, lint, legal, governance,
-  test, lock-verify, and security jobs.
-- Registry publication workflow (`.github/workflows/registry-publish.yml`).
-- Apache 2.0 license with NOTICE.txt attribution to upstream `aws-ia`.
-- CODEOWNERS with per-path review rules (APRA CPS 234 Attachment H).
+### ⚠ BREAKING CHANGES
 
-### Attribution
+* remove deprecated commands → MAJOR bump (1.1.1 → 2.0.0)
 
-This module is derived from [`aws-ia/terraform-aws-iam-identity-center`](https://github.com/aws-ia/terraform-aws-iam-identity-center)
-v1.0.4, licensed under Apache License 2.0. See `modules/iam-identity-center/NOTICE.txt`.
+### Features
 
-[1.1.0]: https://github.com/nnthanh101/terraform-aws/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/nnthanh101/terraform-aws/releases/tag/v1.0.0
+* add new agent template             → MINOR bump (1.1.1 → 1.2.0) ([41898a5](https://github.com/nnthanh101/terraform-aws/commit/41898a526d1d71bae1db474c2702540907116c8a))
+* remove deprecated commands → MAJOR bump (1.1.1 → 2.0.0) ([41898a5](https://github.com/nnthanh101/terraform-aws/commit/41898a526d1d71bae1db474c2702540907116c8a))
+
+
+### Bug Fixes
+
+* Allow GitHub Actions to create and approve pull requests ([7491a52](https://github.com/nnthanh101/terraform-aws/commit/7491a52324bac4d7901cec191bde7a40e42ae483))
+* release-please--branches--main ([d72fd0e](https://github.com/nnthanh101/terraform-aws/commit/d72fd0eb05b1dc522e81737be1da301aa32d7338))
+* resolve hook false positive            → PATCH bump (1.1.1 → 1.1.2) ([41898a5](https://github.com/nnthanh101/terraform-aws/commit/41898a526d1d71bae1db474c2702540907116c8a))
+* SSO & management-account ([1d10fc9](https://github.com/nnthanh101/terraform-aws/commit/1d10fc9e9bbfe78f30032dfca981269570f43c27))
+
+## [2.2.2](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.1...terraform-aws-v2.2.2) (2026-03-14)
+
+
+### Bug Fixes
+
+* sync CHANGELOG and VERSION with v2.2.1 release → triggers v2.2.2 ([87bf2dd](https://github.com/nnthanh101/terraform-aws/commit/87bf2dd6bf9164d67bcfeb6c8df121225f48d9dd))
+
+## [2.2.1](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.0...terraform-aws-v2.2.1) (2026-03-14)
+
+### Business Value
+
+**$180/mo production web stack** — 5 new modules complete the xOps BC1 6-Layer Sovereign Stack. HITL runs `terraform apply` once and gets HTTPS + CDN + WAF + persistent storage + encryption. No manual console clicks.
+
+### New Modules
+
+| Module | Business Value | Cost |
+|--------|---------------|------|
+| **cloudfront** | Global <50ms latency, 60-80% origin cost reduction, AWS Shield Standard (free DDoS) | $0-15/mo |
+| **waf** | OWASP Top 10 protection, bot mitigation, rate limiting — regulatory checkbox for APRA CPS 234 | $5-20/mo |
+| **alb** | Cross-AZ high availability, health checks, blue/green deployment ready — zero-downtime deploys | $20-40/mo |
+| **efs** | Chat history survives container restarts, encrypted at rest via KMS, shared across tasks | $6/mo |
+| **kms** | Customer-managed encryption keys, automatic annual rotation, data sovereignty compliance | $1/mo per key |
+
+### Developer Experience
+
+- **Local CI/CD with `act`** — validate + lint + test without pushing. Catches broken workflows before they waste CI minutes.
+- **Node.js 24 CI upgrade** — all 9 GitHub Actions workflows upgraded from `@v4` to `@v5` (`actions/checkout`, `upload-artifact`). 42 replacements across workflows.
+
+---
+
+## [2.2.0](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.1.0...terraform-aws-v2.2.0) (2026-03-13)
+
+### Business Value
+
+**Zero-touch registry publishing** — push a conventional commit, release-please creates a PR, HITL merges, modules appear in TFC Private Registry automatically. Eliminates manual publish steps that caused SIC-001 "no healthy versions" incident.
+
+### What Changed
+
+- **Docker-first CI/CD** — all jobs run in `nnthanh101/terraform:2.6.0` (SHA-pinned). No "works on my machine" — same container locally and in GitHub Actions.
+- **Registry auto-sync** — `registry-publish.yml` iterates all 12 module tags, not just IAM IC. One workflow for all modules.
+- **Checkov APRA + FOCUS tag compliance** — security scanning enforces `CostCenter`, `DataClassification`, `Environment` tags at plan time, not after deployment.
+- **Release-please v4 monorepo fix** — output keys use `modules/X--tag_name` format (was `X--tag_name`, causing silent publish failures).
+
+---
+
+## [2.1.0](https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.0.0...terraform-aws-v2.1.0) (2026-03-13)
+
+### Business Value
+
+**Enterprise SSO in 15 minutes** — 4-tier landing zone (PlatformTeam, PowerUsers, AuditTeam, SecurityTeam) from a single YAML file. Auditors review YAML, not HCL. APRA CPS 234 compliant out of the box. ([#46](https://github.com/nnthanh101/terraform-aws/issues/46))
+
+### What Consumers Get
+
+- **One version, 12 modules** — `source = "app.terraform.io/oceansoft/sso/aws" version = "~> 2.1"` works for any of the 12 modules. Pin once, use everywhere.
+- **YAML-driven permission sets** — non-engineers can review and approve IAM policies. Separation of config (YAML) from logic (HCL).
+- **One-click publish pipeline** — push tag → validate → lint → Tier-1 test → publish → verify ingestion. No manual steps.
+
+### 12 Building-Block Modules
+
+| Module | What It Solves | Who Benefits |
+|--------|---------------|--------------|
+| **sso** | Centralized login for 50+ AWS accounts | Platform teams, auditors |
+| **ecs** | Serverless containers — pay per second, auto-scale to zero | Application teams |
+| **web** | Production web stack in one module (ALB + TLS 1.3 + FOCUS tags) | Full-stack teams |
+| **acm** | Zero-cost auto-renewing TLS certificates, wildcard domains | Security teams |
+| **alb** | Cross-AZ load balancing with health checks | SRE teams |
+| **cloudfront** | Global CDN with DDoS protection | Performance teams |
+| **efs** | Encrypted persistent storage for containers | Data teams |
+| **kms** | Customer-managed encryption with auto-rotation | Compliance teams |
+| **s3** | 11 9s durable storage with lifecycle cost optimization | All teams |
+| **sftp** | Managed SFTP — no server to patch, audit trail included | Integration teams |
+| **vpc** | Network isolation with public/private/database subnets | Network teams |
+| **waf** | OWASP Top 10 + bot protection for CloudFront and ALB | Security teams |
+
+### Under the Hood
+
+- Docker-first: `nnthanh101/terraform:2.6.0` SHA-pinned container
+- Checkov: 52 consumer-decision skips (building blocks expose variables, consumers decide security posture)
+- WAF deprecated `lookup()` calls updated to 3-arg form (no consumer action needed)
+- docs-sync race condition fixed (`max-parallel: 1`)
+
+---
+
+## [2.0.0](https://github.com/nnthanh101/terraform-aws/releases/tag/terraform-aws-v2.0.0) (2026-03-05)
+
+### Business Value
+
+**The unified versioning epoch.** Before v2.0.0, each module had its own version (sso v1.2.1, ecs v1.0.0, web v1.0.2) — consumers tracked 12 different versions. Now: one `terraform-aws-vX.Y.Z` tag spans all 12 modules. Pin once, upgrade once.
+
+### What Changed
+
+- **Single semver for all modules** — ADR-026 decision. `terraform >= 1.11.0`, `aws >= 6.28, < 7.0` pinned across all 12.
+- **Compliance out-of-the-box** — Apache 2.0 license, APRA CPS 234 tagging, FOCUS 1.2+ cost tags, upstream attribution in NOTICE.txt.
+- **release-please automation** — conventional commits drive version bumps. `feat:` = minor, `fix:` = patch, `!` = major.
+
+### Breaking Changes
+
+- Per-module version tags (`iam-identity-center/v1.x.x`, `ecs/v1.x.x`, `fullstack-web/v1.x.x`) are frozen. All future releases use `terraform-aws-vX.Y.Z`.
+
+---
+
+## [1.1.0](https://github.com/nnthanh101/terraform-aws/compare/v1.0.0...v1.1.0) (2026-02-28)
+
+### Business Value
+
+**TFC Registry actually works** — root wrapper module fixes SIC-001 "no healthy versions" error. Consumers can now `terraform init` against the private registry without workarounds.
+
+### What Changed
+
+- **Production multi-account example** — 4-account Landing Zone (Management, Security-Audit, Shared-Services, Workloads) with ABAC and permission boundaries. Copy-paste ready.
+- **VERSION alignment** — root and `modules/sso/` versions synced (ADR-015). Eliminates registry confusion.
+- **18 Tier-1 snapshot tests** — all passing. <3 seconds, zero cloud cost.
+
+---
+
+## [1.0.0](https://github.com/nnthanh101/terraform-aws/releases/tag/v1.0.0) (2026-02-26)
+
+### Business Value
+
+**IAM Identity Center as code** — enterprise SSO with YAML configuration layer. Auditors review permission sets in YAML, not HCL. Derived from `aws-ia/terraform-aws-sso` v1.0.4 (Apache-2.0) with APRA CPS 234 compliance layer.
+
+### What Consumers Get
+
+- 8 examples — single-account, multi-account, ABAC, permission boundary patterns
+- 8 Tier-1 snapshot tests — validate before apply, zero cloud cost
+- CI pipeline — validate → lint → legal → governance → test gates
+- Registry publication workflow — tag-driven, automated
+
+### Architectural Decisions
+
+ADR-001 through ADR-007 established: module structure, naming conventions, testing strategy, registry publishing, compliance tagging, upstream attribution, and CI/CD pipeline design.
+
+---
+
+## Module Version History (Pre-Unified)
+
+Legacy per-module tags (frozen at v2.0.0 — no new releases on these tag lines):
+
+| Module | Last Per-Module Tag | Now Covered By |
+|--------|-------------------|----------------|
+| iam-identity-center | v1.3.0 | `terraform-aws-v2.x.x` |
+| ecs | v1.1.0 | `terraform-aws-v2.x.x` |
+| fullstack-web | v1.0.2 | `terraform-aws-v2.x.x` |
+
+[2.2.1]: https://github.com/nnthanh101/terraform-aws/compare/terraform-aws-v2.2.0...terraform-aws-v2.2.2

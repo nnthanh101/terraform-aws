@@ -1,0 +1,23 @@
+# Test fixture — YAML permission sets for consumer_contract_sso_yaml_test.
+# Schema matches var.permission_sets in modules/sso/variables.tf.
+# Used only by Tier-1 snapshot tests (no real AWS, no real account IDs).
+
+PlatformAdmin:
+  description: "Platform administrator — full access for break-glass use"
+  session_duration: "PT4H"
+  aws_managed_policies:
+    - "arn:aws:iam::aws:policy/AdministratorAccess"
+  tags:
+    ManagedBy:          "Terraform"
+    CostCenter:         "platform"
+    DataClassification: "internal"
+
+AuditReadOnly:
+  description: "Audit read-only — compliance and review access"
+  session_duration: "PT8H"
+  aws_managed_policies:
+    - "arn:aws:iam::aws:policy/ReadOnlyAccess"
+  tags:
+    ManagedBy:          "Terraform"
+    CostCenter:         "platform"
+    DataClassification: "internal"

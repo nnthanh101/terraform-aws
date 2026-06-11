@@ -1,5 +1,5 @@
 # Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
-# Root wrapper outputs — re-export from modules/iam-identity-center (ADR-007)
+# Root wrapper outputs — re-export from modules/sso (ADR-007)
 
 output "account_assignment_data" {
   value       = module.iam_identity_center.account_assignment_data

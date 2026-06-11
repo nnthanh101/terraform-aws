@@ -1,0 +1,41 @@
+# Permission Sets — YAML configuration for APRA CPS 234 audit trail.
+# Schema matches var.permission_sets in variables.tf.
+# Merged with HCL permission_sets (YAML values take precedence on key collision).
+#
+# Adapted from aws-samples/terraform-aws-identity-center (MIT-0) schema reference.
+
+ReadOnly:
+  description: "Read-only access across all AWS services"
+  session_duration: "PT8H"
+  aws_managed_policies:
+    - "arn:aws:iam::aws:policy/ReadOnlyAccess"
+  tags:
+    ManagedBy:          "Terraform"
+    AccessLevel:        "readonly"
+    CostCenter:         "platform"
+    DataClassification: "internal"
+
+SecurityAudit:
+  description: "Security audit access for compliance reviews"
+  session_duration: "PT4H"
+  aws_managed_policies:
+    - "arn:aws:iam::aws:policy/SecurityAudit"
+    - "arn:aws:iam::aws:policy/job-function/ViewOnlyAccess"
+  tags:
+    ManagedBy:          "Terraform"
+    AccessLevel:        "audit"
+    CostCenter:         "platform"
+    DataClassification: "internal"
+
+AdministratorAccess:
+  description: "Full administrator access with session limit"
+  session_duration: "PT3H"
+  aws_managed_policies:
+    - "arn:aws:iam::aws:policy/AdministratorAccess"
+  permissions_boundary:
+    managed_policy_arn: "arn:aws:iam::aws:policy/PowerUserAccess"
+  tags:
+    ManagedBy:          "Terraform"
+    AccessLevel:        "admin"
+    CostCenter:         "platform"
+    DataClassification: "internal"

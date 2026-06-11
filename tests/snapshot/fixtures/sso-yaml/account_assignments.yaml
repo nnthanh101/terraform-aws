@@ -1,0 +1,24 @@
+# Test fixture — YAML account assignments for consumer_contract_sso_yaml_test.
+# Schema matches var.account_assignments in modules/sso/variables.tf.
+# enable_organizations_lookup = false, so account_ids must be 12-digit numerics.
+# Using placeholder IDs that do NOT trigger the HARDCODED_ENV hook (all zeros are
+# recognisable as test placeholders, not real account IDs).
+
+PlatformTeam_Admin:
+  principal_name: "PlatformTeam"
+  principal_type: "GROUP"
+  principal_idp:  "INTERNAL"
+  permission_sets:
+    - "PlatformAdmin"
+  account_ids:
+    - "000000000001"
+
+AuditTeam_ReadOnly:
+  principal_name: "AuditTeam"
+  principal_type: "GROUP"
+  principal_idp:  "INTERNAL"
+  permission_sets:
+    - "AuditReadOnly"
+  account_ids:
+    - "000000000001"
+    - "000000000002"

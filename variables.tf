@@ -1,5 +1,5 @@
 # Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
-# Root wrapper variables — pass-through to modules/iam-identity-center (ADR-007)
+# Root wrapper variables — pass-through to modules/sso (ADR-007)
 
 # Groups
 variable "sso_groups" {

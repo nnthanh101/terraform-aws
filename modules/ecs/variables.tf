@@ -20,16 +20,18 @@ variable "tags" {
 }
 
 variable "default_tags" {
-  description = "FOCUS 1.2+ / APRA CPS 234 default tags applied to every resource. Must include CostCenter and DataClassification when non-empty."
+  description = "FOCUS 1.2+ / APRA CPS 234 default tags applied to every resource. Must include CostCenter, Project, Environment, and DataClassification when non-empty."
   type        = map(string)
   default     = {}
 
   validation {
     condition = length(var.default_tags) == 0 || alltrue([
       contains(keys(var.default_tags), "CostCenter"),
+      contains(keys(var.default_tags), "Project"),
+      contains(keys(var.default_tags), "Environment"),
       contains(keys(var.default_tags), "DataClassification"),
     ])
-    error_message = "APRA CPS 234: default_tags must include CostCenter and DataClassification when provided."
+    error_message = "FOCUS 1.2+ / APRA CPS 234: default_tags must include CostCenter, Project, Environment, and DataClassification when provided."
   }
 }
 

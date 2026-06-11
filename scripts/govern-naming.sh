@@ -157,7 +157,7 @@ while IFS= read -r -d '' tf_file; do
     _check_hcl_name "$out_name" "$rel_path" "output"
   done < <(grep -nE '^[[:space:]]*output[[:space:]]+"[^"]+"' "$tf_file" 2>/dev/null || true)
 
-done < <(find "$REPO_ROOT/modules" "$REPO_ROOT/projects" "$REPO_ROOT/global" -name "*.tf" -print0 2>/dev/null)
+done < <(find "$REPO_ROOT/modules" "$REPO_ROOT/projects" "$REPO_ROOT/global" -name "*.tf" -not -path '*/.terraform/*' -not -path '*/.infracost/*' -print0 2>/dev/null)
 
 if [ -z "$L2_VIOLATIONS" ]; then
   pass "$CHECK_NUM" "$CHECK_NAME"
@@ -198,7 +198,7 @@ while IFS= read -r -d '' backend_file; do
       L3_VIOLATIONS="${L3_VIOLATIONS}  LZ-PREFIX in state key: ${key_val} (${rel_path})\n"
     fi
   done < <(grep -E '^[[:space:]]*key[[:space:]]*=' "$backend_file" 2>/dev/null || true)
-done < <(find "$REPO_ROOT/modules" -name "backend.tf" -print0 2>/dev/null)
+done < <(find "$REPO_ROOT/modules" -name "backend.tf" -not -path '*/.terraform/*' -not -path '*/.infracost/*' -print0 2>/dev/null)
 
 if [ -z "$L3_VIOLATIONS" ]; then
   pass "$CHECK_NUM" "$CHECK_NAME"
@@ -261,10 +261,17 @@ L4_VIOLATIONS=""
 while IFS= read -r -d '' tf_file; do
   # Look for string values containing LZ in permission set / group name contexts
   # Matches: name = "LZ-Something" or "lz_something" — both are violations
+  #
+  # IMPORTANT: Only check assignment values (name = "...", permission_set_name = "..."),
+  # NOT description strings. AWS API terms like "LocalZone", "AvailabilityZone" are
+  # legitimate in descriptions and must not trigger false positives.
   while IFS= read -r match; do
-    # Extract the string value
+    # Extract the string value from name/permission_set assignment lines only
     val="$(echo "$match" | grep -oE '"[^"]*[Ll][Zz][^"]*"' | tr -d '"' | head -1)"
     if [ -z "$val" ]; then continue; fi
+
+    # Skip known AWS API terms that legitimately contain "LZ" substring
+    if echo "$val" | grep -qE '(LocalZone|AvailabilityZone|LocalGateway)'; then continue; fi
 
     # If it contains LZ, it must be PascalCase: ^LZ[A-Z][a-zA-Z0-9]*$
     # A value like LZAdministrators is PASS; LZ-Administrators or lz_admins is FAIL
@@ -272,8 +279,8 @@ while IFS= read -r -d '' tf_file; do
       rel_path="${tf_file#"$REPO_ROOT/"}"
       L4_VIOLATIONS="${L4_VIOLATIONS}  NOT PascalCase LZ name: ${val} in ${rel_path}\n"
     fi
-  done < <(grep -E '"[^"]*[Ll][Zz][^"]*"' "$tf_file" 2>/dev/null || true)
-done < <(find "$REPO_ROOT/modules" "$REPO_ROOT/projects" -name "*.tf" -print0 2>/dev/null)
+  done < <(grep -E '^\s*(name|permission_set_name|group_name)\s*=\s*"[^"]*[Ll][Zz][^"]*"' "$tf_file" 2>/dev/null || true)
+done < <(find "$REPO_ROOT/modules" "$REPO_ROOT/projects" -name "*.tf" -not -path '*/.terraform/*' -not -path '*/.infracost/*' -print0 2>/dev/null)
 
 if [ -z "$L4_VIOLATIONS" ]; then
   pass "$CHECK_NUM" "$CHECK_NAME"

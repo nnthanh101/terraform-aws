@@ -1,9 +1,9 @@
 # Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
 # Root wrapper module call — ADR-007 wrapper pattern for TFC Registry ingestion.
-# All business logic lives in modules/iam-identity-center/; this file is pure pass-through.
+# All business logic lives in modules/sso/; this file is pure pass-through.
 
 module "iam_identity_center" {
-  source = "./modules/iam-identity-center"
+  source = "./modules/sso"
 
   # Groups
   sso_groups          = var.sso_groups

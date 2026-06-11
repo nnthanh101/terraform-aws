@@ -7,7 +7,7 @@ run "multi_service_plan" {
   command = plan
 
   variables {
-    cluster_name              = "test-multi-svc"
+    cluster_name               = "test-multi-svc"
     cluster_capacity_providers = ["FARGATE"]
     services = {
       api = {

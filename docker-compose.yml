@@ -1,7 +1,7 @@
 # terraform-aws - Unified Development Environment
 # Used by BOTH bare-metal (docker compose up) and DevContainer
 # KISS/DRY: Test once, works everywhere
-# Pattern: adlc-framework/docker-compose.yml + Cloud-Infrastructure/terraform-aws/docker-compose.yml
+# Pattern: adlc-framework/docker-compose.yml + cloudops/terraform-aws/docker-compose.yml
 name: terraform-aws
 
 services:

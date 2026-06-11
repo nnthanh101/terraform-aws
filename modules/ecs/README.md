@@ -1,181 +1,130 @@
-# AWS ECS Terraform module
+<!-- BEGIN_TF_DOCS -->
+# AWS ECS Terraform Module
 
-Terraform module which creates ECS (Elastic Container Service) resources on AWS.
+> Derived from [terraform-aws-modules/terraform-aws-ecs](https://github.com/terraform-aws-modules/terraform-aws-ecs) v7.3.1 (Apache-2.0). See NOTICE.
 
-[![SWUbanner](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md)
+## Features
 
-## Available Features
+- ECS Cluster creation with Fargate and EC2 capacity providers
+- ECS Service creation with full task definition management
+- Task execution IAM role with optional SSM and Secrets Manager access
+- Tasks IAM role for application-level permissions
+- Service IAM role for load balancer integration
+- Infrastructure IAM role for ECS Managed Instances (ECS Anywhere)
+- Node IAM role and instance profile for EC2 container instances
+- Security Group management for clusters and services
+- CloudWatch Log Group for ECS cluster logging
+- Auto-scaling policies and scheduled actions for services
+- Service Connect and Service Discovery (Cloud Map) integration
+- VPC Lattice configuration support
+- Deployment circuit breaker and alarms integration
+- Blue/green deployments via CodeDeploy controller
 
-- ECS cluster w/ Fargate or EC2 Auto Scaling capacity providers
-- ECS Service w/ task definition, task set, and container definition support
-- Separate sub-modules or integrated module for ECS cluster and service
-
-For more details see the [design doc](https://github.com/terraform-aws-modules/terraform-aws-ecs/blob/master/docs/README.md)
-
-## Usage
-
-This project supports creating resources through individual sub-modules, or through a single module that creates both the cluster and service resources. See the respective sub-module directory for more details and example usage.
-
-### Integrated Cluster w/ Services
+## Basic Usage
 
 ```hcl
 module "ecs" {
-  source = "terraform-aws-modules/ecs/aws"
+  source = "oceansoft/ecs/aws"
 
-  cluster_name = "ecs-integrated"
+  cluster_name = "my-cluster"
 
   cluster_configuration = {
     execute_command_configuration = {
       logging = "OVERRIDE"
       log_configuration = {
-        cloud_watch_log_group_name = "/aws/ecs/aws-ec2"
+        cloud_watch_log_group_name = "/aws/ecs/my-cluster"
       }
     }
   }
 
-  # Cluster capacity providers
-  cluster_capacity_providers = ["FARGATE", "FARGATE_SPOT"]
-  default_capacity_provider_strategy = {
+  fargate_capacity_providers = {
     FARGATE = {
-      weight = 50
-      base   = 20
+      default_capacity_provider_strategy = {
+        weight = 50
+      }
     }
     FARGATE_SPOT = {
-      weight = 50
+      default_capacity_provider_strategy = {
+        weight = 50
+      }
     }
   }
 
   services = {
-    ecsdemo-frontend = {
+    my-service = {
       cpu    = 1024
       memory = 4096
 
-      # Container definition(s)
       container_definitions = {
-
-        fluent-bit = {
-          cpu       = 512
-          memory    = 1024
-          essential = true
-          image     = "906394416424.dkr.ecr.us-west-2.amazonaws.com/aws-for-fluent-bit:stable"
-          firelensConfiguration = {
-            type = "fluentbit"
-          }
-          memoryReservation = 50
-        }
-
-        ecs-sample = {
+        my-container = {
           cpu       = 512
           memory    = 1024
           essential = true
           image     = "public.ecr.aws/aws-containers/ecsdemo-frontend:776fd50"
-          portMappings = [
+          port_mappings = [
             {
-              name          = "ecs-sample"
+              name          = "my-container"
               containerPort = 80
               protocol      = "tcp"
             }
           ]
-
-          # Example image used requires access to write to root filesystem
-          readonlyRootFilesystem = false
-
-          dependsOn = [{
-            containerName = "fluent-bit"
-            condition     = "START"
-          }]
-
-          enable_cloudwatch_logging = false
-          logConfiguration = {
-            logDriver = "awsfirelens"
-            options = {
-              Name                    = "firehose"
-              region                  = "eu-west-1"
-              delivery_stream         = "my-stream"
-              log-driver-buffer-limit = "2097152"
-            }
-          }
-          memoryReservation = 100
-        }
-      }
-
-      service_connect_configuration = {
-        namespace = "example"
-        service = [{
-          client_alias = {
-            port     = 80
-            dns_name = "ecs-sample"
-          }
-          port_name      = "ecs-sample"
-          discovery_name = "ecs-sample"
-        }]
-      }
-
-      load_balancer = {
-        service = {
-          target_group_arn = "arn:aws:elasticloadbalancing:eu-west-1:1234567890:targetgroup/bluegreentarget1/209a844cd01825a4"
-          container_name   = "ecs-sample"
-          container_port   = 80
         }
       }
 
       subnet_ids = ["subnet-abcde012", "subnet-bcde012a", "subnet-fghi345a"]
-
-      security_group_ingress_rules = {
-        alb_3000 = {
-          description                  = "Service port"
-          from_port                    = local.container_port
-          ip_protocol                  = "tcp"
-          referenced_security_group_id = "sg-12345678"
+      security_group_rules = {
+        alb_ingress_3000 = {
+          type                     = "ingress"
+          from_port                = 80
+          to_port                  = 80
+          protocol                 = "tcp"
+          description              = "Service port"
+          source_security_group_id = "sg-12345678"
         }
-      }
-      security_group_egress_rules = {
-        all = {
-          ip_protocol = "-1"
-          cidr_ipv4   = "0.0.0.0/0"
+        egress_all = {
+          type        = "egress"
+          from_port   = 0
+          to_port     = 0
+          protocol    = "-1"
+          cidr_blocks = ["0.0.0.0/0"]
         }
       }
     }
   }
 
   tags = {
-    Environment = "Development"
-    Project     = "Example"
+    Environment = "production"
+    Project     = "my-project"
   }
 }
 ```
 
-## Examples
+## Contributing
 
-- [ECS cluster w/ integrated service(s)](https://github.com/terraform-aws-modules/terraform-aws-ecs/tree/master/examples/complete)
-- [ECS container definition](https://github.com/terraform-aws-modules/terraform-aws-ecs/tree/master/examples/container-definition)
-- [ECS cluster w/ EC2 Autoscaling capacity provider](https://github.com/terraform-aws-modules/terraform-aws-ecs/tree/master/examples/ec2-autoscaling)
-- [ECS express service](https://github.com/terraform-aws-modules/terraform-aws-ecs/tree/master/examples/express-service)
-- [ECS cluster w/ Fargate capacity provider](https://github.com/terraform-aws-modules/terraform-aws-ecs/tree/master/examples/fargate)
-- [ECS cluster w/ ECS managed instances capacity provider](https://github.com/terraform-aws-modules/terraform-aws-ecs/tree/master/examples/managed-instances)
+See the `CONTRIBUTING.md` file for information on how to contribute.
 
-<!-- BEGIN_TF_DOCS -->
+## Requirements
+
 ## Requirements
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5.7 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.28 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.11.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.28, < 7.0 |
+
+## Providers
 
 ## Providers
 
 No providers.
 
-## Modules
-
-| Name | Source | Version |
-|------|--------|---------|
-| <a name="module_cluster"></a> [cluster](#module\_cluster) | ./modules/cluster | n/a |
-| <a name="module_service"></a> [service](#module\_service) | ./modules/service | n/a |
+## Resources
 
 ## Resources
 
 No resources.
+
+## Inputs
 
 ## Inputs
 
@@ -201,6 +150,7 @@ No resources.
 | <a name="input_create_task_exec_iam_role"></a> [create\_task\_exec\_iam\_role](#input\_create\_task\_exec\_iam\_role) | Determines whether the ECS task definition IAM role should be created | `bool` | `false` | no |
 | <a name="input_create_task_exec_policy"></a> [create\_task\_exec\_policy](#input\_create\_task\_exec\_policy) | Determines whether the ECS task definition IAM policy should be created. This includes permissions included in AmazonECSTaskExecutionRolePolicy as well as access to secrets and SSM parameters | `bool` | `true` | no |
 | <a name="input_default_capacity_provider_strategy"></a> [default\_capacity\_provider\_strategy](#input\_default\_capacity\_provider\_strategy) | Map of default capacity provider strategy definitions to use for the cluster | <pre>map(object({<br/>    base   = optional(number)<br/>    name   = optional(string) # Will fall back to use map key if not set<br/>    weight = optional(number)<br/>  }))</pre> | `null` | no |
+| <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags) | FOCUS 1.2+ / APRA CPS 234 default tags applied to every resource. Must include CostCenter, Project, Environment, and DataClassification when non-empty. | `map(string)` | `{}` | no |
 | <a name="input_disable_v7_default_name_description"></a> [disable\_v7\_default\_name\_description](#input\_disable\_v7\_default\_name\_description) | [DEPRECATED - will be removed in v8.0] Determines whether to disable the default postfix added to resource names and descriptions added in v7.0 | `bool` | `false` | no |
 | <a name="input_infrastructure_iam_role_description"></a> [infrastructure\_iam\_role\_description](#input\_infrastructure\_iam\_role\_description) | Description of the role | `string` | `null` | no |
 | <a name="input_infrastructure_iam_role_name"></a> [infrastructure\_iam\_role\_name](#input\_infrastructure\_iam\_role\_name) | Name to use on IAM role created | `string` | `null` | no |
@@ -244,6 +194,8 @@ No resources.
 
 ## Outputs
 
+## Outputs
+
 | Name | Description |
 |------|-------------|
 | <a name="output_capacity_providers"></a> [capacity\_providers](#output\_capacity\_providers) | Map of autoscaling capacity providers created and their attributes |
@@ -267,11 +219,3 @@ No resources.
 | <a name="output_task_exec_iam_role_name"></a> [task\_exec\_iam\_role\_name](#output\_task\_exec\_iam\_role\_name) | Task execution IAM role name |
 | <a name="output_task_exec_iam_role_unique_id"></a> [task\_exec\_iam\_role\_unique\_id](#output\_task\_exec\_iam\_role\_unique\_id) | Stable and unique string identifying the task execution IAM role |
 <!-- END_TF_DOCS -->
-
-## Authors
-
-Module is maintained by [Anton Babenko](https://github.com/antonbabenko) with help from [these awesome contributors](https://github.com/terraform-aws-modules/terraform-aws-ecs/graphs/contributors).
-
-## License
-
-Apache-2.0 Licensed. See [LICENSE](https://github.com/terraform-aws-modules/terraform-aws-ecs/blob/master/LICENSE).

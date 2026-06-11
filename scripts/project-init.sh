@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Copyright 2026 nnthanh101@gmail.com (oceansoft.io). Licensed under Apache-2.0. See LICENSE.
 # Consumer project scaffolding generator
-# Usage: MODULE=iam-identity-center ACCOUNT_ID=728863344838 bash scripts/project-init.sh
+# Usage: MODULE=iam-identity-center ACCOUNT_ID=<ACCOUNT_ID> bash scripts/project-init.sh
 set -euo pipefail
 
 # ─── inputs ───────────────────────────────────────────────────────────────────
 MODULE="${MODULE:-}"
 ACCOUNT_ID="${ACCOUNT_ID:-}"
-REGION="${REGION:-ap-southeast-2}"
+REGION="${REGION:-}"
 PROFILE="${PROFILE:-}"
 FORCE="${FORCE:-false}"
 EVIDENCE_DIR="${EVIDENCE_DIR:-tmp/terraform-aws}"
